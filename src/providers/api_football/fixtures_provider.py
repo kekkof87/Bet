@@ -3,7 +3,8 @@ from typing import Any, Dict, Optional, List
 from core.config import get_settings
 from core.persistence import save_latest_fixtures
 from core.logging import get_logger
-from .http_client import get_http_client  # usa il client centralizzato (mockabile nei test)
+# Re-export di _client_singleton per compatibilità con i test
+from .http_client import get_http_client, _client_singleton  # noqa: F401
 
 log = get_logger(__name__)
 
