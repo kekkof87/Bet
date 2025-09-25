@@ -170,3 +170,7 @@ class APIFootballFixturesProvider:
                 log.error(f"persist fixtures raised unexpected error={e}")
 
         return response
+
+
+# Alias per compatibilità con i test che importano ApiFootballFixturesProvider
+ApiFootballFixturesProvider = APIFootballFixturesProvider
