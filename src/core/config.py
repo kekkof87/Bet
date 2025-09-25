@@ -102,5 +102,3 @@ def get_settings() -> Settings:
 
 def _reset_settings_cache_for_tests():
     get_settings.cache_clear()  # type: ignore
-def _reset_settings_cache_for_tests():
-    get_settings.cache_clear()  # type: ignore
