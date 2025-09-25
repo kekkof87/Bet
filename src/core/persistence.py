@@ -29,14 +29,39 @@ def _latest_path() -> Path:
     return _effective_data_dir() / "fixtures_latest.json"
 
 
+def clear_latest_fixtures_file() -> None:
+    """
+    Rimuove il file canonico dei fixtures (data/fixtures_latest.json) se esiste.
+    Best effort: non solleva eccezioni in caso di errore.
+    """
+    try:
+        if LATEST_FIXTURES_FILE.exists():
+            LATEST_FIXTURES_FILE.unlink()
+            log.info(f"Removed {LATEST_FIXTURES_FILE}")
+    except Exception as e:
+        log.warning(f"Could not remove {LATEST_FIXTURES_FILE}: {e}")
+
+
 def save_latest_fixtures(fixtures: List[Any]) -> None:
     """
-    Salva le ultime fixtures nel file effettivo. Se la lista è vuota, non crea/aggiorna il file.
-    Inoltre, sincronizza anche il path canonico LATEST_FIXTURES_FILE (data/fixtures_latest.json)
-    perché i test ne verificano l'esistenza.
+    Salva le ultime fixtures nel file effettivo. Se la lista è vuota:
+    - non crea/aggiorna il file effettivo
+    - rimuove il file canonico data/fixtures_latest.json se presente
+    Altrimenti:
+    - scrive sul path effettivo
+    - sincronizza anche il path canonico (usato dai test)
     """
     if not fixtures:
-        # Non creare il file quando non c'è nulla da salvare (comportamento atteso dai test)
+        # Non persistere nulla; assicurati che il file "canonico" non rimanga da test precedenti
+        clear_latest_fixtures_file()
+        # Rimuovi anche l'eventuale file effettivo, per pulizia
+        eff = _latest_path()
+        try:
+            if eff.exists():
+                eff.unlink()
+                log.info(f"Removed {eff}")
+        except Exception as e:
+            log.warning(f"Could not remove {eff}: {e}")
         return
 
     # Scrivi nel path effettivo (BET_DATA_DIR o settings)
