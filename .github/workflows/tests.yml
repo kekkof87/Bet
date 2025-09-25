@@ -9,6 +9,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      # Aggiungi il progetto al PYTHONPATH (root) e la cartella src/ se usi layout "src"
+      PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -16,10 +19,16 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           else
-            pip install pytest requests python-dotenv
+            pip install requests python-dotenv
+          fi
+          pip install pytest
+          # Se il progetto è installabile (pyproject.toml o setup.py), installalo in editable mode
+          if [ -f pyproject.toml ] || [ -f setup.py ]; then
+            pip install -e .
           fi
       - name: Run tests
         run: pytest -q
