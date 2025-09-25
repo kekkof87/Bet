@@ -132,11 +132,14 @@ class APIFootballHttpClient:
         )
 
 
+# Manteniamo il simbolo per compatibilità con eventuali import nei test
 _client_singleton: Optional[APIFootballHttpClient] = None
 
 
 def get_http_client() -> APIFootballHttpClient:
-    global _client_singleton
-    if _client_singleton is None:
-        _client_singleton = APIFootballHttpClient()
-    return _client_singleton
+    """
+    Restituisce sempre una nuova istanza per far sì che i test
+    che cambiano le variabili d'ambiente (es. API_FOOTBALL_MAX_ATTEMPTS)
+    abbiano effetto immediato.
+    """
+    return APIFootballHttpClient()
