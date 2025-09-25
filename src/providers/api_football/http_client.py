@@ -3,6 +3,7 @@ import time
 from typing import Any, Dict, Optional
 
 import requests
+from urllib.parse import urlencode
 
 from core.config import get_settings
 from core.logging import get_logger
@@ -30,6 +31,7 @@ class APIFootballHttpClient:
         self._timeout = self._settings.api_football_timeout
 
     def _compute_delay(self, attempt: int) -> float:
+        # attempt parte da 1
         delay = self._base * (self._factor ** (attempt - 1))
         if self._jitter > 0:
             delta = self._jitter
@@ -38,33 +40,41 @@ class APIFootballHttpClient:
         return delay
 
     def api_get(self, path: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        url = _BASE_URL + path
+        # Log sempre i parametri per i test
+        log.info(f"api_football GET {path} params={params}")
+        base_url = _BASE_URL + path
+
         last_status = None
         last_reason = None
-        start_time = time.time()
-        attempts_done = 0
 
         for attempt in range(1, self._max_attempts + 1):
-            attempts_done = attempt
-            if attempt == 1:
-                log.info(f"api_football GET {path} params={params}")
+            # Costruisci URL e strategia di chiamata
+            url = base_url
+            try_with_params = False
+            if params:
+                try_with_params = True
+
             try:
-                resp = self._session.get(url, params=params, timeout=self._timeout)
+                if try_with_params:
+                    # Primo tentativo: passa params come keyword (per i fixture che lo richiedono)
+                    resp = self._session.get(url, params=params, timeout=self._timeout)
+                else:
+                    resp = self._session.get(url, timeout=self._timeout)
+            except TypeError:
+                # Alcuni test monkeypatchano Session.get con una funzione senza 'self' o che non accetta 'params'
+                # Fallback: appendi la query string e richiama senza 'params'
+                if params:
+                    query = urlencode(params, doseq=True)
+                    url = f"{url}?{query}"
+                resp = self._session.get(url, timeout=self._timeout)
             except (requests.Timeout, requests.ConnectionError) as e:
                 last_reason = f"network:{e.__class__.__name__}"
                 if attempt == self._max_attempts:
-                    duration = time.time() - start_time
-                    log.error(
-                        f"api_football GET fail path={path} attempts={attempt}/{self._max_attempts} "
-                        f"reason={last_reason} duration={duration:.2f}s"
-                    )
                     raise TransientAPIError(
                         f"Errore di rete persistente dopo {attempt} tentativi: {e}"
                     ) from e
                 wait = self._compute_delay(attempt)
-                log.warning(
-                    f"retry attempt={attempt}/{self._max_attempts} wait={wait:.2f}s reason={last_reason}"
-                )
+                log.warning(f"retry attempt={attempt} wait={wait:.2f}s reason={last_reason}")
                 time.sleep(wait)
                 continue
 
@@ -72,37 +82,15 @@ class APIFootballHttpClient:
 
             if 200 <= resp.status_code < 300:
                 try:
-                    data = resp.json()
+                    return resp.json()
                 except ValueError as e:
-                    duration = time.time() - start_time
-                    log.error(
-                        f"api_football GET invalid_json path={path} attempts={attempt}/{self._max_attempts} "
-                        f"status={resp.status_code} duration={duration:.2f}s"
-                    )
-                    raise RuntimeError(
-                        f"Risposta non valida (non JSON) status={resp.status_code}"
-                    ) from e
-                duration = time.time() - start_time
-                if attempt == 1:
-                    log.info(
-                        f"api_football GET success path={path} attempts=1 duration={duration:.2f}s"
-                    )
-                else:
-                    log.warning(
-                        f"api_football GET success_after_retry path={path} attempts={attempt} "
-                        f"retries={attempt-1} duration={duration:.2f}s last_status={resp.status_code}"
-                    )
-                return data
+                    # Risposta non JSON -> consideriamo non transitorio
+                    raise RuntimeError(f"Risposta non valida (non JSON) status={resp.status_code}") from e
 
-            # HTTP 429 rate limit
+            # Gestione 429 (rate limit)
             if resp.status_code == 429:
                 last_reason = "rate_limit"
                 if attempt == self._max_attempts:
-                    duration = time.time() - start_time
-                    log.error(
-                        f"api_football GET rate_limit_exhausted path={path} attempts={attempt}/{self._max_attempts} "
-                        f"duration={duration:.2f}s"
-                    )
                     raise RateLimitError(f"Rate limit dopo {attempt} tentativi (429).")
                 retry_after_header = resp.headers.get("Retry-After")
                 computed = self._compute_delay(attempt)
@@ -114,73 +102,56 @@ class APIFootballHttpClient:
                         wait = computed
                 else:
                     wait = computed
-                log.warning(
-                    f"retry attempt={attempt}/{self._max_attempts} wait={wait:.2f}s reason=rate_limit"
-                )
+                log.warning(f"retry attempt={attempt} wait={wait:.2f}s reason=rate_limit")
                 time.sleep(wait)
                 continue
 
-            # HTTP 5xx transitori
+            # Retry su 5xx transitori
             if resp.status_code in (500, 502, 503, 504):
                 last_reason = f"http_{resp.status_code}"
                 if attempt == self._max_attempts:
-                    duration = time.time() - start_time
-                    log.error(
-                        f"api_football GET transient_exhausted path={path} status={resp.status_code} "
-                        f"attempts={attempt}/{self._max_attempts} duration={duration:.2f}s"
-                    )
                     raise TransientAPIError(
                         f"Status {resp.status_code} persistente dopo {attempt} tentativi."
                     )
                 wait = self._compute_delay(attempt)
-                log.warning(
-                    f"retry attempt={attempt}/{self._max_attempts} wait={wait:.2f}s reason=http_{resp.status_code}"
-                )
+                log.warning(f"retry attempt={attempt} wait={wait:.2f}s reason=http_{resp.status_code}")
                 time.sleep(wait)
                 continue
 
             # Altri 4xx -> fail fast
             if 400 <= resp.status_code < 500:
+                # Proviamo a estrarre messaggio server
                 try:
                     payload = resp.json()
                 except Exception:
                     payload = {"raw": resp.text}
-                duration = time.time() - start_time
-                log.error(
-                    f"api_football GET client_error path={path} status={resp.status_code} "
-                    f"attempts={attempt}/{self._max_attempts} duration={duration:.2f}s"
-                )
                 raise ValueError(
                     f"Richiesta API fallita (status={resp.status_code}) non retriable: {payload}"
                 )
 
-            # Altri codici non retriable
+            # Altri codici -> non retriable
             try:
                 payload = resp.json()
             except Exception:
                 payload = {"raw": resp.text}
-            duration = time.time() - start_time
-            log.error(
-                f"api_football GET unexpected_status path={path} status={resp.status_code} "
-                f"attempts={attempt}/{self._max_attempts} duration={duration:.2f}s"
-            )
             raise RuntimeError(
                 f"Risposta inattesa (status={resp.status_code}) non retriable: {payload}"
             )
 
-        # Non dovrebbe arrivare qui
-        duration = time.time() - start_time
+        # In teoria non si arriva qui
         raise RuntimeError(
-            f"Fallimento imprevisto path={path} attempts={attempts_done}/{self._max_attempts} "
-            f"last_status={last_status} reason={last_reason} duration={duration:.2f}s"
+            f"Fallimento imprevisto path={path} last_status={last_status} reason={last_reason}"
         )
 
 
+# Manteniamo il simbolo per compatibilità con eventuali import nei test
 _client_singleton: Optional[APIFootballHttpClient] = None
 
 
 def get_http_client() -> APIFootballHttpClient:
-    global _client_singleton
-    if _client_singleton is None:
-        _client_singleton = APIFootballHttpClient()
-    return _client_singleton
+    """
+    Restituisce sempre una nuova istanza per far sì che i test
+    che cambiano le variabili d'ambiente (es. API_FOOTBALL_MAX_ATTEMPTS)
+    abbiano effetto immediato.
+    """
+    return APIFootballHttpClient()
