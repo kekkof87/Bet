@@ -4,9 +4,10 @@ import pytest
 from core.config import _reset_settings_cache_for_tests
 from core.persistence import LATEST_FIXTURES_FILE
 
-# Adatta questo import al tuo path reale
-from providers.api_football.fixtures_provider import APIFootballFixturesProvider
-from providers.api_football.http_client import _client_singleton
+from providers.api_football.fixtures_provider import (
+    APIFootballFixturesProvider,
+    _client_singleton,
+)
 
 
 @pytest.fixture(autouse=True)
