@@ -77,3 +77,23 @@ ProviderRegistry.add(MyProvider())
 
 ## Licenza
 TBD
+
+## Environment variables
+
+Configure these variables in your local environment (via a `.env` file or shell exports) and in CI as needed:
+
+- `API_FOOTBALL_KEY`: your API-Football key (keep it secret; in GitHub, store it as Actions secret `API_FOOTBALL_KEY`).
+- `API_FOOTBALL_PERSIST_FIXTURES` (default: `true`): if `true`, saves the latest fixtures to `data/fixtures_latest.json`.
+- `BET_DATA_DIR` (default: `data`): directory where persisted files are written.
+
+## CI Workflows
+
+- Tests (`.github/workflows/tests.yml`)
+  - Triggers: on push to `main`, on pull requests, and manually via "Run workflow".
+  - Runs `pytest` on Ubuntu with Python 3.11.
+
+- Fetch fixtures (`.github/workflows/fetch-fixtures.yml`)
+  - Triggers: daily at 03:00 UTC (05:00 Naples during CEST) and manually via "Run workflow".
+  - Inputs: optional `date` in `YYYY-MM-DD`.
+  - Requirements: repository Actions secret `API_FOOTBALL_KEY` must be set.
+  - Artifacts: uploads `fixtures-latest` containing `data/fixtures_latest.json` when present.
