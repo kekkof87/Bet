@@ -8,6 +8,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def _parse_bool(value: Optional[str], default: bool) -> bool:
+    if value is None or value == "":
+        return default
+    v = value.strip().lower()
+    if v in {"0", "false", "no"}:
+        return False
+    return True
+
+
 @dataclass
 class Settings:
     api_football_key: str
@@ -15,12 +24,15 @@ class Settings:
     default_season: Optional[int]
     log_level: str
 
-    # NUOVI PARAMETRI RETRY / TIMEOUT
+    # Parametri retry / timeout esistenti
     api_football_max_attempts: int
     api_football_backoff_base: float
     api_football_backoff_factor: float
     api_football_backoff_jitter: float
     api_football_timeout: float
+
+    # Nuovo flag di persistenza fixtures
+    persist_fixtures: bool
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -67,6 +79,8 @@ class Settings:
         backoff_jitter = _float("API_FOOTBALL_BACKOFF_JITTER", 0.2)
         timeout = _float("API_FOOTBALL_TIMEOUT", 10.0)
 
+        persist_fixtures = _parse_bool(os.getenv("API_FOOTBALL_PERSIST_FIXTURES"), True)
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -77,6 +91,7 @@ class Settings:
             api_football_backoff_factor=backoff_factor,
             api_football_backoff_jitter=backoff_jitter,
             api_football_timeout=timeout,
+            persist_fixtures=persist_fixtures,
         )
 
 
