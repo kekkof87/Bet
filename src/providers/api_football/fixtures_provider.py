@@ -1,10 +1,11 @@
 import random
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 import requests
 
 from core.config import get_settings
+from core.persistence import save_latest_fixtures
 from core.logging import get_logger
 from .exceptions import RateLimitError, TransientAPIError
 
@@ -134,3 +135,38 @@ def get_http_client() -> APIFootballHttpClient:
     if _client_singleton is None:
         _client_singleton = APIFootballHttpClient()
     return _client_singleton
+
+
+class APIFootballFixturesProvider:
+    def __init__(self):
+        self._settings = get_settings()
+        self._client = get_http_client()
+
+    def fetch_fixtures(
+        self,
+        date: Optional[str] = None,
+        league_id: Optional[int] = None,
+        season: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        params: Dict[str, Any] = {}
+        if date:
+            params["date"] = date
+        if league_id or self._settings.default_league_id:
+            params["league"] = league_id or self._settings.default_league_id
+        if season or self._settings.default_season:
+            params["season"] = season or self._settings.default_season
+
+        data = self._client.api_get("/fixtures", params=params or None)
+        response = data.get("response", [])
+
+        if not isinstance(response, list):
+            log.warning("Formato inatteso: 'response' non è una lista")
+            return []
+
+        if self._settings.persist_fixtures and response:
+            try:
+                save_latest_fixtures(response)
+            except Exception as e:  # best effort, non bloccare il flusso
+                log.error(f"persist fixtures raised unexpected error={e}")
+
+        return response
