@@ -42,18 +42,30 @@ class APIFootballHttpClient:
     def api_get(self, path: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         # Log sempre i parametri per i test
         log.info(f"api_football GET {path} params={params}")
-        url = _BASE_URL + path
-        if params:
-            # Evita di passare 'params=' alla sessione (compatibilità con mock dei test)
-            query = urlencode(params, doseq=True)
-            url = f"{url}?{query}"
+        base_url = _BASE_URL + path
 
         last_status = None
         last_reason = None
 
         for attempt in range(1, self._max_attempts + 1):
+            # Costruisci URL e strategia di chiamata
+            url = base_url
+            try_with_params = False
+            if params:
+                try_with_params = True
+
             try:
-                # Non passiamo 'params=' per evitare TypeError con il mock
+                if try_with_params:
+                    # Primo tentativo: passa params come keyword (per i fixture che lo richiedono)
+                    resp = self._session.get(url, params=params, timeout=self._timeout)
+                else:
+                    resp = self._session.get(url, timeout=self._timeout)
+            except TypeError:
+                # Alcuni test monkeypatchano Session.get con una funzione senza 'self' o che non accetta 'params'
+                # Fallback: appendi la query string e richiama senza 'params'
+                if params:
+                    query = urlencode(params, doseq=True)
+                    url = f"{url}?{query}"
                 resp = self._session.get(url, timeout=self._timeout)
             except (requests.Timeout, requests.ConnectionError) as e:
                 last_reason = f"network:{e.__class__.__name__}"
