@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional, List
 
 from core.config import get_settings
-from core.persistence import save_latest_fixtures
+from core.persistence import save_latest_fixtures, clear_latest_fixtures_file
 from core.logging import get_logger
 # Re-export di _client_singleton per compatibilità con i test
 from .http_client import get_http_client, _client_singleton  # noqa: F401
@@ -33,6 +33,9 @@ class APIFootballFixturesProvider:
 
         if not isinstance(response, list):
             log.warning("Formato inatteso: 'response' non è una lista")
+            # Se la persistenza è disabilitata, assicurati che il file canonico non resti sporco
+            if not self._settings.persist_fixtures:
+                clear_latest_fixtures_file()
             return []
 
         if self._settings.persist_fixtures and response:
@@ -40,6 +43,9 @@ class APIFootballFixturesProvider:
                 save_latest_fixtures(response)
             except Exception as e:  # best effort, non bloccare il flusso
                 log.error(f"persist fixtures raised unexpected error={e}")
+        else:
+            # Persistenza disabilitata o risposta vuota -> pulisci l’eventuale file canonico
+            clear_latest_fixtures_file()
 
         return response
 
