@@ -1,42 +1,67 @@
-from __future__ import annotations
-
 import json
 import os
-import logging
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, List
 
-log = logging.getLogger(__name__)
+from core.config import get_settings
+from core.logging import get_logger
 
-DATA_DIR = Path(os.getenv("BET_DATA_DIR", "data"))
-LATEST_FIXTURES_FILE = DATA_DIR / "fixtures_latest.json"
+log = get_logger(__name__)
+
+# Costante di riferimento usata nei test per verifiche sull'albero del repo
+LATEST_FIXTURES_FILE = Path("data") / "fixtures_latest.json"
 
 
-def save_latest_fixtures(fixtures: List[Dict[str, Any]]) -> None:
+def _effective_data_dir() -> Path:
+    """
+    Directory effettiva in cui leggere/scrivere, rispettando l'ambiente di test.
+    Priorità:
+    - BET_DATA_DIR in env (usata dai test)
+    - settings.bet_data_dir
+    """
+    env_dir = os.getenv("BET_DATA_DIR")
+    if env_dir:
+        return Path(env_dir)
+    return Path(get_settings().bet_data_dir)
+
+
+def _latest_path() -> Path:
+    return _effective_data_dir() / "fixtures_latest.json"
+
+
+def save_latest_fixtures(fixtures: List[Any]) -> None:
+    """
+    Salva le ultime fixtures nel file effettivo. Se la lista è vuota, non crea/aggiorna il file.
+    """
     if not fixtures:
+        # Non creare il file quando non c'è nulla da salvare (comportamento atteso dai test)
         return
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    path = _latest_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        with LATEST_FIXTURES_FILE.open("w", encoding="utf-8") as f:
-            json.dump(fixtures, f, ensure_ascii=False, indent=2)
-        log.info(f"persist fixtures count={len(fixtures)} path={LATEST_FIXTURES_FILE}")
+        path.write_text(json.dumps(fixtures, ensure_ascii=False, indent=2), encoding="utf-8")
+        log.info(f"Saved latest fixtures to {path}")
     except Exception as e:
-        log.error(f"persist fixtures failed error={e}")
+        log.error(f"Failed to persist fixtures to {path}: {e}")
+        raise
 
 
-def load_latest_fixtures() -> List[Dict[str, Any]]:
-    if not LATEST_FIXTURES_FILE.exists():
+def load_latest_fixtures() -> List[Any]:
+    """
+    Carica le ultime fixtures. In caso di:
+    - file mancante -> []
+    - JSON invalido -> [] con warning
+    - struttura non lista -> [] con warning
+    """
+    path = _latest_path()
+    if not path.exists():
         return []
     try:
-        with LATEST_FIXTURES_FILE.open("r", encoding="utf-8") as f:
-            data = json.load(f)
-        if isinstance(data, list):
-            return data
-        log.warning("latest fixtures file invalid structure (not a list)")
-        return []
-    except json.JSONDecodeError:
-        log.warning("latest fixtures file invalid/corrupt JSON")
-        return []
+        data = json.loads(path.read_text(encoding="utf-8"))
     except Exception as e:
-        log.warning(f"latest fixtures file read error={e}")
+        log.warning(f"Invalid JSON in {path}: {e}")
         return []
+    if not isinstance(data, list):
+        log.warning(f"Unexpected structure in {path}: not a list")
+        return []
+    return data
