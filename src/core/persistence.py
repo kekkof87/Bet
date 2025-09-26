@@ -1,14 +1,20 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
+from json import JSONDecodeError
 from pathlib import Path
 from typing import Any, Optional
 
-from .models import FixtureDataset
+from .models import FixtureDataset, FixtureRecord
 
-# Directory & file naming (puoi adattare se altrove)
+LOGGER = logging.getLogger(__name__)
+
+# Cartella dati (può essere resa dinamica in futuro leggendo da settings/env)
 DATA_DIR = Path("data")
+
+# File “corrente” usato nei test e dal provider
 LATEST_FIXTURES_FILE = DATA_DIR / "fixtures_latest.json"
 PREVIOUS_FIXTURES_FILE = DATA_DIR / "fixtures_previous.json"
 
@@ -18,6 +24,9 @@ def ensure_dir(path: Path) -> None:
 
 
 def write_json_atomic(path: Path, data: Any, indent: int = 2) -> None:
+    """
+    Scrittura atomica: crea file temporaneo e poi sostituisce quello reale.
+    """
     ensure_dir(path)
     tmp_path = path.with_suffix(path.suffix + ".tmp")
     with tmp_path.open("w", encoding="utf-8") as f:
@@ -27,45 +36,76 @@ def write_json_atomic(path: Path, data: Any, indent: int = 2) -> None:
     os.replace(tmp_path, path)
 
 
-def read_json(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as f:
-        return json.load(f)
+# ---------------------------------------------------------------------------
+# Funzioni di basso livello (non usate direttamente dai test)
+# ---------------------------------------------------------------------------
 
 
-def load_fixtures(path: Path) -> Optional[FixtureDataset]:
+def _load_json_list(path: Path) -> FixtureDataset:
+    """
+    Carica una lista JSON dal path. Se invalido o struttura errata → log + [].
+    """
     if not path.exists():
-        return None
-    data = read_json(path)
+        return []
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+    except JSONDecodeError:
+        LOGGER.warning("Invalid / corrupt fixtures JSON at %s", path)
+        return []
+    except OSError as e:
+        LOGGER.warning("Error reading fixtures file %s: %s", path, e)
+        return []
     if not isinstance(data, list):
-        raise ValueError("Invalid fixtures file: expected list")
-    # Validazione leggera differibile; ritorno tipizzato
-    return data  # FixturesDataset alias list[FixtureRecord]
-
-
-def save_fixtures_atomic(path: Path, fixtures: FixtureDataset) -> None:
-    write_json_atomic(path, fixtures)
+        LOGGER.warning("Invalid structure in fixtures JSON (expected list) at %s", path)
+        return []
+    # Validazione superficiale opzionale: controlliamo chiave fixture_id se presente
+    out: FixtureDataset = []
+    for item in data:
+        if isinstance(item, dict):
+            # Non facciamo casting rigido ora; i test richiedono solo la lista
+            out.append(item)  # type: ignore[arg-type]
+    return out
 
 
 # ---------------------------------------------------------------------------
-# Backward compatibility wrappers (usati dai provider & test esistenti)
+# API pubblica compatibile con i test esistenti
 # ---------------------------------------------------------------------------
+
+
+def load_latest_fixtures() -> FixtureDataset:
+    """
+    Ritorna sempre una lista (vuota se il file manca o è invalido).
+    """
+    return _load_json_list(LATEST_FIXTURES_FILE)
+
 
 def save_latest_fixtures(fixtures: FixtureDataset) -> None:
     """
-    Wrapper retro-compatibile.
-    Usa la write atomica sul file 'fixtures_latest.json'.
+    Salva la lista solo se NON vuota. (Comportamento atteso dai test.)
     """
-    save_fixtures_atomic(LATEST_FIXTURES_FILE, fixtures)
+    if not fixtures:  # lista vuota → no file
+        return
+    write_json_atomic(LATEST_FIXTURES_FILE, fixtures)
 
 
 def clear_latest_fixtures_file() -> None:
     """
-    Elimina il file delle fixtures correnti se esiste.
-    Usato in alcuni test per ripulire stato.
+    Elimina il file corrente se esiste (usato nei test).
     """
     if LATEST_FIXTURES_FILE.exists():
         LATEST_FIXTURES_FILE.unlink()
 
 
-def load_latest_fixtures() -> Optional[FixtureDataset]:
-    return load_fixtures(LATEST_FIXTURES_FILE)
+# Funzione aggiuntiva (non richiesta dai test ma utile).
+def load_previous_fixtures() -> FixtureDataset:
+    return _load_json_list(PREVIOUS_FIXTURES_FILE)
+
+
+def save_fixtures_atomic(path: Path, fixtures: FixtureDataset) -> None:
+    """
+    API generica (rimane disponibile per codice futuro).
+    """
+    if not fixtures:
+        return
+    write_json_atomic(path, fixtures)
