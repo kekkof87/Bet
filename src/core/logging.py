@@ -1,50 +1,28 @@
+from __future__ import annotations
+import json
 import logging
+import sys
+from datetime import datetime
+from typing import Any, Dict
 
-try:
-    from rich.logging import RichHandler  # type: ignore
-    _RICH = True
-except Exception:
-    _RICH = False
+class JsonFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        payload: Dict[str, Any] = {
+            "ts": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+            "level": record.levelname,
+            "logger": record.name,
+            "msg": record.getMessage(),
+        }
+        if record.exc_info:
+            payload["exc"] = self.formatException(record.exc_info)
+        return json.dumps(payload, ensure_ascii=False)
 
-from core.config import get_settings
-
-_CONFIGURED = False
-
-
-def _configure():
-    global _CONFIGURED
-    if _CONFIGURED:
-        return
-
-    level = "INFO"
-    try:
-        level = get_settings().log_level
-    except Exception:
-        pass
-
-    root = logging.getLogger()
-    root.setLevel(getattr(logging, level, logging.INFO))
-
-    if root.handlers:
-        _CONFIGURED = True
-        return
-
-    if _RICH:
-        handler = RichHandler(rich_tracebacks=True, show_time=True)
-        fmt = "[%(name)s] %(levelname)s: %(message)s"
-        handler.setFormatter(logging.Formatter(fmt))
-        root.addHandler(handler)
-    else:
-        handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter(
-            "%(asctime)s [%(name)s] %(levelname)s: %(message)s",
-            "%Y-%m-%d %H:%M:%S",
-        ))
-        root.addHandler(handler)
-
-    _CONFIGURED = True
-
-
-def get_logger(name: str):
-    _configure()
-    return logging.getLogger(name)
+def get_logger(name: str) -> logging.Logger:
+    logger = logging.getLogger(name)
+    if not logger.handlers:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(JsonFormatter())
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
+    return logger

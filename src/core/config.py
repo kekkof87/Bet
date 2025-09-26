@@ -100,6 +100,11 @@ class Settings:
 def get_settings() -> Settings:
     return Settings.from_env()
 
+# MOSTRA SOLO LA PARTE DA SISTEMARE: assicurati di NON avere doppia definizione.
+# Trova la vecchia funzione duplicata e lasciane UNA così:
 
-def _reset_settings_cache_for_tests():
-    get_settings.cache_clear()  # type: ignore
+def _reset_settings_cache_for_tests() -> None:
+    """
+    Supporto ai test: svuota la cache di get_settings().
+    """
+    get_settings.cache_clear()
