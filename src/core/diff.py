@@ -1,9 +1,8 @@
-# Controlla che NON ci sia un return con type: ignore inutile.
-# Qui la versione pulita che avevamo definito:
-
 from __future__ import annotations
-from typing import List, Dict, Tuple
-from .models import FixtureRecord, FixtureDataset
+
+from typing import Dict, List, Tuple
+
+from .models import FixtureDataset, FixtureRecord
 
 
 def index_by_id(fixtures: FixtureDataset) -> Dict[int, FixtureRecord]:
@@ -15,7 +14,9 @@ def index_by_id(fixtures: FixtureDataset) -> Dict[int, FixtureRecord]:
     return out
 
 
-def diff_fixtures(old: FixtureDataset, new: FixtureDataset) -> Tuple[List[int], List[int], List[int]]:
+def diff_fixtures(
+    old: FixtureDataset, new: FixtureDataset
+) -> Tuple[List[int], List[int], List[int]]:
     old_idx = index_by_id(old)
     new_idx = index_by_id(new)
     old_ids = set(old_idx.keys())
