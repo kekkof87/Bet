@@ -1,1 +1,1 @@
-# Future providers aggregation
+# Providers namespace
