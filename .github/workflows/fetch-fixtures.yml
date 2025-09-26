@@ -25,18 +25,17 @@ jobs:
           python-version: '3.11'
       - name: Ensure pip & dependencies
         run: |
-          python -m ensurepip --upgrade
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+      - name: Check requests install
+        run: |
+          python -c "import requests; print('requests version:', requests.__version__)"
       - name: Debug Python & pip
         run: |
           python --version
           which python
           python -m pip --version
           python -m pip list
-      - name: Check requests install
-        run: |
-          python -c "import requests; print(requests.__version__)"
       - name: Fetch fixtures
         env:
           DATE: ${{ github.event.inputs.date }}
