@@ -12,19 +12,24 @@ on:
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}/Bet
     env:
       API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
       API_FOOTBALL_PERSIST_FIXTURES: 'true'
       BET_DATA_DIR: 'data'
     steps:
       - uses: actions/checkout@v4
+      - name: List root files
+        run: ls -l
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install dependencies
+      - name: Ensure pip & dependencies
         run: |
+          python -m ensurepip --upgrade
           python -m pip install --upgrade pip
-          python -m pip install rich==13.7.1 schedule==1.2.1 python-dotenv==1.0.1 pytest httpx requests
           python -m pip install -r requirements.txt
       - name: Debug Python & pip
         run: |
@@ -32,6 +37,9 @@ jobs:
           which python
           python -m pip --version
           python -m pip list
+      - name: Check requests install
+        run: |
+          python -c "import requests; print(requests.__version__)"
       - name: Fetch fixtures
         env:
           DATE: ${{ github.event.inputs.date }}
