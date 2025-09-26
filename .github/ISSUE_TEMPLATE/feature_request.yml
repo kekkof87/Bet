@@ -1,0 +1,24 @@
+name: Feature request
+description: Proponi una nuova funzionalità o miglioramento
+labels: [enhancement]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Descrizione
+      description: Spiega la proposta e il valore per il progetto
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Ambito / Requisiti
+      description: Requisiti funzionali, non funzionali, criteri di accettazione
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative considerate
+  - type: textarea
+    id: extra
+    attributes:
+      label: Note aggiuntive

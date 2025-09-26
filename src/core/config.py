@@ -3,10 +3,6 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Optional
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 
 def _parse_bool(value: Optional[str], default: bool) -> bool:
     if value is None or value == "":
@@ -24,15 +20,16 @@ class Settings:
     default_season: Optional[int]
     log_level: str
 
-    # Parametri retry / timeout esistenti
     api_football_max_attempts: int
     api_football_backoff_base: float
     api_football_backoff_factor: float
     api_football_backoff_jitter: float
     api_football_timeout: float
 
-    # Nuovo flag di persistenza fixtures
     persist_fixtures: bool
+
+    # NUOVO: directory base per dati (fallback se non impostata via env nei punti che la usano)
+    bet_data_dir: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -81,6 +78,9 @@ class Settings:
 
         persist_fixtures = _parse_bool(os.getenv("API_FOOTBALL_PERSIST_FIXTURES"), True)
 
+        # NUOVO: fallback "data" (coerente con README e uso in persistence)
+        bet_data_dir = os.getenv("BET_DATA_DIR", "data")
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -92,6 +92,7 @@ class Settings:
             api_football_backoff_jitter=backoff_jitter,
             api_football_timeout=timeout,
             persist_fixtures=persist_fixtures,
+            bet_data_dir=bet_data_dir,
         )
 
 

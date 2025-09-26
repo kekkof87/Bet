@@ -1,6 +1,5 @@
 import pytest
 from core.config import _reset_settings_cache_for_tests
-import os
 
 
 @pytest.fixture(autouse=True)

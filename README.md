@@ -97,3 +97,35 @@ Configure these variables in your local environment (via a `.env` file or shell 
   - Inputs: optional `date` in `YYYY-MM-DD`.
   - Requirements: repository Actions secret `API_FOOTBALL_KEY` must be set.
   - Artifacts: uploads `fixtures-latest` containing `data/fixtures_latest.json` when present.
+## Development
+
+### Test e Lint
+```bash
+# Eseguire test
+pytest -q
+
+# Lint (Ruff)
+ruff check .
+
+# Type check (mypy)
+mypy --pretty src
+```
+
+### Variabili d’ambiente chiave
+- `API_FOOTBALL_KEY`: chiave per API-Football (necessaria per chiamate reali).
+- `API_FOOTBALL_PERSIST_FIXTURES` (default `true`): se `true`, salva l’ultima risposta in `data/fixtures_latest.json`.
+- `BET_DATA_DIR` (default `data`): directory di output. I test usano una cartella temporanea; manteniamo in sync anche `data/fixtures_latest.json` quando opportuno.
+- `API_FOOTBALL_MAX_ATTEMPTS`, `API_FOOTBALL_BACKOFF_BASE`, `API_FOOTBALL_BACKOFF_FACTOR`, `API_FOOTBALL_BACKOFF_JITTER`, `API_FOOTBALL_TIMEOUT`: controllano retry/backoff del client.
+
+### Provider
+- `APIFootballFixturesProvider` (requests): implementa retry/backoff, integrazione con persistenza.
+- `ApiFootballFixturesProvider` (httpx): restituisce un output normalizzato (usato nei test di normalizzazione).
+
+### Script utili
+- `scripts/fetch_fixtures.py`: estrae fixtures tramite provider reale (richiede `API_FOOTBALL_KEY`).
+- `scripts/dump_latest_fixtures.py`: stampa il contenuto persistito (se presente).
+
+### CI
+- Workflow `tests`: esegue la suite di test.
+- Workflow `lint`: esegue Ruff.
+- Workflow `typecheck`: esegue mypy.

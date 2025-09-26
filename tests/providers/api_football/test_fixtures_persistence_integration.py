@@ -4,10 +4,8 @@ import pytest
 from core.config import _reset_settings_cache_for_tests
 from core.persistence import LATEST_FIXTURES_FILE
 
-from providers.api_football.fixtures_provider import (
-    APIFootballFixturesProvider,
-    _client_singleton,
-)
+from providers.api_football.fixtures_provider import APIFootballFixturesProvider
+import providers.api_football.fixtures_provider as fixtures_module
 
 
 @pytest.fixture(autouse=True)
@@ -15,11 +13,10 @@ def clean_env(monkeypatch, tmp_path):
     monkeypatch.setenv("API_FOOTBALL_KEY", "DUMMY_KEY")
     monkeypatch.setenv("BET_DATA_DIR", str(tmp_path))
     _reset_settings_cache_for_tests()
-    global _client_singleton
-    _client_singleton = None
+    fixtures_module._client_singleton = None
     yield
     _reset_settings_cache_for_tests()
-    _client_singleton = None
+    fixtures_module._client_singleton = None
 
 
 def test_persistence_enabled(monkeypatch):
