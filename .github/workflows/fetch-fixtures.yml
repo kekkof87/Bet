@@ -1,35 +1,46 @@
 name: fetch-fixtures
+
 on:
   workflow_dispatch:
     inputs:
       date:
-        description: 'YYYY-MM-DD (opzionale)'
+        description: 'Data (YYYY-MM-DD), opzionale'
         required: false
-        type: string
   schedule:
-    - cron: '0 3 * * *'  # 03:00 UTC
+    # Orario cron è in UTC. Per eseguire alle 05:00 a Napoli (CEST, UTC+2),
+    # impostiamo le 03:00 UTC. Regola se cambi fuso/ora legale.
+    - cron: '0 3 * * *'
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
     env:
       API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      API_FOOTBALL_PERSIST_FIXTURES: 'true'
+      BET_DATA_DIR: 'data'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install deps
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      - name: Run fetch
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install requests python-dotenv httpx
+          fi
+      - name: Fetch fixtures
         env:
+          DATE: ${{ github.event.inputs.date }}
           PYTHONPATH: src
-        run: python scripts/fetch_fixtures.py
-      - name: Upload artifact (fixtures-latest)
-        if: ${{ hashFiles('data/fixtures_latest.json') != '' }}
+        run: |
+          python scripts/fetch_fixtures.py
+      - name: Upload latest fixtures artifact
+        if: always()  # carica comunque il file se presente
         uses: actions/upload-artifact@v4
         with:
           name: fixtures-latest
           path: data/fixtures_latest.json
+          if-no-files-found: ignore
