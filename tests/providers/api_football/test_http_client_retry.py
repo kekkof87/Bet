@@ -1,11 +1,11 @@
-import types
 import json
 import pytest
 import requests
 
-from providers.api_football.http_client import get_http_client, _client_singleton
-from providers.api_football.exceptions import RateLimitError, TransientAPIError
 from core.config import _reset_settings_cache_for_tests
+from providers.api_football.exceptions import RateLimitError, TransientAPIError
+from providers.api_football.http_client import get_http_client
+import providers.api_football.http_client as http_client_module
 
 
 class FakeResponse:
@@ -13,7 +13,9 @@ class FakeResponse:
         self.status_code = status_code
         self._json_data = json_data
         self.headers = headers or {}
-        self.text = text or (json.dumps(json_data) if isinstance(json_data, (dict, list)) else "")
+        self.text = text or (
+            json.dumps(json_data) if isinstance(json_data, (dict, list)) else ""
+        )
 
     def json(self):
         if self._json_data is None:
@@ -23,13 +25,12 @@ class FakeResponse:
 
 @pytest.fixture(autouse=True)
 def clean_singleton(monkeypatch):
-    # Reset client & settings between test
-    global _client_singleton
-    _client_singleton = None
+    # Reset client & settings between tests
+    http_client_module._client_singleton = None
     _reset_settings_cache_for_tests()
     monkeypatch.setenv("API_FOOTBALL_KEY", "DUMMY_KEY")
     yield
-    _client_singleton = None
+    http_client_module._client_singleton = None
     _reset_settings_cache_for_tests()
 
 
@@ -47,7 +48,9 @@ def no_sleep(monkeypatch):
 @pytest.fixture
 def fixed_jitter(monkeypatch):
     # Jitter deterministico = 1.0 (nessuna variazione)
-    monkeypatch.setattr("providers.api_football.http_client.random.uniform", lambda a, b: 1.0)
+    monkeypatch.setattr(
+        "providers.api_football.http_client.random.uniform", lambda a, b: 1.0
+    )
 
 
 def build_sequence_get(responses):
@@ -92,7 +95,7 @@ def test_retry_su_500_poi_successo(monkeypatch, fixed_jitter, no_sleep):
 
 
 def test_retry_429_honor_retry_after(monkeypatch, fixed_jitter, no_sleep):
-    # Retry-After = 1, computed base=0.5 -> 0.5 < 1 => atteso wait >= 1
+    # Retry-After = 1, base=0.5 => atteso wait >= 1
     monkeypatch.setenv("API_FOOTBALL_BACKOFF_BASE", "0.5")
     seq = [
         FakeResponse(429, {"error": "rate"}, headers={"Retry-After": "1"}),
@@ -110,7 +113,7 @@ def test_retry_429_honor_retry_after(monkeypatch, fixed_jitter, no_sleep):
 
 
 def test_rate_limit_esaurito(monkeypatch, fixed_jitter, no_sleep):
-    # 3 tentativi configurati per testare più velocemente
+    # 3 tentativi configurati per test più veloce
     monkeypatch.setenv("API_FOOTBALL_MAX_ATTEMPTS", "3")
     seq = [
         FakeResponse(429, {"error": "rate"}, headers={"Retry-After": "0.2"}),
