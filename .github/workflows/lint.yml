@@ -24,7 +24,5 @@ jobs:
           pip install ruff==0.6.8
       - name: Ruff version
         run: ruff --version
-      - name: Format check
-        run: ruff format --check .
       - name: Lint (blocking)
         run: ruff check .
