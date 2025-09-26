@@ -1,54 +1,34 @@
 name: fetch-fixtures
-
 on:
   workflow_dispatch:
     inputs:
       date:
-        description: 'Data (YYYY-MM-DD), opzionale'
+        description: 'YYYY-MM-DD (opzionale)'
         required: false
+        type: string
   schedule:
-    # Orario cron è in UTC. Per eseguire alle 05:00 a Napoli (CEST, UTC+2),
-    # impostiamo le 03:00 UTC. Regola se cambi fuso/ora legale.
-    - cron: '0 3 * * *'
+    - cron: '0 3 * * *'  # 03:00 UTC
 
 jobs:
   fetch:
     runs-on: ubuntu-latest
     env:
       API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
-      API_FOOTBALL_PERSIST_FIXTURES: 'true'
-      BET_DATA_DIR: 'data'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install dependencies
+      - name: Install deps
         run: |
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          else
-            pip install requests python-dotenv
-          fi
-      - name: Fetch fixtures
-        env:
-          DATE: ${{ github.event.inputs.date }}
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run fetch
         run: |
-          python - <<'PY'
-          import os
-          from providers.api_football.fixtures_provider import APIFootballFixturesProvider
-          provider = APIFootballFixturesProvider()
-          date = os.getenv('DATE') or None
-          fixtures = provider.fetch_fixtures(date=date)
-          print(f"Scaricate: {len(fixtures)}")
-          if not fixtures:
-              # Non falliamo il job se nessuna fixture: può capitare
-              print("Nessuna fixture trovata.")
-          PY
-      - name: Upload latest fixtures artifact
-        if: always()  # carica comunque il file se presente
+          python scripts/fetch_fixtures.py
+      - name: Upload artifact (fixtures-latest)
+        if: ${{ hashFiles('data/fixtures_latest.json') != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: fixtures-latest
           path: data/fixtures_latest.json
-          if-no-files-found: ignore
