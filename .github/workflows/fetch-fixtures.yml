@@ -24,8 +24,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run fetch
-        run: |
-          python scripts/fetch_fixtures.py
+        env:
+          PYTHONPATH: src
+        run: python scripts/fetch_fixtures.py
       - name: Upload artifact (fixtures-latest)
         if: ${{ hashFiles('data/fixtures_latest.json') != '' }}
         uses: actions/upload-artifact@v4
