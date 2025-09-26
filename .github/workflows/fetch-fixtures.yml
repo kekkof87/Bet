@@ -32,19 +32,8 @@ jobs:
           fi
       - name: Fetch fixtures
         env:
-          DATE: ${{ github.event.inputs.date }}
-        run: |
-          python - <<'PY'
-          import os
-          from providers.api_football.fixtures_provider import APIFootballFixturesProvider
-          provider = APIFootballFixturesProvider()
-          date = os.getenv('DATE') or None
-          fixtures = provider.fetch_fixtures(date=date)
-          print(f"Scaricate: {len(fixtures)}")
-          if not fixtures:
-              # Non falliamo il job se nessuna fixture: può capitare
-              print("Nessuna fixture trovata.")
-          PY
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/src
+        run: python scripts/fetch_fixtures.py
       - name: Upload latest fixtures artifact
         if: always()  # carica comunque il file se presente
         uses: actions/upload-artifact@v4

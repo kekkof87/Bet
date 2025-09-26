@@ -1,0 +1,62 @@
+name: Bug Report
+description: Segnala un bug o un comportamento inaspettato
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Grazie per aver segnalato un bug! Fornisci più dettagli possibili.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrizione del problema
+      description: Descrivi il bug in dettaglio
+      placeholder: Cosa è successo? Cosa ti aspettavi?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passi per riprodurre
+      description: Come possiamo riprodurre il problema?
+      placeholder: |
+        1. Esegui comando '...'
+        2. Vedi errore '...'
+      value: |
+        1. 
+        2. 
+        3. 
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Ambiente
+      description: Informazioni sull'ambiente
+      placeholder: |
+        - OS: [e.g. Ubuntu 20.04]
+        - Python: [e.g. 3.11]
+        - Version: [e.g. commit hash]
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log e messaggi di errore
+      description: Incolla eventuali log o messaggi di errore
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Informazioni aggiuntive
+      description: Qualsiasi altra informazione utile
+    validations:
+      required: false

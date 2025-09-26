@@ -17,6 +17,45 @@ Variabili d'ambiente (vedi `.env.example`):
 - `PROVIDER_MOCK_ENABLED` (true/false)
 - `DRY_RUN=1` (se impostato esegue un solo ciclo e termina)
 
+## Development
+
+### Comandi locali
+
+```bash
+# Test
+pytest -q
+
+# Lint
+ruff check .
+
+# Type check
+mypy --pretty src
+```
+
+### Variabili d'ambiente principali
+
+- `API_FOOTBALL_KEY`: chiave API-Football (obbligatoria)
+- `API_FOOTBALL_PERSIST_FIXTURES` (default: `true`): salva fixtures in `data/fixtures_latest.json`
+- `BET_DATA_DIR` (default: `data`): directory per file persistenti
+- `API_FOOTBALL_MAX_ATTEMPTS`, `API_FOOTBALL_BACKOFF_*`: parametri retry/backoff
+
+### Provider disponibili
+
+- `APIFootballFixturesProvider`: client basato su requests (compatibilità test)
+- `ApiFootballFixturesProvider`: implementazione principale con retry/persistence
+
+### Script disponibili
+
+- `scripts/fetch_fixtures.py`: scarica fixtures da API-Football
+- `scripts/dump_latest_fixtures.py`: mostra fixtures salvate localmente
+
+### CI Workflows
+
+- **tests**: esegue pytest su push/PR
+- **lint**: controllo stile con ruff (--exit-zero per ora)
+- **typecheck**: controllo tipi con mypy (configurazione leniente)
+- **fetch-fixtures**: scarica fixtures daily alle 03:00 UTC
+
 ## Struttura
 
 ```
@@ -88,12 +127,20 @@ Configure these variables in your local environment (via a `.env` file or shell 
 
 ## CI Workflows
 
-- Tests (`.github/workflows/tests.yml`)
-  - Triggers: on push to `main`, on pull requests, and manually via "Run workflow".
-  - Runs `pytest` on Ubuntu with Python 3.11.
+- **Tests** (`.github/workflows/tests.yml`)
+  - Triggers: on push to `main`, on pull requests, and manually via "Run workflow"
+  - Runs `pytest` on Ubuntu with Python 3.11
 
-- Fetch fixtures (`.github/workflows/fetch-fixtures.yml`)
-  - Triggers: daily at 03:00 UTC (05:00 Naples during CEST) and manually via "Run workflow".
-  - Inputs: optional `date` in `YYYY-MM-DD`.
-  - Requirements: repository Actions secret `API_FOOTBALL_KEY` must be set.
-  - Artifacts: uploads `fixtures-latest` containing `data/fixtures_latest.json` when present.
+- **Lint** (`.github/workflows/lint.yml`)
+  - Triggers: on push to `main` and pull requests
+  - Runs `ruff check .` with `--exit-zero` (non-disruptive initially)
+
+- **Typecheck** (`.github/workflows/typecheck.yml`)
+  - Triggers: on push to `main` and pull requests
+  - Runs `mypy --pretty src` with lenient configuration
+
+- **Fetch fixtures** (`.github/workflows/fetch-fixtures.yml`)
+  - Triggers: daily at 03:00 UTC (05:00 Naples during CEST) and manually via "Run workflow"
+  - Inputs: optional `date` in `YYYY-MM-DD`
+  - Requirements: repository Actions secret `API_FOOTBALL_KEY` must be set
+  - Artifacts: uploads `fixtures-latest` containing `data/fixtures_latest.json` when present
