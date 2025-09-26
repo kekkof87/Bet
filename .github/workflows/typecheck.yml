@@ -1,22 +1,64 @@
 name: typecheck
+
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - quality_setup          # (Aggiungi altri branch su cui vuoi far girare mypy)
   pull_request:
+    branches:
+      - main
+      - quality_setup
 
 jobs:
   mypy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Install deps
+            python-version: '3.11'
+            cache: 'pip'          # Usa hashing di requirements.txt per cache automatica
+
+      # (Facoltativo) Cache manuale pip. Puoi mantenerlo commentato perché setup-python già fa caching.
+      # - name: Cache pip (manual alternative)
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/.cache/pip
+      #     key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pip-
+
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install mypy==1.11.2 types-requests
-          # Se servono altri stub: pip install types-python-dateutil types-PyYAML ...
-      - name: Run mypy
+          pip install -r requirements.txt
+          # Se hai stub extra da aggiungere, falli qui:
+          # pip install types-requests types-python-dateutil types-PyYAML
+
+      - name: Debug (facoltativo) - mostra sys.path e versione mypy
         run: |
-          mypy --pretty src
+          python -c "import sys; print('PYTHONPATH=', '\n'.join(sys.path))"
+          mypy --version
+          pip freeze | grep -E 'mypy|httpx|dotenv|rich' || true
+
+      - name: Run mypy
+        env:
+          # Non strettamente necessario se usi mypy.ini con mypy_path,
+          # ma lasciarlo è ridondanza sicura.
+          MYPYPATH: src
+        run: |
+          # Usa il file di configurazione (se hai mypy.ini in root)
+          mypy --config-file mypy.ini --pretty
+          # In alternativa (se volessi forzare solo src):
+          # mypy --config-file mypy.ini --pretty src
+
+      # (Opzionale) Fallisci se qualcuno ha lasciato print/debug (puoi rimuovere questo step)
+      # - name: Check no stray debug prints
+      #   run: |
+      #     ! grep -R "print(" -n src || (echo "Found debug print statements"; exit 1)
