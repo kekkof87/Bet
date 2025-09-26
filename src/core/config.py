@@ -100,6 +100,12 @@ class Settings:
 def get_settings() -> Settings:
     return Settings.from_env()
 
+def _reset_settings_cache_for_tests() -> None:
+    """
+    Funzione di supporto ai test per svuotare la cache di get_settings().
+    Da usare SOLO in contesto di test.
+    """
+    get_settings.cache_clear()
 
 def _reset_settings_cache_for_tests():
     get_settings.cache_clear()  # type: ignore
