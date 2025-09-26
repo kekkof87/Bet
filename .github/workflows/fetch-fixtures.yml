@@ -12,9 +12,6 @@ on:
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}/Bet
     env:
       API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
       API_FOOTBALL_PERSIST_FIXTURES: 'true'
