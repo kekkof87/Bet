@@ -7,7 +7,12 @@ on:
         description: 'Data (YYYY-MM-DD), opzionale'
         required: false
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 3 * * *'   # 03:00 UTC
+
+# Evita che più run simultanee del medesimo workflow si accavallino
+concurrency:
+  group: fetch-fixtures
+  cancel-in-progress: false
 
 jobs:
   fetch:
@@ -16,32 +21,46 @@ jobs:
       API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
       API_FOOTBALL_PERSIST_FIXTURES: 'true'
       BET_DATA_DIR: 'data'
+
     steps:
-      - uses: actions/checkout@v4
-      - name: List root files
-        run: ls -l
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Ensure pip & dependencies
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-      - name: Check requests install
+            python -m pip install --upgrade pip
+            python -m pip install -r requirements.txt
+
+      - name: Verifica prerequisiti
         run: |
-          python -c "import requests; print('requests version:', requests.__version__)"
-      - name: Debug Python & pip
-        run: |
-          python --version
-          which python
-          python -m pip --version
-          python -m pip list
+          if [ -z "${API_FOOTBALL_KEY}" ]; then
+            echo "ERRORE: manca la variabile segreta API_FOOTBALL_KEY"
+            exit 1
+          fi
+          echo "Requisiti OK."
+
       - name: Fetch fixtures
         env:
           DATE: ${{ github.event.inputs.date }}
           PYTHONPATH: src
         run: |
+          set -euo pipefail
+          echo "Avvio fetch fixtures..."
+          if [ -n "${DATE:-}" ]; then
+            echo " -> Uso data specificata: $DATE"
+          else
+            echo " -> Nessuna data specificata, uso default nel codice."
+          fi
           python scripts/fetch_fixtures.py
+          echo "Esecuzione completata."
+
       - name: Upload latest fixtures artifact
         if: always()
         uses: actions/upload-artifact@v4
