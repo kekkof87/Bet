@@ -1,12 +1,22 @@
 ## Descrizione
-<!-- Cosa cambia e perché -->
+Breve riassunto dei cambiamenti e motivazione.
+
+## Tipo di cambiamento
+- [ ] Feature
+- [ ] Fix
+- [ ] Refactor
+- [ ] Docs
+- [ ] CI / tooling
+- [ ] Breaking change
 
 ## Checklist
-- [ ] Test locali passano (`pytest`)
-- [ ] CI verde (tests, lint, typecheck)
-- [ ] Aggiornata documentazione (README/NOTE)
-- [ ] Variabili d’ambiente documentate se necessarie
-- [ ] Breaking changes evidenziate (se presenti)
+- [ ] Tests pass (`pytest -q`)
+- [ ] Lint pulito o accettabile (`ruff check .`)
+- [ ] Typecheck ok (`mypy --pretty src`)
+- [ ] Docs / README aggiornati (se necessario)
+- [ ] Variabili ambiente nuove documentate
+- [ ] Nessun segreto nei log / nel diff
+- [ ] Ho rivalutato nomi e responsabilità delle funzioni modificate
 
 ## Note
-<!-- Extra info per i reviewer -->
+Eventuali considerazioni aggiuntive, rischi o follow-up.
