@@ -1,0 +1,30 @@
+name: Bug report
+description: Segnala un problema
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Cosa è successo?
+      description: Descrivi il problema e il comportamento atteso
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passi per riprodurre
+      description: Elenca i passi minimi per riprodurre il bug
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+  - type: input
+    id: env
+    attributes:
+      label: Ambiente
+      description: OS, Python, ecc.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log / stacktrace
+      render: shell
