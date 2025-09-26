@@ -7,8 +7,6 @@ on:
         description: 'Data (YYYY-MM-DD), opzionale'
         required: false
   schedule:
-    # Orario cron è in UTC. Per eseguire alle 05:00 a Napoli (CEST, UTC+2),
-    # impostiamo le 03:00 UTC. Regola se cambi fuso/ora legale.
     - cron: '0 3 * * *'
 
 jobs:
@@ -26,10 +24,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install requests python-dotenv httpx
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
-          else
-            pip install requests python-dotenv httpx
           fi
       - name: Fetch fixtures
         env:
@@ -38,7 +35,7 @@ jobs:
         run: |
           python scripts/fetch_fixtures.py
       - name: Upload latest fixtures artifact
-        if: always()  # carica comunque il file se presente
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: fixtures-latest
