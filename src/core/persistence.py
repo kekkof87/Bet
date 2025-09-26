@@ -7,7 +7,7 @@ from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
 
-from .models import FixtureDataset, FixtureRecord
+from .models import FixtureDataset
 
 LOGGER = logging.getLogger(__name__)
 
@@ -98,7 +98,6 @@ def save_latest_fixtures(fixtures: FixtureDataset) -> None:
     """
     dyn = _latest_dynamic_path()
     if not fixtures:
-        # Clean up eventuali file preesistenti (test 'skips empty' si aspetta assenza)
         if dyn.exists():
             dyn.unlink()
         if LATEST_FIXTURES_FILE.exists():
