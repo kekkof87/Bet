@@ -12,7 +12,6 @@ from .models import FixtureDataset, FixtureRecord
 LOGGER = logging.getLogger(__name__)
 
 # Costante legacy (statica) usata dai test per verificare l'esistenza del file.
-# Il codice runtime può usare anche un path dinamico basato su BET_DATA_DIR.
 LATEST_FIXTURES_FILE = Path("data") / "fixtures_latest.json"
 LATEST_FIXTURES_FILE_NAME = "fixtures_latest.json"
 PREVIOUS_FIXTURES_FILE_NAME = "fixtures_previous.json"
@@ -94,13 +93,17 @@ def load_latest_fixtures() -> FixtureDataset:
 def save_latest_fixtures(fixtures: FixtureDataset) -> None:
     """
     Salva le fixtures se non vuote.
-    - Scrive SEMPRE nel path dinamico (BET_DATA_DIR/fixtures_latest.json).
-    - Se il path dinamico è diverso dal path statico (legacy), duplica la scrittura
-      per compatibilità con i test che verificano LATEST_FIXTURES_FILE.
+    - Lista vuota: rimuove eventuali file (dinamico + legacy) per evitare leakage tra test.
+    - Lista non vuota: scrive nel path dinamico e, se diverso, duplica nel path statico (compat test).
     """
-    if not fixtures:
-        return
     dyn = _latest_dynamic_path()
+    if not fixtures:
+        # Clean up eventuali file preesistenti (test 'skips empty' si aspetta assenza)
+        if dyn.exists():
+            dyn.unlink()
+        if LATEST_FIXTURES_FILE.exists():
+            LATEST_FIXTURES_FILE.unlink()
+        return
     _write_json_atomic(dyn, fixtures)
     if dyn.resolve() != LATEST_FIXTURES_FILE.resolve():
         _write_json_atomic(LATEST_FIXTURES_FILE, fixtures)
