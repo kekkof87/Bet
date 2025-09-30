@@ -221,3 +221,41 @@ Variabili:
 
 Integrazione:
 Generato in `scripts/fetch_fixtures.py` dopo delta e prima dello scoreboard.
+
+### Predictions (Baseline – Nuovo)
+Pipeline iniziale di predizione probabilistica (stub):
+- Features: `predictions/features.py` (is_live, score_diff, hours_to_kickoff, status_code)
+- Modello: `predictions/model.py` (BaselineModel)
+  - Probabilità iniziali: home=0.33, draw=0.33, away=0.34
+  - Aggiustamento lineare con score_diff
+  - Normalizzazione e bounding min 0.05 (draw min 0.05)
+- Pipeline: `predictions/pipeline.py`
+  - Output: `predictions/latest_predictions.json`
+  - Struttura:
+    ```json
+    {
+      "model_version":"baseline-v1",
+      "count": N,
+      "predictions": [
+        {
+          "fixture_id": 123,
+          "prob": {"home_win":0.33,"draw":0.33,"away_win":0.34},
+          "model_version":"baseline-v1"
+        }
+      ]
+    }
+    ```
+Abilitazione:
+- Variabili:
+  - ENABLE_PREDICTIONS (default false)
+  - PREDICTIONS_DIR (default predictions)
+  - MODEL_BASELINE_VERSION (default baseline-v1)
+
+Integrazione:
+- Eseguita alla fine di `scripts/fetch_fixtures.py` (sempre invocata; se disabilitata logga skip).
+- Nessuna influenza su delta/scoreboard.
+
+Prossimi passi (futuro):
+- Feature arricchite (forma squadre, quote, ranking)
+- Modelli multipli (ensemble)
+- Consensus su probabilità per feed esterno
