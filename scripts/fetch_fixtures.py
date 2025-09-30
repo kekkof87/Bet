@@ -14,8 +14,7 @@ from core.persistence import (
 )
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 
-# Telemetria: se in futuro unifichi i provider sul client con retry (requests),
-# potrai passare l'istanza e leggere stats reali. Per ora lasciamo placeholder.
+# Placeholder per future stats unificate (quando il provider userà il client con retry)
 try:
     from providers.api_football.http_client import get_http_client  # type: ignore
 except Exception:  # pragma: no cover
@@ -28,14 +27,13 @@ def main() -> None:
 
     Funzionalità:
       - Abort su fetch vuoto se FETCH_ABORT_ON_EMPTY=1
-      - Compare keys opzionali (DELTA_COMPARE_KEYS)
+      - Compare keys (DELTA_COMPARE_KEYS)
       - Classification (score_change / status_change / both / other)
       - History snapshots se ENABLE_HISTORY=1 (rotazione HISTORY_MAX)
       - Structured logging: delta_summary, change_breakdown, fetch_stats (placeholder)
     """
     logger = get_logger("scripts.fetch_fixtures")
 
-    # Config
     try:
         settings = get_settings()
     except ValueError as e:
@@ -43,21 +41,18 @@ def main() -> None:
         logger.error("Aggiungi API_FOOTBALL_KEY nel file .env oppure come variabile ambiente.")
         return
 
-    # Stato precedente
     old: List[Dict[str, Any]] = load_latest_fixtures()
     if not isinstance(old, list):
         logger.warning("Snapshot precedente non valido, uso old=[]")
         old = []
 
     logger.info("Avvio fetch fixtures (API-Football)...")
-
     provider = ApiFootballFixturesProvider()
     new: List[Dict[str, Any]] = provider.fetch_fixtures(
         league_id=settings.default_league_id,
         season=settings.default_season,
         date=None,
     )
-
     if not isinstance(new, list):
         logger.error("Provider ha restituito tipo inatteso %s, forzo lista vuota", type(new))
         new = []
@@ -95,7 +90,7 @@ def main() -> None:
     modified = detailed["modified"]
     change_breakdown = detailed["change_breakdown"]
 
-    # Salva previous solo se c'era uno stato
+    # Salva previous solo se esisteva un old
     if old:
         try:
             save_previous_fixtures(old)
@@ -116,22 +111,18 @@ def main() -> None:
         except Exception as exc:  # pragma: no cover
             logger.error("Errore history: %s", exc)
 
-    # Riepilogo
+    # Riepilogo delta
     summary = summarize_delta(added, removed, modified, len(new))
     if compare_keys:
         summary["compare_keys"] = ",".join(compare_keys)
 
-    # Telemetria fetch (placeholder: reale solo se usi il client requests con retry in questo path)
+    # Telemetria fetch (placeholder finché non si unifica il client)
     fetch_stats: Dict[str, Any] = {}
     if get_http_client:
-        try:
-            # Crea client solo per leggere stats? Non avrebbe i dati della chiamata appena fatta.
-            # Quindi lasciamo fetch_stats vuoto per ora. (Unificazione in iterazione successiva).
-            pass
-        except Exception:  # pragma: no cover
-            fetch_stats = {}
+        # get_http_client() qui creerebbe una nuova istanza senza stats utili
+        # Verrà sostituito quando il provider userà il client con retry condiviso
+        pass
 
-    # Logging strutturato
     logger.info(
         "fixtures_delta",
         extra={
