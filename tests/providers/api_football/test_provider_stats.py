@@ -46,7 +46,6 @@ def test_fetch_stats_success_no_retry(monkeypatch):
             }
         ]
     }
-    from providers.api_football import http_client as http_module  # local import to patch
     monkeypatch.setattr(
         "providers.api_football.http_client.requests.Session.get",
         build_sequence([FakeResponse(200, payload)]),
