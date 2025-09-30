@@ -60,11 +60,11 @@ def main() -> None:
         except Exception as exc:  # pragma: no cover (best effort)
             logger.error("Errore salvataggio snapshot previous: %s", exc)
 
-    # 5. Salvataggio nuovo stato (anche se vuoto, rappresenta lo stato corrente)
+    # 5. Salvataggio nuovo stato (anche se vuoto: rappresenta lo stato corrente)
     try:
         save_latest_fixtures(new)
     except Exception as exc:  # pragma: no cover
-            logger.error("Errore salvataggio fixtures latest: %s", exc)
+        logger.error("Errore salvataggio fixtures latest: %s", exc)
 
     # 6. Logging riepilogo delta
     summary = summarize_delta(added, removed, modified, len(new))
