@@ -83,7 +83,7 @@ def _load_json_list(path: Path) -> FixtureDataset:
 
 
 # ---------------------------------------------------------------------------
-# API pubblica - Latest / Previous
+# Latest / Previous
 # ---------------------------------------------------------------------------
 
 
@@ -154,28 +154,37 @@ def save_fixtures_atomic(path: Path, fixtures: FixtureDataset) -> None:
 
 
 # ---------------------------------------------------------------------------
-# History snapshots (abilitati da ENABLE_HISTORY / HISTORY_MAX)
+# History snapshots
 # ---------------------------------------------------------------------------
 
 
 def save_history_snapshot(fixtures: FixtureDataset) -> Path:
     """
     Salva uno snapshot timestamped se fixtures non vuote.
-    Ritorna il path creato oppure un path fittizio (history/empty-skip) se lista vuota.
+    Ritorna il path creato, oppure un path fittizio (history/empty-skip) se lista vuota.
+    Usa timestamp con microsecondi per evitare collisioni nello stesso secondo.
+    In caso (estremo) di collisione sul nome, aggiunge un contatore suffisso.
     """
     if not fixtures:
         return _history_dir() / "empty-skip"
+
     # Assicura esistenza directory
     _ensure_dir(_history_dir() / "._probe")
-    stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    path = _history_dir() / f"fixtures_{stamp}.json"
-    _write_json_atomic(path, fixtures)
-    return path
+
+    base_stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f")
+    attempt = 0
+    while True:
+        suffix = f"_{attempt}" if attempt > 0 else ""
+        path = _history_dir() / f"fixtures_{base_stamp}{suffix}.json"
+        if not path.exists():
+            _write_json_atomic(path, fixtures)
+            return path
+        attempt += 1  # extremely unlikely
 
 
 def rotate_history(max_files: int) -> None:
     """
-    Mantiene al più max_files snapshot nella cartella history (ordine alfabetico = ordine cronologico).
+    Mantiene al più max_files snapshot nella cartella history (ordine alfabetico ≈ ordine temporale).
     Rimuove i più vecchi se eccedenti.
     """
     hdir = _history_dir()
