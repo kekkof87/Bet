@@ -132,3 +132,19 @@ Futuro miglioramento: log come oggetto (non string dict) usando `extra` oppure s
 
 ## Sintesi
 Il layer Delta aggiunge osservabilità e tracciabilità tra snapshot consecutivi con impatto minimo sul resto dell’architettura, preparando il terreno per storicizzazione e processamento incrementale.
+
+### History Snapshots (Nuovo)
+Se `ENABLE_HISTORY=1`, ad ogni fetch riuscito viene salvato uno snapshot timestamped in `BET_DATA_DIR/history/fixtures_YYYYmmdd_HHMMSS.json`.
+Rotazione: mantenuti al più `HISTORY_MAX` (default 30). Viene chiamata `rotate_history()` dopo ogni salvataggio.
+
+### Fetch Stats (Telemetria Iniziale)
+Campo `fetch_stats` nei log (placeholder) con struttura:
+```
+{
+  "attempts": <int>,
+  "retries": <int>,
+  "latency_ms": <float>,
+  "last_status": <int|null>
+}
+```
+Nei prossimi passi verrà unificata la sorgente (attualmente valorizzata solo se si integra lo stesso client di retry nel provider).
