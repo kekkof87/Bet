@@ -180,3 +180,31 @@ Variabili:
 
 ### Validazione date_utc
 La normalizzazione aggiunge `valid_date_utc` basato su regex ISO 8601 semplice. In caso di mismatch viene loggato un warning solo alla prima occorrenza.
+
+### Read-Only API (Nuovo)
+Servizio FastAPI (modulo `api/app.py`) con endpoint:
+
+| Endpoint | Descrizione |
+|----------|-------------|
+| /health | Stato base del servizio |
+| /fixtures | Lista fixtures correnti (fixtures_latest.json) |
+| /delta | Delta recente + summary (events + metrics) |
+| /metrics | Ultima run metrics (metrics/last_run.json) |
+| /scoreboard | Aggregato sintetico scoreboard.json |
+
+Lo scoreboard è generato durante il fetch e include:
+- total, live_count, upcoming_count_next_24h
+- recent_delta (conteggi)
+- change_breakdown
+- subset live_fixtures / upcoming_next_24h (limite 10)
+- last_fetch_total_new
+
+File coinvolti:
+- `core/scoreboard.py`
+- `scripts/fetch_fixtures.py` (esteso con build_scoreboard)
+- `api/app.py`
+
+Futuri miglioramenti:
+- Filtri /fixtures?status=LIVE
+- Parametri timeframe upcoming
+- Paginazione
