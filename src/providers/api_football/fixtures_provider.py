@@ -5,17 +5,77 @@ from typing import Any, Dict, List, Optional
 from core.config import get_settings
 from core.logging import get_logger
 from core.normalization import normalize_api_football_fixture
+from core.persistence import (
+    clear_latest_fixtures_file,
+    save_latest_fixtures,
+)
 from .http_client import get_http_client, APIFootballHttpClient
 
 log = get_logger(__name__)
 
 
+class APIFootballFixturesProvider:
+    """
+    LEGACY Provider (compat per test esistenti).
+    Caratteristiche:
+      - Usa APIFootballHttpClient (requests + retry)
+      - NON normalizza i record (restituisce la 'response' grezza dell'API)
+      - Gestisce persistenza diretta (save_latest_fixtures / clear_latest_fixtures_file)
+      - On/off controllato da API_FOOTBALL_PERSIST_FIXTURES
+    I test di integrazione della persistenza dipendono da questo comportamento.
+    """
+
+    def __init__(self, client: Optional[APIFootballHttpClient] = None) -> None:
+        self._settings = get_settings()
+        self._client = client or get_http_client()
+
+    def fetch_fixtures(
+        self,
+        *,
+        date: Optional[str] = None,
+        league_id: Optional[int] = None,
+        season: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        params: Dict[str, Any] = {}
+        if date:
+            params["date"] = date
+        if league_id or self._settings.default_league_id:
+            params["league"] = league_id or self._settings.default_league_id
+        if season or self._settings.default_season:
+            params["season"] = season or self._settings.default_season
+
+        data = self._client.api_get("/fixtures", params=params or None)
+        response = data.get("response", [])
+
+        if not isinstance(response, list):
+            log.warning("Formato inatteso: 'response' non è una lista")
+            if not self._settings.persist_fixtures:
+                clear_latest_fixtures_file()
+            return []
+
+        if self._settings.persist_fixtures and response:
+            try:
+                save_latest_fixtures(response)
+            except Exception as e:  # pragma: no cover
+                log.error("Persist fixtures raised unexpected error=%s", e)
+        else:
+            clear_latest_fixtures_file()
+
+        return response
+
+    def get_last_stats(self) -> Dict[str, Any]:
+        # Fornisce comunque le stats dal client se servisse confrontare
+        return self._client.get_stats()
+
+
 class ApiFootballFixturesProvider:
     """
-    Provider unificato che:
-      - Usa APIFootballHttpClient (requests + retry/backoff)
-      - Normalizza i record con funzione centralizzata
-      - Espone telemetria dell'ultima chiamata (get_last_stats)
+    Provider UNIFICATO normalizzato.
+    Caratteristiche:
+      - Usa APIFootballHttpClient (stesso client con retry/backoff)
+      - Normalizza i record (chiavi: fixture_id, league_id, season, date_utc, ecc.)
+      - NON persiste automaticamente (la persistenza è gestita dallo script)
+      - Espone get_last_stats() per telemetria fetch (attempts, retries, latency, last_status)
     """
 
     def __init__(self, client: Optional[APIFootballHttpClient] = None) -> None:
@@ -52,10 +112,10 @@ class ApiFootballFixturesProvider:
         return [normalize_api_football_fixture(item) for item in response]
 
     def get_last_stats(self) -> Dict[str, Any]:
-        """
-        Ritorna le stats (attempts, retries, latency_ms, last_status) dall'HTTP client.
-        """
         return self._client.get_stats()
 
 
-__all__ = ["ApiFootballFixturesProvider"]
+__all__ = [
+    "APIFootballFixturesProvider",  # legacy
+    "ApiFootballFixturesProvider",  # normalizzato
+]
