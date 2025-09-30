@@ -131,4 +131,20 @@ Futuro miglioramento: log come oggetto (non string dict) usando `extra` oppure s
 - Consensus/Scoring può ricalcolare partizioni solo su subset changed.
 
 ## Sintesi
-Il layer Delta aggiunge osservabilità e tracciabilità tra snapshot consecutivi con impatto minimo sul resto dell’architettura, preparando il terreno per storicizzazione e processamento incrementale.
+Il layer Delta aggiunge osservabilità e tracciabilità tra snapshot consecutivi con impatto 
+
+
+### Change Classification (Nuovo)
+Il diff avanzato (`diff_fixtures_detailed`) classifica le modifiche:
+- score_change: cambia almeno uno tra home_score / away_score
+- status_change: cambia solo lo status
+- both: cambiano punteggio e status insieme
+- other: altri campi (non punteggio, non status) differiscono
+
+Il logging arricchito espone:
+- delta_summary: conteggi macro
+- change_breakdown: distribuzione dei tipi di modifica
+
+Questa classificazione supporta:
+- Trigger selettivi (es: reagisci solo a score_change)
+- Metriche di qualità (quante volte cambia solo lo status vs punteggi)minimo sul resto dell’architettura, preparando il terreno per storicizzazione e processamento incrementale.
