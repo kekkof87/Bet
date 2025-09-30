@@ -1,142 +1,129 @@
-from __future__ import annotations
-
-from typing import Any, Dict, List, Optional
-
-from core.config import get_settings
-from core.diff import diff_fixtures_detailed, summarize_delta
-from core.logging import get_logger
-from core.persistence import (
-    load_latest_fixtures,
-    save_latest_fixtures,
-    save_previous_fixtures,
-    save_history_snapshot,
-    rotate_history,
-)
-from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
-
-# Placeholder per future stats unificate (quando il provider userà il client con retry)
-try:
-    from providers.api_football.http_client import get_http_client  # type: ignore
-except Exception:  # pragma: no cover
-    get_http_client = None  # type: ignore
+import os
+from dataclasses import dataclass
+from functools import lru_cache
+from typing import Optional, List
 
 
-def main() -> None:
-    """
-    Fetch fixtures + diff dettagliato (classification) + history opzionale + structured logging.
+def _parse_bool(value: Optional[str], default: bool) -> bool:
+    if value is None or value == "":
+        return default
+    v = value.strip().lower()
+    if v in {"0", "false", "no"}:
+        return False
+    return True
 
-    Funzionalità:
-      - Abort su fetch vuoto se FETCH_ABORT_ON_EMPTY=1
-      - Compare keys (DELTA_COMPARE_KEYS)
-      - Classification (score_change / status_change / both / other)
-      - History snapshots se ENABLE_HISTORY=1 (rotazione HISTORY_MAX)
-      - Structured logging: delta_summary, change_breakdown, fetch_stats (placeholder)
-    """
-    logger = get_logger("scripts.fetch_fixtures")
 
-    try:
-        settings = get_settings()
-    except ValueError as e:
-        logger.error("%s", e)
-        logger.error("Aggiungi API_FOOTBALL_KEY nel file .env oppure come variabile ambiente.")
-        return
+def _parse_list(value: Optional[str]) -> Optional[List[str]]:
+    if not value:
+        return None
+    parts = [p.strip() for p in value.split(",")]
+    clean = [p for p in parts if p]
+    return clean or None
 
-    old: List[Dict[str, Any]] = load_latest_fixtures()
-    if not isinstance(old, list):
-        logger.warning("Snapshot precedente non valido, uso old=[]")
-        old = []
 
-    logger.info("Avvio fetch fixtures (API-Football)...")
-    provider = ApiFootballFixturesProvider()
-    new: List[Dict[str, Any]] = provider.fetch_fixtures(
-        league_id=settings.default_league_id,
-        season=settings.default_season,
-        date=None,
-    )
-    if not isinstance(new, list):
-        logger.error("Provider ha restituito tipo inatteso %s, forzo lista vuota", type(new))
-        new = []
+@dataclass
+class Settings:
+    api_football_key: str
+    default_league_id: Optional[int]
+    default_season: Optional[int]
+    log_level: str
 
-    if settings.fetch_abort_on_empty and not new:
-        logger.warning("Fetch vuoto e FETCH_ABORT_ON_EMPTY=1: abort senza aggiornare stato.")
-        return
+    api_football_max_attempts: int
+    api_football_backoff_base: float
+    api_football_backoff_factor: float
+    api_football_backoff_jitter: float
+    api_football_timeout: float
 
-    compare_keys: Optional[List[str]] = settings.delta_compare_keys
+    persist_fixtures: bool
+    bet_data_dir: str
 
-    # Diff dettagliato con classification
-    try:
-        detailed = diff_fixtures_detailed(
-            old,
-            new,
-            compare_keys=compare_keys if compare_keys else None,
-            classify=True,
+    delta_compare_keys: Optional[List[str]]
+    fetch_abort_on_empty: bool
+
+    # History / retention
+    enable_history: bool
+    history_max: int
+
+    @classmethod
+    def from_env(cls) -> "Settings":
+        key = os.getenv("API_FOOTBALL_KEY")
+        if not key:
+            raise ValueError(
+                "API_FOOTBALL_KEY non impostata. Aggiungi a .env: API_FOOTBALL_KEY=LA_TUA_CHIAVE"
+            )
+
+        def _opt_int(name: str) -> Optional[int]:
+            raw = os.getenv(name)
+            if not raw:
+                return None
+            try:
+                return int(raw)
+            except ValueError as e:
+                raise ValueError(f"Variabile {name} deve essere un intero (valore: {raw!r})") from e
+
+        def _int(name: str, default: int) -> int:
+            raw = os.getenv(name)
+            if not raw:
+                return default
+            try:
+                return int(raw)
+            except ValueError as e:
+                raise ValueError(f"Variabile {name} deve essere un intero (valore: {raw!r})") from e
+
+        def _float(name: str, default: float) -> float:
+            raw = os.getenv(name)
+            if not raw:
+                return default
+            try:
+                return float(raw)
+            except ValueError as e:
+                raise ValueError(f"Variabile {name} deve essere un numero (valore: {raw!r})") from e
+
+        league_id = _opt_int("API_FOOTBALL_DEFAULT_LEAGUE_ID")
+        season = _opt_int("API_FOOTBALL_DEFAULT_SEASON")
+        log_level = os.getenv("BET_LOG_LEVEL", "INFO").upper()
+
+        max_attempts = _int("API_FOOTBALL_MAX_ATTEMPTS", 5)
+        backoff_base = _float("API_FOOTBALL_BACKOFF_BASE", 0.5)
+        backoff_factor = _float("API_FOOTBALL_BACKOFF_FACTOR", 2.0)
+        backoff_jitter = _float("API_FOOTBALL_BACKOFF_JITTER", 0.2)
+        timeout = _float("API_FOOTBALL_TIMEOUT", 10.0)
+
+        persist_fixtures = _parse_bool(os.getenv("API_FOOTBALL_PERSIST_FIXTURES"), True)
+        bet_data_dir = os.getenv("BET_DATA_DIR", "data")
+
+        delta_compare_keys = _parse_list(os.getenv("DELTA_COMPARE_KEYS"))
+        fetch_abort_on_empty = _parse_bool(os.getenv("FETCH_ABORT_ON_EMPTY"), False)
+
+        enable_history = _parse_bool(os.getenv("ENABLE_HISTORY"), False)
+        history_max = _int("HISTORY_MAX", 30)
+
+        return cls(
+            api_football_key=key,
+            default_league_id=league_id,
+            default_season=season,
+            log_level=log_level,
+            api_football_max_attempts=max_attempts,
+            api_football_backoff_base=backoff_base,
+            api_football_backoff_factor=backoff_factor,
+            api_football_backoff_jitter=backoff_jitter,
+            api_football_timeout=timeout,
+            persist_fixtures=persist_fixtures,
+            bet_data_dir=bet_data_dir,
+            delta_compare_keys=delta_compare_keys,
+            fetch_abort_on_empty=fetch_abort_on_empty,
+            enable_history=enable_history,
+            history_max=history_max,
         )
-    except Exception as exc:  # pragma: no cover
-        logger.error("Errore diff dettagliato: %s", exc)
-        detailed = {
-            "added": [],
-            "removed": [],
-            "modified": [],
-            "change_breakdown": {
-                "score_change": 0,
-                "status_change": 0,
-                "both": 0,
-                "other": 0,
-            },
-        }
-
-    added = detailed["added"]
-    removed = detailed["removed"]
-    modified = detailed["modified"]
-    change_breakdown = detailed["change_breakdown"]
-
-    # Salva previous solo se esisteva un old
-    if old:
-        try:
-            save_previous_fixtures(old)
-        except Exception as exc:  # pragma: no cover
-            logger.error("Errore salvataggio previous: %s", exc)
-
-    # Salva latest (anche vuoto se non abortito)
-    try:
-        save_latest_fixtures(new)
-    except Exception as exc:  # pragma: no cover
-        logger.error("Errore salvataggio latest: %s", exc)
-
-    # History opzionale
-    if settings.enable_history:
-        try:
-            save_history_snapshot(new)
-            rotate_history(settings.history_max)
-        except Exception as exc:  # pragma: no cover
-            logger.error("Errore history: %s", exc)
-
-    # Riepilogo delta
-    summary = summarize_delta(added, removed, modified, len(new))
-    if compare_keys:
-        summary["compare_keys"] = ",".join(compare_keys)
-
-    # Telemetria fetch (placeholder finché non si unifica il client)
-    fetch_stats: Dict[str, Any] = {}
-    if get_http_client:
-        # get_http_client() qui creerebbe una nuova istanza senza stats utili
-        # Verrà sostituito quando il provider userà il client con retry condiviso
-        pass
-
-    logger.info(
-        "fixtures_delta",
-        extra={
-            "delta_summary": summary,
-            "change_breakdown": change_breakdown,
-            "fetch_stats": fetch_stats,
-        },
-    )
-
-    if new:
-        logger.info("Esempio prima fixture", extra={"first_fixture": new[0]})
-    else:
-        logger.info("Nessuna fixture ottenuta.")
 
 
-if __name__ == "__main__":
-    main()
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    return Settings.from_env()
+
+
+def _reset_settings_cache_for_tests() -> None:
+    get_settings.cache_clear()
+
+
+__all__ = ["Settings", "get_settings", "_reset_settings_cache_for_tests"]
