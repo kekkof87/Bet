@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from datetime import datetime
 from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
@@ -11,10 +12,13 @@ from .models import FixtureDataset
 
 LOGGER = logging.getLogger(__name__)
 
-# Costante legacy (statica) usata dai test per verificare l'esistenza del file.
-LATEST_FIXTURES_FILE = Path("data") / "fixtures_latest.json"
+# ---------------------------------------------------------------------------
+# File names / legacy constants
+# ---------------------------------------------------------------------------
+LATEST_FIXTURES_FILE = Path("data") / "fixtures_latest.json"  # legacy static path (kept for backward compatibility in tests)
 LATEST_FIXTURES_FILE_NAME = "fixtures_latest.json"
 PREVIOUS_FIXTURES_FILE_NAME = "fixtures_previous.json"
+HISTORY_DIR_NAME = "history"  # directory (inside BET_DATA_DIR) for timestamped snapshots
 
 # ---------------------------------------------------------------------------
 # Path helpers (runtime: rispettano BET_DATA_DIR se impostata)
@@ -31,6 +35,10 @@ def _latest_dynamic_path() -> Path:
 
 def _previous_dynamic_path() -> Path:
     return _data_dir() / PREVIOUS_FIXTURES_FILE_NAME
+
+
+def _history_dir() -> Path:
+    return _data_dir() / HISTORY_DIR_NAME
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +83,7 @@ def _load_json_list(path: Path) -> FixtureDataset:
 
 
 # ---------------------------------------------------------------------------
-# API pubblica
+# Latest / Previous
 # ---------------------------------------------------------------------------
 
 
@@ -143,3 +151,54 @@ def save_fixtures_atomic(path: Path, fixtures: FixtureDataset) -> None:
     if not fixtures:
         return
     _write_json_atomic(path, fixtures)
+
+
+# ---------------------------------------------------------------------------
+# History snapshots
+# ---------------------------------------------------------------------------
+
+
+def save_history_snapshot(fixtures: FixtureDataset) -> Path:
+    """
+    Salva uno snapshot timestamped se fixtures non vuote.
+    Ritorna il path creato, oppure un path fittizio (history/empty-skip) se lista vuota.
+    Usa timestamp con microsecondi per evitare collisioni nello stesso secondo.
+    In caso (estremo) di collisione sul nome, aggiunge un contatore suffisso.
+    """
+    if not fixtures:
+        return _history_dir() / "empty-skip"
+
+    # Assicura esistenza directory
+    _ensure_dir(_history_dir() / "._probe")
+
+    base_stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f")
+    attempt = 0
+    while True:
+        suffix = f"_{attempt}" if attempt > 0 else ""
+        path = _history_dir() / f"fixtures_{base_stamp}{suffix}.json"
+        if not path.exists():
+            _write_json_atomic(path, fixtures)
+            return path
+        attempt += 1  # extremely unlikely
+
+
+def rotate_history(max_files: int) -> None:
+    """
+    Mantiene al più max_files snapshot nella cartella history (ordine alfabetico ≈ ordine temporale).
+    Rimuove i più vecchi se eccedenti.
+    """
+    hdir = _history_dir()
+    if not hdir.exists():
+        return
+    files = sorted(
+        (p for p in hdir.iterdir() if p.is_file() and p.name.startswith("fixtures_")),
+        key=lambda p: p.name,
+    )
+    excess = len(files) - max_files
+    if excess <= 0:
+        return
+    for old in files[:excess]:
+        try:
+            old.unlink()
+        except OSError:
+            LOGGER.warning("Impossibile rimuovere snapshot history: %s", old)

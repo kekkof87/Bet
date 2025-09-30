@@ -3,7 +3,7 @@
 ## Flow (Current Scope)
 1. Fetch fixtures (scheduled GitHub Action)
 2. Validate & persist (atomic write)
-3. Delta computation (added / removed / modified) + snapshot previous
+3. Delta computation (added / removed / modified + classification) + snapshot previous
 4. (Planned) Telegram parsing
 5. (Planned) AI reasoning & prediction synthesis
 6. (Planned) Consensus & scoring
@@ -11,7 +11,7 @@
 8. (Planned) Post-match analytics
 
 ## Modules Roadmap
-- core/: configuration, logging, persistence, diff (delta logic), models
+- core/: configuration, logging, persistence, diff (delta logic), models / fixture_record
 - providers/: API adapters (API-Football attuale, altri futuri)
 - telegram/: parsing & normalization (planned)
 - ai/: feature engineering & reasoning (planned)
@@ -19,132 +19,137 @@
 - web/ or frontend/: UI delivery (planned)
 
 ## Data Contracts
-- FixtureRecord (vedi models.py)
-- Delta Output (in-memory, non ancora formalizzato come modello):
+- FixtureRecord (dataclass normalizzata: fixture_id, league_id, season, date_utc, home_team, away_team, status, home_score, away_score, provider)
+- Delta Output (detailed):
   - added: List[FixtureRecord]
   - removed: List[FixtureRecord]
-  - modified: List[Tuple[FixtureRecord_old, FixtureRecord_new]]
+  - modified: List[{old: FixtureRecord, new: FixtureRecord, change_type: str}]
+  - change_breakdown: Dict[str,int] (score_change, status_change, both, other)
 
 ## Quality & CI
 - Lint: Ruff
-- Typecheck: mypy (approccio incrementale, strict graduale)
-- Test: Pytest (+ future coverage badge)
+- Typecheck: mypy
+- Test: Pytest
+- Coverage (planned / workflow draft)
 - Scheduled data fetch (GitHub Actions)
-- Delta logging strutturato per osservabilità
+- Structured logging JSON (delta_summary, change_breakdown, fetch_stats)
 
-## Delta Fixtures (Nuova Sezione)
+## Delta Fixtures
 ### Compare Keys (Configurabile)
-Se definita la variabile d'ambiente `DELTA_COMPARE_KEYS` (es: `home_score,away_score,status`), il diff considera solo quei campi per determinare le modifiche.  
-Caso d'uso: ignorare cambi secondari (es. note interne) e concentrarsi su punteggi / stato partita.  
-Se non impostata, rimane il confronto completo dei record (shallow dict equality).
+Se definita la variabile d'ambiente `DELTA_COMPARE_KEYS` (es: `home_score,away_score,status`), il diff considera solo quei campi per determinare se una fixture è “modified”.  
+Se non impostata: confronto shallow sull’intero record.
 
-### Obiettivi
-Garantire:
-- Tracciabilità delle variazioni tra ultimo snapshot e nuovo insieme di fixtures.
-- Persistenza dello snapshot precedente per audit / debug.
-- Riepilogo numerico (added, removed, modified, total_new) nei log JSON.
+### Change Classification
+Il diff avanzato (`diff_fixtures_detailed`) classifica le modifiche:
+- score_change: cambia almeno uno tra home_score / away_score
+- status_change: cambia solo lo status
+- both: cambiano punteggio e status insieme
+- other: differenze in campi fuori da punteggio e status (solo se compare_keys non limita)
 
-### File Coinvolti
-- Nuovo: `src/core/diff.py`
-- Modifica: `scripts/fetch_fixtures.py`
-- Modifica: `src/core/persistence.py` (aggiunta `save_previous_fixtures`)
-- Test: `tests/test_fixtures_diff.py`
+Logging arricchito:
+- delta_summary: {"added": X, "removed": Y, "modified": Z, "total_new": N, ...}
+- change_breakdown: {"score_change": a, "status_change": b, "both": c, "other": d}
 
 ### Flusso Delta (dettaglio)
 1. Carica stato precedente: `old = load_latest_fixtures()`
-2. Fetch nuove fixtures dal provider (API-Football) → `new`
-3. Calcola delta: `added, removed, modified = diff_fixtures(old, new)`
-4. Se `old` non vuoto → salva snapshot previous (`fixtures_previous.json`)
-5. Salva nuovo snapshot latest (`fixtures_latest.json`)
-6. Logga riepilogo: `{"added": X, "removed": Y, "modified": Z, "total_new": N}`
+2. Fetch nuove fixtures → `new`
+3. Se configurato `FETCH_ABORT_ON_EMPTY=1` e `new` è vuoto → abort senza salvare
+4. Calcola diff/classification: `detailed = diff_fixtures_detailed(old, new, ...)`
+5. Se `old` non vuoto → salva previous (`fixtures_previous.json`)
+6. Salva latest (`fixtures_latest.json`)
+7. (Se `ENABLE_HISTORY=1`) salva snapshot timestamped + rotazione
+8. Log JSON strutturato con summary e breakdown
 
 ### Persistenza
 | File | Scopo | Trigger |
 |------|-------|---------|
 | fixtures_latest.json | Stato corrente canonicale | Ogni fetch riuscito |
 | fixtures_previous.json | Stato precedente immediato | Solo se esisteva un vecchio stato |
-| (Legacy) data/fixtures_latest.json | Retrocompatibilità test / path statico | Duplicato condizionale |
+| history/fixtures_YYYYmmdd_HHMMSS.json | Snapshot storico (opzionale) | Se ENABLE_HISTORY=1 |
 
-### Algoritmo Diff
-Implementato in `core.diff`:
+### Algoritmo Diff (Sintesi)
 - Indicizzazione per chiave primaria preferenziale: `fixture_id`
-- Fallback chiave composita: `(league_id, date_utc, home_team, away_team)`
-- Confronto:
-  - added = chiavi nuove
-  - removed = chiavi mancanti
-  - modified = chiavi in comune con differenze (confronto shallow su dict, opz. subset chiavi future)
-- Funzione helper `summarize_delta(...)` per logging.
+- Fallback chiave composita: `(league_id, date_utc, home_team, away_team)` (record incompleti scartati)
+- added: chiavi nuove
+- removed: chiavi mancanti
+- modified: coppie con differenze (limitato da compare_keys se impostato)
+- classification: determinata confrontando punteggio e status
 
-### Logging
-Esempio linea (JSON):
+### Logging (Esempio)
 ```
-{"ts":"2025-01-01T10:00:00Z","level":"INFO","logger":"scripts.fetch_fixtures","msg":"fixtures_delta {'added': 2, 'removed': 1, 'modified': 3, 'total_new': 120}"}
+{
+  "ts":"2025-01-01T10:00:00Z",
+  "level":"INFO",
+  "logger":"scripts.fetch_fixtures",
+  "msg":"fixtures_delta",
+  "delta_summary":{"added":2,"removed":1,"modified":3,"total_new":120,"compare_keys":"home_score,away_score,status"},
+  "change_breakdown":{"score_change":2,"status_change":1,"both":0,"other":0},
+  "fetch_stats":{"attempts":1,"retries":0,"latency_ms":123.4,"last_status":200}
+}
 ```
-Futuro miglioramento: log come oggetto (non string dict) usando `extra` oppure serializzazione dedicata.
 
-### Error Handling
+### History Snapshots
+Abilitati con:
+- `ENABLE_HISTORY=1`
+- `HISTORY_MAX` (default 30) → rotazione automatica (mantiene gli snapshot più recenti)
+
+Motivazioni:
+- Audit evolutivo
+- Possibile replay/analisi retrospettiva
+
+### Fetch Stats (Telemetria Iniziale)
+Campo `fetch_stats` nel log (placeholder attuale, verrà unificato quando il provider userà un unico client con retry).
+Struttura:
+```
+{
+  "attempts": <int>,
+  "retries": <int>,
+  "latency_ms": <float>,
+  "last_status": <int | null>
+}
+```
+
+## Error Handling (Principali)
 | Scenario | Comportamento |
 |----------|---------------|
-| API key assente | Abort con messaggio chiaro |
-| Errore I/O salvataggio previous | Log error, continua (best effort) |
-| Errore I/O salvataggio latest | Log error (lo stato non avanza) |
-| JSON corrotto snapshot precedente | Ignorato, log warning, procede come se old = [] |
-| Diff exception interna (teorica) | Da gestire in futuro con try/except wrapper se necessario |
+| API key assente | Abort con messaggio |
+| Errore I/O salvataggio previous | Log errore, continua |
+| Errore I/O salvataggio latest | Log errore (stato non avanza) |
+| Snapshot corrotto | Warning, trattato come [] |
+| Diff exception interna | Catturata, logged, delta vuoto |
+| Fetch vuoto + abort_on_empty | Non salva né previous né latest |
 
-### Retrocompatibilità
-- Manteniamo ancora la costante `LATEST_FIXTURES_FILE` per test esistenti.
-- Nessun breaking change per gli script esterni: l’interfaccia di fetch (provider) invariata.
+## Retrocompatibilità
+- `LATEST_FIXTURES_FILE` statico ancora presente per test.
+- Doppio provider legacy in fase di consolidamento (in corso).
 
-### Estensioni Future
+## Estensioni Future (Prioritized)
 | Idea | Descrizione | Priorità |
 |------|-------------|----------|
-| Filtri compare_keys | Limitare modified a campi es: punteggi, status | Media |
-| Storage storico versionato | Archiviazione con timestamp (es: fixtures_2025-01-01T10-00.json) | Alta |
-| Metriche Prometheus | Esposizione counters delta | Media |
-| Event streaming | Pubblicare delta su coda (Kafka / Redis Streams) | Bassa |
-| Deduplicate unchanged log | Skippare log se delta vuoto | Bassa |
-| Normalizzazione hash | Hash deterministico record per diff profondo | Media |
+| Unify HTTP client | Un solo client httpx + retry + stats reali | Alta |
+| Metrics persistenti | Esportare scoreboard JSON o endpoint | Media |
+| Prometheus / OTEL | Esposizione metrics & tracing | Media |
+| Event streaming | Pubblicare delta come eventi incrementali | Bassa |
+| Advanced filtering | Trigger su soli score_change | Media |
+| Model validation ISO | Validare date_utc formato ISO | Media |
+| Snapshot diff storage | Conservare differenze classifiche / ranking | Bassa |
 
-### Complessità
-- Diff O(n) medio (due pass per indicizzazione + confronto) con n = max(len(old), len(new)).
-- Memory: due dict indicizzati → accettabile per volumi tipici di fixtures giornaliere.
+## Complessità
+- Diff O(n) (indicizzazione + set operations).
+- Memory: due mappe indicizzate + struttura modifiche.
 
-### Rischi Mitigati
+## Rischi Mitigati
 | Rischio | Mitigazione |
 |---------|-------------|
-| Corruzione latest | Scrittura atomica + fsync + rename |
-| Race run concorrenti | Azione GitHub schedulata → single writer (accettato) |
-| Cambi schema fixture | Diff grace (fallback composite key) |
-| Crescita file previous | Sovrascrive, non accumula (richiede storico separato se serve) |
+| Corruzione file | Scrittura atomica |
+| Crescita illimitata snapshot | Rotazione HISTORY_MAX |
+| Rumore modifiche non rilevanti | compare_keys / classification |
+| Perdita stato per fetch vuoto | FETCH_ABORT_ON_EMPTY |
 
-## Futuri Passi Chiave
-1. Aggiungere retention storica / archivio versionato.
-2. Documentare FixtureRecord formalmente (pydantic dataclass futura).
-3. Introdurre compare_keys configurabile (env / CLI).
-4. Aggiungere test e2e fetch + delta (integrazione).
-5. Esportare metrics (Prometheus / OpenTelemetry).
-6. Logging delta come structured object (non stringa del dict).
-
-## Integrazione con Fasi Future
-- Telegram parsing potrà usare il delta per correlare eventi messaggio ↔ cambi stato fixture.
-- AI reasoning può reagire solo a modified (riducendo compute).
-- Consensus/Scoring può ricalcolare partizioni solo su subset changed.
+## Integrazione Futura
+- Telegram parsing sfrutterà classification per correlare messaggi a score_change.
+- AI reasoning potrà eseguire solo su subset modificato.
+- Dashboard potrà mostrare breakdown cambi giornalieri.
 
 ## Sintesi
-Il layer Delta aggiunge osservabilità e tracciabilità tra snapshot consecutivi con impatto 
-
-
-### Change Classification (Nuovo)
-Il diff avanzato (`diff_fixtures_detailed`) classifica le modifiche:
-- score_change: cambia almeno uno tra home_score / away_score
-- status_change: cambia solo lo status
-- both: cambiano punteggio e status insieme
-- other: altri campi (non punteggio, non status) differiscono
-
-Il logging arricchito espone:
-- delta_summary: conteggi macro
-- change_breakdown: distribuzione dei tipi di modifica
-
-Questa classificazione supporta:
-- Trigger selettivi (es: reagisci solo a score_change)
-- Metriche di qualità (quante volte cambia solo lo status vs punteggi)minimo sul resto dell’architettura, preparando il terreno per storicizzazione e processamento incrementale.
+Il layer Delta + Classification + History fornisce un’infrastruttura incrementale pronta per evolvere verso analisi avanzate e automazioni senza introdurre complessità eccessiva.
