@@ -17,12 +17,9 @@ log = get_logger(__name__)
 class APIFootballFixturesProvider:
     """
     LEGACY Provider (compat per test esistenti).
-    Caratteristiche:
-      - Usa APIFootballHttpClient (requests + retry)
-      - NON normalizza i record (restituisce la 'response' grezza dell'API)
-      - Gestisce persistenza diretta (save_latest_fixtures / clear_latest_fixtures_file)
-      - On/off controllato da API_FOOTBALL_PERSIST_FIXTURES
-    I test di integrazione della persistenza dipendono da questo comportamento.
+    - Usa APIFootballHttpClient (requests + retry)
+    - NON normalizza (restituisce 'response' grezza)
+    - Gestisce persistenza diretta (se API_FOOTBALL_PERSIST_FIXTURES=true)
     """
 
     def __init__(self, client: Optional[APIFootballHttpClient] = None) -> None:
@@ -64,18 +61,15 @@ class APIFootballFixturesProvider:
         return response
 
     def get_last_stats(self) -> Dict[str, Any]:
-        # Fornisce comunque le stats dal client se servisse confrontare
         return self._client.get_stats()
 
 
 class ApiFootballFixturesProvider:
     """
     Provider UNIFICATO normalizzato.
-    Caratteristiche:
-      - Usa APIFootballHttpClient (stesso client con retry/backoff)
-      - Normalizza i record (chiavi: fixture_id, league_id, season, date_utc, ecc.)
-      - NON persiste automaticamente (la persistenza è gestita dallo script)
-      - Espone get_last_stats() per telemetria fetch (attempts, retries, latency, last_status)
+    - Usa APIFootballHttpClient
+    - Normalizza i record
+    - Nessuna persistenza automatica
     """
 
     def __init__(self, client: Optional[APIFootballHttpClient] = None) -> None:
@@ -116,6 +110,6 @@ class ApiFootballFixturesProvider:
 
 
 __all__ = [
-    "APIFootballFixturesProvider",  # legacy
+    "APIFootballFixturesProvider",  # legacy (tests persistence)
     "ApiFootballFixturesProvider",  # normalizzato
 ]
