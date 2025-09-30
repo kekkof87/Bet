@@ -8,18 +8,9 @@ from typing import Any, Dict
 
 
 class JsonFormatter(logging.Formatter):
-    """
-    Formatter che emette log in JSON minimale:
-    {
-      "ts": "...",
-      "level": "...",
-      "logger": "...",
-      "msg": "...",
-      "exc": "... (se presente)"
-    }
-    """
+    """Formatter JSON minimale per i log applicativi."""
 
-    def format(self, record: logging.LogRecord) -> str:  # type: ignore[override]
+    def format(self, record: logging.LogRecord) -> str:
         payload: Dict[str, Any] = {
             "ts": datetime.utcnow().isoformat(timespec="seconds") + "Z",
             "level": record.levelname,
@@ -34,8 +25,13 @@ class JsonFormatter(logging.Formatter):
 def get_logger(name: str) -> logging.Logger:
     """
     Restituisce un logger con JsonFormatter e livello INFO di default.
-    Evita di aggiungere più handler se già configurato.
+    Evita duplicazione di handler se già configurato.
     """
     logger = logging.getLogger(name)
     if not logger.handlers:
-        handler = logging.Stream
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(JsonFormatter())
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
+    return logger
