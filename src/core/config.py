@@ -27,16 +27,15 @@ class Settings:
     api_football_timeout: float
 
     persist_fixtures: bool
-
-    # NUOVO: directory base per dati (fallback se non impostata via env nei punti che la usano)
-    bet_data_dir: str
+    bet_data_dir: str  # directory base dati
 
     @classmethod
     def from_env(cls) -> "Settings":
         key = os.getenv("API_FOOTBALL_KEY")
         if not key:
             raise ValueError(
-                "API_FOOTBALL_KEY non impostata. Aggiungi a .env: API_FOOTBALL_KEY=LA_TUA_CHIAVE"
+                "API_FOOTBALL_KEY non impostata. Aggiungi a .env: "
+                "API_FOOTBALL_KEY=LA_TUA_CHIAVE"
             )
 
         def _opt_int(name: str) -> Optional[int]:
@@ -45,8 +44,10 @@ class Settings:
                 return None
             try:
                 return int(raw)
-            except ValueError:
-                raise ValueError(f"Variabile {name} deve essere un intero (valore: {raw!r})")
+            except ValueError as e:
+                raise ValueError(
+                    f"Variabile {name} deve essere un intero (valore: {raw!r})"
+                ) from e
 
         def _int(name: str, default: int) -> int:
             raw = os.getenv(name)
@@ -54,8 +55,10 @@ class Settings:
                 return default
             try:
                 return int(raw)
-            except ValueError:
-                raise ValueError(f"Variabile {name} deve essere un intero (valore: {raw!r})")
+            except ValueError as e:
+                raise ValueError(
+                    f"Variabile {name} deve essere un intero (valore: {raw!r})"
+                ) from e
 
         def _float(name: str, default: float) -> float:
             raw = os.getenv(name)
@@ -63,8 +66,10 @@ class Settings:
                 return default
             try:
                 return float(raw)
-            except ValueError:
-                raise ValueError(f"Variabile {name} deve essere un numero (valore: {raw!r})")
+            except ValueError as e:
+                raise ValueError(
+                    f"Variabile {name} deve essere un numero (valore: {raw!r})"
+                ) from e
 
         league_id = _opt_int("API_FOOTBALL_DEFAULT_LEAGUE_ID")
         season = _opt_int("API_FOOTBALL_DEFAULT_SEASON")
@@ -76,9 +81,10 @@ class Settings:
         backoff_jitter = _float("API_FOOTBALL_BACKOFF_JITTER", 0.2)
         timeout = _float("API_FOOTBALL_TIMEOUT", 10.0)
 
-        persist_fixtures = _parse_bool(os.getenv("API_FOOTBALL_PERSIST_FIXTURES"), True)
-
-        # NUOVO: fallback "data" (coerente con README e uso in persistence)
+        persist_fixtures = _parse_bool(
+            os.getenv("API_FOOTBALL_PERSIST_FIXTURES"),
+            True,
+        )
         bet_data_dir = os.getenv("BET_DATA_DIR", "data")
 
         return cls(
@@ -100,11 +106,14 @@ class Settings:
 def get_settings() -> Settings:
     return Settings.from_env()
 
-# MOSTRA SOLO LA PARTE DA SISTEMARE: assicurati di NON avere doppia definizione.
-# Trova la vecchia funzione duplicata e lasciane UNA così:
 
 def _reset_settings_cache_for_tests() -> None:
-    """
-    Supporto ai test: svuota la cache di get_settings().
-    """
+    """Supporto ai test: svuota la cache di get_settings()."""
     get_settings.cache_clear()
+
+
+__all__ = [
+    "Settings",
+    "get_settings",
+    "_reset_settings_cache_for_tests",
+]

@@ -1,21 +1,24 @@
-from typing import Any, Dict, Optional, List
+from __future__ import annotations
+
+from typing import Any, Dict, List, Optional
 
 from core.config import get_settings
-from core.persistence import save_latest_fixtures, clear_latest_fixtures_file
 from core.logging import get_logger
-# Re-export di _client_singleton per compatibilità con i test di integrazione
-from .http_client import get_http_client, _client_singleton  # noqa: F401
+from core.persistence import clear_latest_fixtures_file, save_latest_fixtures
+
 from .client import ApiFootballClient
+from .http_client import _client_singleton, get_http_client  # noqa: F401
 
 log = get_logger(__name__)
 
 
 class APIFootballFixturesProvider:
     """
-    Provider che usa il client basato su requests (mockato nei test di retry/persistenza).
-    Mantiene la compatibilità con i test che importano APIFootballFixturesProvider e _client_singleton.
+    Provider che usa un client basato su 'requests'.
+    Mantiene compatibilità con test che importano _client_singleton.
     """
-    def __init__(self):
+
+    def __init__(self) -> None:
         self._settings = get_settings()
         self._client = get_http_client()
 
@@ -38,7 +41,6 @@ class APIFootballFixturesProvider:
 
         if not isinstance(response, list):
             log.warning("Formato inatteso: 'response' non è una lista")
-            # Se la persistenza è disabilitata, assicuriamoci di non lasciare file sporchi
             if not self._settings.persist_fixtures:
                 clear_latest_fixtures_file()
             return []
@@ -46,10 +48,9 @@ class APIFootballFixturesProvider:
         if self._settings.persist_fixtures and response:
             try:
                 save_latest_fixtures(response)
-            except Exception as e:  # best effort, non bloccare il flusso
-                log.error(f"persist fixtures raised unexpected error={e}")
+            except Exception as e:
+                log.error("Persist fixtures raised unexpected error=%s", e)
         else:
-            # Persistenza disabilitata o risposta vuota -> pulisci l’eventuale file canonico
             clear_latest_fixtures_file()
 
         return response
@@ -57,10 +58,10 @@ class APIFootballFixturesProvider:
 
 class ApiFootballFixturesProvider:
     """
-    Provider che usa il client basato su httpx (mockato nel test di normalizzazione)
-    e normalizza l'output nelle chiavi attese dal test.
+    Provider httpx che normalizza i record.
     """
-    def __init__(self, client: Optional[ApiFootballClient] = None):
+
+    def __init__(self, client: Optional[ApiFootballClient] = None) -> None:
         self._client = client or ApiFootballClient()
 
     def fetch_fixtures(
@@ -111,5 +112,4 @@ class ApiFootballFixturesProvider:
         }
 
 
-# Alias per compatibilità con i test che importano ApiFootballFixturesProvider
-ApiFootballFixturesProvider = ApiFootballFixturesProvider
+ApiFootballFixturesProvider = ApiFootballFixturesProvider  # compat

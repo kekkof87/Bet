@@ -1,15 +1,22 @@
+from __future__ import annotations
+
 from typing import Any, Dict, List, Optional
 
-from core.logging import get_logger
 from core.config import get_settings
-from .client import ApiFootballClient
+from core.logging import get_logger
 from .base import FixturesProviderBase
+from .client import ApiFootballClient
 
 logger = get_logger(__name__)
 
 
 class ApiFootballFixturesProvider(FixturesProviderBase):
-    def __init__(self, client: Optional[ApiFootballClient] = None):
+    """
+    Provider che interroga l'endpoint /fixtures dell'API Football e normalizza
+    la risposta in un dizionario coerente con il resto del sistema.
+    """
+
+    def __init__(self, client: Optional[ApiFootballClient] = None) -> None:
         self._client = client or ApiFootballClient()
 
     def fetch_fixtures(
@@ -32,8 +39,11 @@ class ApiFootballFixturesProvider(FixturesProviderBase):
         if season is not None:
             params["season"] = season
 
-        raw = self._client.get("/fixtures", params=params)
+        raw = self._client.get("/fixtures", params=params or None)
         response = raw.get("response", [])
+        if not isinstance(response, list):
+            logger.warning("Formato inatteso: 'response' non è una lista")
+            return []
         return [self._normalize(item) for item in response]
 
     @staticmethod

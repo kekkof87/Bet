@@ -1,5 +1,6 @@
 import httpx
 import pytest
+
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 
 
@@ -8,6 +9,7 @@ def mock_http(monkeypatch):
     def fake_get(*args, **kwargs):
         class R:
             status_code = 200
+
             def json(self):
                 return {
                     "response": [
@@ -26,9 +28,11 @@ def mock_http(monkeypatch):
                         }
                     ]
                 }
+
             @property
             def text(self):
                 return str(self.json())
+
         return R()
 
     monkeypatch.setenv("API_FOOTBALL_KEY", "DUMMY")
@@ -39,7 +43,7 @@ def mock_http(monkeypatch):
     return fake_get
 
 
-def test_fetch_fixtures_normalization(mock_http):
+def test_fetch_fixtures_normalization(mock_http) -> None:
     provider = ApiFootballFixturesProvider()
     fixtures = provider.fetch_fixtures()
     assert len(fixtures) == 1
