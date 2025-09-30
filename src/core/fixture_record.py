@@ -19,13 +19,16 @@ class FixtureRecord:
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "FixtureRecord":
-        # raw è nel formato normalizzato dal provider (fixture, league, teams, goals)
-        fixture = raw.get("fixture", {})
-        league = raw.get("league", {})
-        teams = raw.get("teams", {})
-        goals = raw.get("goals", {})
+        """
+        Crea un FixtureRecord a partire dalla struttura raw dell'API Football
+        (item con chiavi: fixture, league, teams, goals).
+        """
+        fixture = raw.get("fixture", {}) or {}
+        league = raw.get("league", {}) or {}
+        teams = raw.get("teams", {}) or {}
+        goals = raw.get("goals", {}) or {}
 
-        def _as_int(v):
+        def _as_int(v: Any) -> Optional[int]:
             try:
                 return int(v) if v is not None else None
             except (ValueError, TypeError):
@@ -36,14 +39,17 @@ class FixtureRecord:
             league_id=_as_int(league.get("id")),
             season=_as_int(league.get("season")),
             date_utc=fixture.get("date"),
-            home_team=teams.get("home", {}).get("name"),
-            away_team=teams.get("away", {}).get("name"),
-            status=(fixture.get("status") or {}).get("short"),
+            home_team=(teams.get("home") or {}).get("name"),
+            away_team=(teams.get("away") or {}).get("name"),
+            status=((fixture.get("status") or {}) or {}).get("short"),
             home_score=_as_int(goals.get("home")),
             away_score=_as_int(goals.get("away")),
         )
 
     def to_dict(self) -> Dict[str, Any]:
+        """
+        Serializza il record in un dizionario (forma usata dal resto del sistema / diff).
+        """
         return {
             "fixture_id": self.fixture_id,
             "league_id": self.league_id,
@@ -56,3 +62,6 @@ class FixtureRecord:
             "away_score": self.away_score,
             "provider": self.provider,
         }
+
+
+__all__ = ["FixtureRecord"]
