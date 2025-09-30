@@ -7,8 +7,11 @@ from datetime import datetime
 from typing import Any, Dict
 
 
+EXTRA_WHITELIST = {"delta_summary", "fetch_stats", "change_breakdown"}
+
+
 class JsonFormatter(logging.Formatter):
-    """Formatter JSON minimale per i log applicativi."""
+    """Formatter JSON con supporto campi extra selezionati."""
 
     def format(self, record: logging.LogRecord) -> str:
         payload: Dict[str, Any] = {
@@ -17,16 +20,16 @@ class JsonFormatter(logging.Formatter):
             "logger": record.name,
             "msg": record.getMessage(),
         }
+        # Extra whitelisted
+        for key in EXTRA_WHITELIST:
+            if hasattr(record, key):
+                payload[key] = getattr(record, key)
         if record.exc_info:
             payload["exc"] = self.formatException(record.exc_info)
         return json.dumps(payload, ensure_ascii=False)
 
 
 def get_logger(name: str) -> logging.Logger:
-    """
-    Restituisce un logger con JsonFormatter e livello INFO di default.
-    Evita duplicazione di handler se già configurato.
-    """
     logger = logging.getLogger(name)
     if not logger.handlers:
         handler = logging.StreamHandler(sys.stdout)
