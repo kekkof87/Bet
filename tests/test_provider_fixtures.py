@@ -1,4 +1,3 @@
-import httpx
 import pytest
 
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
@@ -6,6 +5,10 @@ from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 
 @pytest.fixture
 def mock_http(monkeypatch):
+    """
+    Mock della GET usata dal provider unificato (requests.Session.get).
+    Restituisce una risposta coerente con la struttura API-Football.
+    """
     def fake_get(*args, **kwargs):
         class R:
             status_code = 200
@@ -35,11 +38,17 @@ def mock_http(monkeypatch):
 
         return R()
 
+    # Variabili d'ambiente richieste
     monkeypatch.setenv("API_FOOTBALL_KEY", "DUMMY")
     monkeypatch.setenv("BET_LOG_LEVEL", "DEBUG")
     monkeypatch.setenv("API_FOOTBALL_DEFAULT_LEAGUE_ID", "135")
     monkeypatch.setenv("API_FOOTBALL_DEFAULT_SEASON", "2024")
-    monkeypatch.setattr(httpx, "get", fake_get)
+
+    # Patch del client requests usato da APIFootballHttpClient
+    monkeypatch.setattr(
+        "providers.api_football.http_client.requests.Session.get",
+        fake_get,
+    )
     return fake_get
 
 
@@ -52,3 +61,6 @@ def test_fetch_fixtures_normalization(mock_http) -> None:
     assert f["league_id"] == 135
     assert f["season"] == 2024
     assert f["provider"] == "api_football"
+    assert f["status"] == "NS"
+    assert f["home_team"] == "Team A"
+    assert f["away_team"] == "Team B"
