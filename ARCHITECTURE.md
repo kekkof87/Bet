@@ -17,9 +17,11 @@
 - ai/: feature engineering & reasoning (planned)
 - consensus/: merging signals (planned)
 - web/ or frontend/: UI delivery (planned)
+- api/: read-only HTTP service (FastAPI)
 
 ## Data Contracts
-- FixtureRecord (dataclass normalizzata: fixture_id, league_id, season, date_utc, home_team, away_team, status, home_score, away_score, provider)
+- FixtureRecord (dataclass normalizzata):  
+  fixture_id, league_id, season, date_utc, valid_date_utc, home_team, away_team, status, home_score, away_score, provider
 - Delta Output (detailed):
   - added: List[FixtureRecord]
   - removed: List[FixtureRecord]
@@ -30,7 +32,7 @@
 - Lint: Ruff
 - Typecheck: mypy
 - Test: Pytest
-- Coverage (planned / workflow draft)
+- Coverage workflow
 - Scheduled data fetch (GitHub Actions)
 - Structured logging JSON (delta_summary, change_breakdown, fetch_stats)
 
@@ -53,27 +55,30 @@ Logging arricchito:
 ### Flusso Delta (dettaglio)
 1. Carica stato precedente: `old = load_latest_fixtures()`
 2. Fetch nuove fixtures → `new`
-3. Se configurato `FETCH_ABORT_ON_EMPTY=1` e `new` è vuoto → abort senza salvare
+3. Se `FETCH_ABORT_ON_EMPTY=1` e `new` è vuoto → abort senza salvare
 4. Calcola diff/classification: `detailed = diff_fixtures_detailed(old, new, ...)`
 5. Se `old` non vuoto → salva previous (`fixtures_previous.json`)
 6. Salva latest (`fixtures_latest.json`)
 7. (Se `ENABLE_HISTORY=1`) salva snapshot timestamped + rotazione
 8. Log JSON strutturato con summary e breakdown
+9. Scrive metrics/last_run.json & events/last_delta.json (se delta non vuoto)
+10. Genera scoreboard.json
 
 ### Persistenza
 | File | Scopo | Trigger |
 |------|-------|---------|
 | fixtures_latest.json | Stato corrente canonicale | Ogni fetch riuscito |
 | fixtures_previous.json | Stato precedente immediato | Solo se esisteva un vecchio stato |
-| history/fixtures_YYYYmmdd_HHMMSS.json | Snapshot storico (opzionale) | Se ENABLE_HISTORY=1 |
+| history/fixtures_YYYYmmdd_HHMMSS_micro.json | Snapshot storico (opzionale) | Se ENABLE_HISTORY=1 |
+| metrics/last_run.json | Snapshot ultima esecuzione (summary + stats) | Ogni fetch |
+| events/last_delta.json | Ultimo delta non vuoto | Fetch con cambi |
+| scoreboard.json | Aggregato sintetico per API/UI | Ogni fetch |
 
 ### Algoritmo Diff (Sintesi)
 - Indicizzazione per chiave primaria preferenziale: `fixture_id`
 - Fallback chiave composita: `(league_id, date_utc, home_team, away_team)` (record incompleti scartati)
-- added: chiavi nuove
-- removed: chiavi mancanti
-- modified: coppie con differenze (limitato da compare_keys se impostato)
-- classification: determinata confrontando punteggio e status
+- added / removed / modified via set difference + confronto shallow (limitato da compare_keys se impostato)
+- classification: in base a punteggio e status
 
 ### Logging (Esempio)
 ```
@@ -91,15 +96,10 @@ Logging arricchito:
 ### History Snapshots
 Abilitati con:
 - `ENABLE_HISTORY=1`
-- `HISTORY_MAX` (default 30) → rotazione automatica (mantiene gli snapshot più recenti)
+- `HISTORY_MAX` (default 30) → rotazione automatica
 
-Motivazioni:
-- Audit evolutivo
-- Possibile replay/analisi retrospettiva
-
-### Fetch Stats (Telemetria Iniziale)
-Campo `fetch_stats` nel log (placeholder attuale, verrà unificato quando il provider userà un unico client con retry).
-Struttura:
+### Fetch Stats (Telemetria)
+Campo `fetch_stats` nel log con:
 ```
 {
   "attempts": <int>,
@@ -108,6 +108,7 @@ Struttura:
   "last_status": <int | null>
 }
 ```
+Derivato dal client con retry/backoff.
 
 ## Error Handling (Principali)
 | Scenario | Comportamento |
@@ -116,67 +117,76 @@ Struttura:
 | Errore I/O salvataggio previous | Log errore, continua |
 | Errore I/O salvataggio latest | Log errore (stato non avanza) |
 | Snapshot corrotto | Warning, trattato come [] |
-| Diff exception interna | Catturata, logged, delta vuoto |
-| Fetch vuoto + abort_on_empty | Non salva né previous né latest |
+| Diff exception | Catturata, logged, delta vuoto |
+| Fetch vuoto + abort_on_empty | Stato invariato |
 
 ## Retrocompatibilità
-- `LATEST_FIXTURES_FILE` statico ancora presente per test.
-- Doppio provider legacy in fase di consolidamento (in corso).
+- `LATEST_FIXTURES_FILE` statico mantenuto per test.
+- Provider legacy ancora presente finché non conclusa migrazione totale.
 
 ## Estensioni Future (Prioritized)
 | Idea | Descrizione | Priorità |
 |------|-------------|----------|
-| Unify HTTP client | Un solo client httpx + retry + stats reali | Alta |
-| Metrics persistenti | Esportare scoreboard JSON o endpoint | Media |
-| Prometheus / OTEL | Esposizione metrics & tracing | Media |
-| Event streaming | Pubblicare delta come eventi incrementali | Bassa |
-| Advanced filtering | Trigger su soli score_change | Media |
-| Model validation ISO | Validare date_utc formato ISO | Media |
-| Snapshot diff storage | Conservare differenze classifiche / ranking | Bassa |
+| Alerts (score/status transition) | File events dedicato | Alta |
+| Prediction baseline | Prob. stub per modelli futuri | Alta |
+| Consensus ranking | Aggregazione multi modello | Media |
+| Prometheus / OTEL | Metrics & tracing runtime | Media |
+| Filtering endpoints | Parametri query API | Media |
+| Model validation ISO stricter | Parser robusto date / timezone | Media |
+| Compression history | Riduzione spazio (gzip) | Bassa |
 
 ## Complessità
-- Diff O(n) (indicizzazione + set operations).
-- Memory: due mappe indicizzate + struttura modifiche.
+- Diff O(n)
+- Memory: copie dict indicizzati + delta
 
 ## Rischi Mitigati
 | Rischio | Mitigazione |
 |---------|-------------|
 | Corruzione file | Scrittura atomica |
-| Crescita illimitata snapshot | Rotazione HISTORY_MAX |
-| Rumore modifiche non rilevanti | compare_keys / classification |
-| Perdita stato per fetch vuoto | FETCH_ABORT_ON_EMPTY |
+| Crescita snapshot | Rotazione |
+| Rumore modifiche | compare_keys / classification |
+| Perdita stato per fetch vuoto | Abort config |
 
 ## Integrazione Futura
-- Telegram parsing sfrutterà classification per correlare messaggi a score_change.
-- AI reasoning potrà eseguire solo su subset modificato.
-- Dashboard potrà mostrare breakdown cambi giornalieri.
+- Telegram parsing userà classification (score_change) per correlare messaggi.
+- AI reasoning potrà processare solo subset modified.
+- Dashboard leggerà scoreboard.json + metrics.
 
 ## Sintesi
-Il layer Delta + Classification + History fornisce un’infrastruttura incrementale pronta per evolvere verso analisi avanzate e automazioni senza introdurre complessità eccessiva.
+Il layer Delta + Classification + History + Metrics/Event + Scoreboard crea una base incrementale, osservabile e pronta a integrazioni (API, alerting, predictions) senza dipendere da un DB esterno.
 
-### Unified Provider & Fetch Stats (Update)
-Il provider delle fixtures ora utilizza un unico client con retry/backoff (requests) e produce telemetria reale:
-- attempts / retries / latency_ms / last_status
-La normalizzazione è centralizzata in `core/normalization.py`.
-Il vecchio client httpx è deprecato (vedi `providers/api_football/client.py`) e verrà rimosso in futuro.
+### Unified Provider & Fetch Stats
+Provider fixtures unificato con:
+- Retry/backoff
+- Telemetria (attempts, retries, latency_ms, last_status)
+- Normalizzazione centralizzata in `core/normalization.py`
+Client httpx precedente deprecato.
 
-### Metrics & Events (Nuovo)
-Se `ENABLE_METRICS_FILE=true` viene scritto `metrics/last_run.json` (dentro `BET_DATA_DIR`) con:
-```json
-{
-  "summary": {...},
-  "change_breakdown": {...},
-  "fetch_stats": {...},
-  "total_fixtures": N
-}
-```
-Se `ENABLE_EVENTS_FILE=true` e il delta non è vuoto viene scritto `events/last_delta.json` con i dettagli (added/removed/modified + breakdown).
-
-Variabili:
-- ENABLE_METRICS_FILE (default true)
-- ENABLE_EVENTS_FILE (default true)
-- METRICS_DIR (default metrics)
-- EVENTS_DIR (default events)
+### Metrics & Events
+Se `ENABLE_METRICS_FILE=true` → `metrics/last_run.json`.  
+Se `ENABLE_EVENTS_FILE=true` e delta non vuoto → `events/last_delta.json`.
 
 ### Validazione date_utc
-La normalizzazione aggiunge `valid_date_utc` basato su regex ISO 8601 semplice. In caso di mismatch viene loggato un warning solo alla prima occorrenza.
+Regex ISO 8601 semplice → aggiunge `valid_date_utc`. Prima occorrenza non valida → warning singolo.
+
+### Read-Only API
+Servizio FastAPI (`api/app.py`) espone:
+| Endpoint | Descrizione |
+|----------|-------------|
+| /health | Stato base |
+| /fixtures | Stato corrente |
+| /delta | Ultimo delta + summary |
+| /metrics | Ultima run metrics |
+| /scoreboard | Aggregato sintetico |
+
+Scoreboard include:
+- total, live_count, upcoming_count_next_24h
+- recent_delta (added/removed/modified)
+- change_breakdown
+- subset live_fixtures / upcoming_next_24h
+- last_fetch_total_new
+
+Futuri miglioramenti:
+- Filtri /fixtures?status=LIVE
+- Parametri timeframe upcoming
+- Paginazione
