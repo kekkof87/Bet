@@ -38,7 +38,11 @@ class Settings:
     bet_data_dir: str
 
     delta_compare_keys: Optional[List[str]]
-    fetch_abort_on_empty: bool  # NEW
+    fetch_abort_on_empty: bool
+
+    # NEW history / retention
+    enable_history: bool
+    history_max: int
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -91,6 +95,9 @@ class Settings:
         delta_compare_keys = _parse_list(os.getenv("DELTA_COMPARE_KEYS"))
         fetch_abort_on_empty = _parse_bool(os.getenv("FETCH_ABORT_ON_EMPTY"), False)
 
+        enable_history = _parse_bool(os.getenv("ENABLE_HISTORY"), False)
+        history_max = _int("HISTORY_MAX", 30)
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -105,6 +112,8 @@ class Settings:
             bet_data_dir=bet_data_dir,
             delta_compare_keys=delta_compare_keys,
             fetch_abort_on_empty=fetch_abort_on_empty,
+            enable_history=enable_history,
+            history_max=history_max,
         )
 
 
