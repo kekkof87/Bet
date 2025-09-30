@@ -1,6 +1,4 @@
 import json
-from pathlib import Path
-
 import pytest
 
 from core.metrics import write_metrics_snapshot, write_last_delta_event
@@ -40,6 +38,5 @@ def test_disable_metrics_events(monkeypatch):
     payload = {"summary": {}}
     metrics_path = write_metrics_snapshot(payload)
     events_path = write_last_delta_event({"added": [], "removed": [], "modified": []})
-    # I path sono calcolati ma i file non devono esistere
     assert not metrics_path.exists()
     assert not events_path.exists()
