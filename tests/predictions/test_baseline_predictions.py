@@ -1,6 +1,4 @@
 import json
-from pathlib import Path
-
 import pytest
 
 from predictions.pipeline import run_baseline_predictions
@@ -44,10 +42,9 @@ def test_run_baseline_predictions(tmp_path):
     data = json.loads(path.read_text(encoding="utf-8"))
     assert data["model_version"] == "baseline-v1"
     assert data["count"] == 2
-    assert "predictions" in data
     pmap = {p["fixture_id"]: p for p in data["predictions"]}
     assert 100 in pmap and 101 in pmap
     for p in data["predictions"]:
         probs = p["prob"]
-        s = round(probs["home_win"] + probs["draw"] + probs["away_win"], 5)
-        assert s == 1.0
+        total = round(probs["home_win"] + probs["draw"] + probs["away_win"], 5)
+        assert total == 1.0
