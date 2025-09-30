@@ -20,6 +20,12 @@ class APIFootballHttpClient:
     """
     Client HTTP con retry e backoff per API Football (versione requests).
     Gestisce rate limit (429), errori transitori (5xx, network) e ritorna JSON.
+
+    Aggiunta telemetria minima:
+      - _last_attempts: numero di tentativi effettuati nella ultima chiamata
+      - _last_retries: retries (attempts - 1)
+      - _last_latency_ms: durata totale in millisecondi (dall'inizio alla conclusione: successo o errore finale)
+      - _last_status: ultimo HTTP status code ricevuto (se nessuna risposta -> None)
     """
 
     def __init__(self) -> None:
@@ -36,6 +42,12 @@ class APIFootballHttpClient:
         self._factor = self._settings.api_football_backoff_factor
         self._jitter = self._settings.api_football_backoff_jitter
         self._timeout = self._settings.api_football_timeout
+
+        # Telemetria (popolata ad ogni api_get)
+        self._last_attempts: int = 0
+        self._last_retries: int = 0
+        self._last_latency_ms: float = 0.0
+        self._last_status: Optional[int] = None
 
     def _compute_delay(self, attempt: int) -> float:
         # attempt parte da 1
@@ -56,6 +68,13 @@ class APIFootballHttpClient:
 
         last_status: Optional[int] = None
         last_reason: Optional[str] = None
+        start_overall = time.perf_counter()
+
+        # Reset telemetria (in caso di riuso dello stesso oggetto)
+        self._last_attempts = 0
+        self._last_retries = 0
+        self._last_latency_ms = 0.0
+        self._last_status = None
 
         for attempt in range(1, self._max_attempts + 1):
             url = base_url
@@ -80,6 +99,11 @@ class APIFootballHttpClient:
             except (requests.Timeout, requests.ConnectionError) as e:
                 last_reason = f"network:{e.__class__.__name__}"
                 if attempt == self._max_attempts:
+                    # Fallimento finale: aggiorna telemetria e rilancia
+                    self._last_attempts = attempt
+                    self._last_retries = attempt - 1
+                    self._last_latency_ms = (time.perf_counter() - start_overall) * 1000
+                    self._last_status = None
                     raise TransientAPIError(
                         f"Errore di rete persistente dopo {attempt} tentativi: {e}"
                     ) from e
@@ -94,20 +118,33 @@ class APIFootballHttpClient:
                 continue
 
             last_status = resp.status_code
+            self._last_status = last_status  # aggiorniamo ogni volta che riceviamo risposta
 
             # Successo
             if 200 <= resp.status_code < 300:
                 try:
-                    return resp.json()
+                    data = resp.json()
                 except ValueError as e:
+                    # Telemetria su errore finale
+                    self._last_attempts = attempt
+                    self._last_retries = attempt - 1
+                    self._last_latency_ms = (time.perf_counter() - start_overall) * 1000
                     raise RuntimeError(
                         f"Risposta non valida (non JSON) status={resp.status_code}"
                     ) from e
+                # Telemetria su successo
+                self._last_attempts = attempt
+                self._last_retries = attempt - 1
+                self._last_latency_ms = (time.perf_counter() - start_overall) * 1000
+                return data
 
             # Rate limit 429
             if resp.status_code == 429:
                 last_reason = "rate_limit"
                 if attempt == self._max_attempts:
+                    self._last_attempts = attempt
+                    self._last_retries = attempt - 1
+                    self._last_latency_ms = (time.perf_counter() - start_overall) * 1000
                     raise RateLimitError(
                         f"Rate limit dopo {attempt} tentativi (429)."
                     )
@@ -133,6 +170,9 @@ class APIFootballHttpClient:
             if resp.status_code in (500, 502, 503, 504):
                 last_reason = f"http_{resp.status_code}"
                 if attempt == self._max_attempts:
+                    self._last_attempts = attempt
+                    self._last_retries = attempt - 1
+                    self._last_latency_ms = (time.perf_counter() - start_overall) * 1000
                     raise TransientAPIError(
                         f"Status {resp.status_code} persistente dopo {attempt} tentativi."
                     )
@@ -152,6 +192,9 @@ class APIFootballHttpClient:
                     payload = resp.json()
                 except Exception:
                     payload = {"raw": resp.text}
+                self._last_attempts = attempt
+                self._last_retries = attempt - 1
+                self._last_latency_ms = (time.perf_counter() - start_overall) * 1000
                 raise ValueError(
                     f"Richiesta API fallita (status={resp.status_code}) non retriable: {payload}"
                 )
@@ -161,14 +204,35 @@ class APIFootballHttpClient:
                 payload = resp.json()
             except Exception:
                 payload = {"raw": resp.text}
+            self._last_attempts = attempt
+            self._last_retries = attempt - 1
+            self._last_latency_ms = (time.perf_counter() - start_overall) * 1000
             raise RuntimeError(
                 f"Risposta inattesa (status={resp.status_code}) non retriable: {payload}"
             )
 
         # Non dovrebbe mai arrivare qui
+        self._last_attempts = self._max_attempts
+        self._last_retries = self._max_attempts - 1
+        self._last_latency_ms = (time.perf_counter() - start_overall) * 1000
         raise RuntimeError(
             f"Fallimento imprevisto path={path} last_status={last_status} reason={last_reason}"
         )
+
+    def get_stats(self) -> Dict[str, Any]:
+        """
+        Ritorna telemetria dell'ultima chiamata:
+          attempts: tentativi totali
+          retries: tentativi falliti (attempts - 1)
+          latency_ms: durata complessiva
+          last_status: ultimo status code visto (None se mai ricevuta risposta valida)
+        """
+        return {
+            "attempts": self._last_attempts,
+            "retries": self._last_retries,
+            "latency_ms": round(self._last_latency_ms, 2),
+            "last_status": self._last_status,
+        }
 
 
 # Manteniamo il simbolo per compatibilità con eventuali import nei test
