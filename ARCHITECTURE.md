@@ -292,6 +292,22 @@ Esecuzione:
 - Integrata a fine `scripts/fetch_fixtures.py` dopo predictions.
 - Se predictions assenti o file mancante → genera payload vuoto (count=0).
 
+### Hardening (Iterazione 10)
+Azioni:
+- Rimossi file deprecati: `providers/api_football/client.py`, `providers/api_football/base.py`
+- Coverage threshold impostata a 80% (`--cov-fail-under=80` + `.coveragerc`)
+- Esclusi file non critici dalla coverage (fixture_record, deprecated)
+- Consolidato flusso pipeline end-to-end:
+  fetch → diff/classification → metrics/events/alerts → scoreboard → predictions → consensus
+
+Prossimi sviluppi possibili:
+| Area | Idea | Note |
+|------|------|------|
+| Monitoring | Prometheus exporter /metrics | Export fetch stats & delta counts |
+| Storage | DB (PostgreSQL / DuckDB) | Per analisi storiche avanzate |
+| Notifications | Telegram / Webhook | Sugli alerts score/status |
+| ML | Modelli multipli / ensemble | Sostituisce baseline |
+| Security | Firma snapshot | Integrity chain |
 Evoluzioni future:
 - Media pesata multi-modello
 - Filtri su confidenza minima
