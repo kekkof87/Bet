@@ -33,6 +33,10 @@
 - Delta logging strutturato per osservabilità
 
 ## Delta Fixtures (Nuova Sezione)
+### Compare Keys (Configurabile)
+Se definita la variabile d'ambiente `DELTA_COMPARE_KEYS` (es: `home_score,away_score,status`), il diff considera solo quei campi per determinare le modifiche.  
+Caso d'uso: ignorare cambi secondari (es. note interne) e concentrarsi su punteggi / stato partita.  
+Se non impostata, rimane il confronto completo dei record (shallow dict equality).
 
 ### Obiettivi
 Garantire:
