@@ -4,26 +4,31 @@ from typing import Any, Dict, List, Optional
 
 from core.config import get_settings
 from core.logging import get_logger
-from core.persistence import clear_latest_fixtures_file, save_latest_fixtures
-from core.fixture_record import FixtureRecord
-
-from .client import ApiFootballClient
-from .http_client import _client_singleton, get_http_client  # noqa: F401
+from core.normalization import normalize_api_football_fixture
+from core.persistence import (
+    clear_latest_fixtures_file,
+    save_latest_fixtures,
+)
+from .http_client import get_http_client, APIFootballHttpClient
 
 log = get_logger(__name__)
 
 
 class APIFootballFixturesProvider:
     """
-    Provider che usa un client basato su 'requests' con persistenza integrata (legacy).
+    LEGACY Provider (compat per test esistenti).
+    - Usa APIFootballHttpClient (requests + retry)
+    - NON normalizza (restituisce 'response' grezza)
+    - Gestisce persistenza diretta (se API_FOOTBALL_PERSIST_FIXTURES=true)
     """
 
-    def __init__(self) -> None:
+    def __init__(self, client: Optional[APIFootballHttpClient] = None) -> None:
         self._settings = get_settings()
-        self._client = get_http_client()
+        self._client = client or get_http_client()
 
     def fetch_fixtures(
         self,
+        *,
         date: Optional[str] = None,
         league_id: Optional[int] = None,
         season: Optional[int] = None,
@@ -48,24 +53,32 @@ class APIFootballFixturesProvider:
         if self._settings.persist_fixtures and response:
             try:
                 save_latest_fixtures(response)
-            except Exception as e:
+            except Exception as e:  # pragma: no cover
                 log.error("Persist fixtures raised unexpected error=%s", e)
         else:
             clear_latest_fixtures_file()
 
         return response
 
+    def get_last_stats(self) -> Dict[str, Any]:
+        return self._client.get_stats()
+
 
 class ApiFootballFixturesProvider:
     """
-    Provider httpx che normalizza i record in FixtureRecord e restituisce dict coerenti.
+    Provider UNIFICATO normalizzato.
+    - Usa APIFootballHttpClient
+    - Normalizza i record
+    - Nessuna persistenza automatica
     """
 
-    def __init__(self, client: Optional[ApiFootballClient] = None) -> None:
-        self._client = client or ApiFootballClient()
+    def __init__(self, client: Optional[APIFootballHttpClient] = None) -> None:
+        self._client = client or get_http_client()
+        self._last_raw: Dict[str, Any] | None = None
 
     def fetch_fixtures(
         self,
+        *,
         date: Optional[str] = None,
         league_id: Optional[int] = None,
         season: Optional[int] = None,
@@ -84,14 +97,19 @@ class ApiFootballFixturesProvider:
         if season is not None:
             params["season"] = season
 
-        raw = self._client.get("/fixtures", params=params or None)
+        raw = self._client.api_get("/fixtures", params=params or None)
+        self._last_raw = raw
         response = raw.get("response", [])
         if not isinstance(response, list):
             log.warning("Formato inatteso: 'response' non è una lista")
             return []
-        out: List[Dict[str, Any]] = []
-        for item in response:
-            # item è il blocco completo {"fixture": {...}, "league": {...}, "teams": {...}, "goals": {...}}
-            rec = FixtureRecord.from_api(item)
-            out.append(rec.to_dict())
-        return out
+        return [normalize_api_football_fixture(item) for item in response]
+
+    def get_last_stats(self) -> Dict[str, Any]:
+        return self._client.get_stats()
+
+
+__all__ = [
+    "APIFootballFixturesProvider",  # legacy (tests persistence)
+    "ApiFootballFixturesProvider",  # normalizzato
+]

@@ -153,3 +153,9 @@ Struttura:
 
 ## Sintesi
 Il layer Delta + Classification + History fornisce un’infrastruttura incrementale pronta per evolvere verso analisi avanzate e automazioni senza introdurre complessità eccessiva.
+
+### Unified Provider & Fetch Stats (Update)
+Il provider delle fixtures ora utilizza un unico client con retry/backoff (requests) e produce telemetria reale:
+- attempts / retries / latency_ms / last_status
+La normalizzazione è centralizzata in `core/normalization.py`.
+Il vecchio client httpx è deprecato (vedi `providers/api_football/client.py`) e verrà rimosso in futuro.

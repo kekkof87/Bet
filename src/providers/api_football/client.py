@@ -1,3 +1,10 @@
+"""
+DEPRECATED: questo client httpx semplice è mantenuto solo per riferimento transitorio.
+Usare ApiFootballFixturesProvider (fixtures_provider.py) che ora si basa su APIFootballHttpClient
+(con retry/backoff + telemetria) e normalizzazione centralizzata.
+
+In una futura iterazione questo file potrà essere rimosso del tutto.
+"""
 import time
 from typing import Any, Dict, Optional
 
@@ -10,11 +17,6 @@ logger = get_logger(__name__)
 
 
 class ApiFootballClient:
-    """
-    Client HTTP minimale per l'API Football (api-sports).
-    Gestisce header API key e logging basilare (debug/errore).
-    """
-
     BASE_URL = "https://v3.football.api-sports.io"
 
     def __init__(self, api_key: Optional[str] = None) -> None:
@@ -25,34 +27,15 @@ class ApiFootballClient:
             "Accept": "application/json",
         }
 
-    def get(
-        self,
-        path: str,
-        params: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Esegue una GET sincrona e ritorna il JSON decodificato.
-        Lancia eccezioni httpx in caso di problemi di rete o status != 200.
-        """
+    def get(self, path: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         params = params or {}
         url = f"{self.BASE_URL.rstrip('/')}/{path.lstrip('/')}"
-        logger.debug("GET %s params=%s", url, params)
+        logger.debug("DEPRECATED httpx GET %s params=%s", url, params)
         start = time.perf_counter()
-        try:
-            resp = httpx.get(url, params=params, headers=self._headers, timeout=30)
-        except httpx.RequestError as exc:
-            elapsed = (time.perf_counter() - start) * 1000
-            logger.error("Errore rete %s dopo %.1fms: %s", url, elapsed, exc)
-            raise
+        resp = httpx.get(url, params=params, headers=self._headers, timeout=30)
         elapsed = (time.perf_counter() - start) * 1000
         if resp.status_code != 200:
-            logger.error(
-                "Status %s %s (%.1fms) body=%s",
-                resp.status_code,
-                url,
-                elapsed,
-                resp.text[:300],
-            )
+            logger.error("DEPRECATED client status %s url=%s body=%s", resp.status_code, url, resp.text[:250])
             resp.raise_for_status()
-        logger.debug("OK %s %s %.1fms", url, resp.status_code, elapsed)
+        logger.debug("DEPRECATED client OK %s %.1fms", url, elapsed)
         return resp.json()
