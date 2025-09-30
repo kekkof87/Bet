@@ -43,11 +43,16 @@ class Settings:
     enable_history: bool
     history_max: int
 
-    # NEW (metrics / events)
     enable_metrics_file: bool
     enable_events_file: bool
     metrics_dir: str
     events_dir: str
+
+    # NEW (alerts)
+    enable_alerts_file: bool
+    alerts_dir: str
+    alert_status_sequence: Optional[List[str]]
+    alert_include_final: bool
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -108,6 +113,11 @@ class Settings:
         metrics_dir = os.getenv("METRICS_DIR", "metrics")
         events_dir = os.getenv("EVENTS_DIR", "events")
 
+        enable_alerts_file = _parse_bool(os.getenv("ENABLE_ALERTS_FILE"), True)
+        alerts_dir = os.getenv("ALERTS_DIR", "alerts")
+        alert_status_sequence = _parse_list(os.getenv("ALERT_STATUS_SEQUENCE"))
+        alert_include_final = _parse_bool(os.getenv("ALERT_INCLUDE_FINAL"), True)
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -128,6 +138,10 @@ class Settings:
             enable_events_file=enable_events_file,
             metrics_dir=metrics_dir,
             events_dir=events_dir,
+            enable_alerts_file=enable_alerts_file,
+            alerts_dir=alerts_dir,
+            alert_status_sequence=alert_status_sequence,
+            alert_include_final=alert_include_final,
         )
 
 
