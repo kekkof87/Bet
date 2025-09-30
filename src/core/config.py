@@ -109,7 +109,7 @@ def get_settings() -> Settings:
 
 def _reset_settings_cache_for_tests() -> None:
     """Supporto ai test: svuota la cache di get_settings()."""
-    get_settings.cache_clear()  # type: ignore[attr-defined]
+    get_settings.cache_clear()
 
 
 __all__ = [
