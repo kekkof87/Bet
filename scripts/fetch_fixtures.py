@@ -153,7 +153,13 @@ def main() -> None:
             delta=delta_event if (added or removed or modified) else None,
         )
         write_scoreboard(scoreboard)
-        logger.info("scoreboard_generated", extra={"live": scoreboard["live_count"], "upcoming": scoreboard["upcoming_count_next_24h"]})
+        logger.info(
+            "scoreboard_generated",
+            extra={
+                "live": scoreboard["live_count"],
+                "upcoming": scoreboard["upcoming_count_next_24h"],
+            },
+        )
     except Exception as exc:  # pragma: no cover
         logger.error("Errore generazione scoreboard: %s", exc)
 
