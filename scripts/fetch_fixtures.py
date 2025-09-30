@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from core.config import get_settings
 from core.diff import diff_fixtures, summarize_delta
@@ -19,16 +19,16 @@ def main() -> None:
 
     Passi:
       1. Carica snapshot precedente (latest).
-      2. Fetch nuove fixtures.
+      2. Fetch nuove fixtures dal provider.
       3. Calcola delta (added / removed / modified).
       4. Salva snapshot previous (se esisteva uno stato).
       5. Salva nuove fixtures (latest).
       6. Logga riepilogo delta + esempio.
 
     NOTE:
-      - Se vuoi limitare il confronto soltanto a certe chiavi (es. punteggi):
-        added, removed, modified = diff_fixtures(old, new, compare_keys=["home_score","away_score","status"])
-      - Il salvataggio avviene anche se new è vuoto (rappresenta “nessun dato attuale”).
+      - Per limitare il confronto a certe chiavi (es. punteggi):
+        diff_fixtures(old, new, compare_keys=["home_score","away_score","status"])
+      - Anche se new è vuoto viene salvato (stato corrente = nessun dato).
     """
     logger = get_logger("scripts.fetch_fixtures")
 
@@ -58,7 +58,10 @@ def main() -> None:
         date=None,
     )
     if not isinstance(new, list):
-        logger.error("Provider ha restituito un oggetto non lista (%s). Abort diff.", type(new))
+        logger.error(
+            "Provider ha restituito un oggetto non lista (%s). Abort diff.",
+            type(new),
+        )
         new = []
 
     # 3. Calcolo delta (protetto)
@@ -66,10 +69,9 @@ def main() -> None:
         added, removed, modified = diff_fixtures(old, new)
     except Exception as exc:  # pragma: no cover (difensivo)
         logger.error("Errore durante il diff fixtures: %s", exc)
-        # Fallback: niente delta (considera tutto come added se vuoi, qui manteniamo neutro)
         added, removed, modified = [], [], []
 
-    # 4. Salvataggio previous (solo se c'era uno stato precedente non vuoto)
+    # 4. Salvataggio snapshot previous (solo se c'era uno stato non vuoto)
     if old:
         try:
             save_previous_fixtures(old)
@@ -84,7 +86,6 @@ def main() -> None:
 
     # 6. Logging riepilogo delta
     summary = summarize_delta(added, removed, modified, len(new))
-    # Formato leggibile + parse-friendly
     logger.info("fixtures_delta: %s", summary)
 
     if new:
