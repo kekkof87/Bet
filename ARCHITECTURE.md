@@ -259,3 +259,40 @@ Prossimi passi (futuro):
 - Feature arricchite (forma squadre, quote, ranking)
 - Modelli multipli (ensemble)
 - Consensus su probabilità per feed esterno
+
+### Consensus & Ranking (Stub – Nuovo)
+Pipeline di consenso iniziale (stub) che replica direttamente le probabilità baseline e calcola:
+- consensus_confidence = max(home_win, draw, away_win)
+- ranking_score = home_win - away_win (valore >0 preferenza casa, <0 preferenza trasferta)
+
+File generato:
+`consensus/consensus.json`
+```json
+{
+  "generated_at": "...",
+  "count": N,
+  "model_sources": ["baseline-v1"],
+  "entries": [
+    {
+      "fixture_id": 123,
+      "prob": {"home_win":0.33,"draw":0.33,"away_win":0.34},
+      "consensus_confidence":0.34,
+      "ranking_score":-0.01,
+      "model_version":"baseline-v1"
+    }
+  ]
+}
+```
+
+Configurazione:
+- ENABLE_CONSENSUS (default false)
+- CONSENSUS_DIR (default consensus)
+
+Esecuzione:
+- Integrata a fine `scripts/fetch_fixtures.py` dopo predictions.
+- Se predictions assenti o file mancante → genera payload vuoto (count=0).
+
+Evoluzioni future:
+- Media pesata multi-modello
+- Filtri su confidenza minima
+- Ranking basato su expected value / probabilità calibrate
