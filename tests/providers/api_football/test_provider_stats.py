@@ -1,8 +1,6 @@
 import pytest
-import requests
 
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
-import providers.api_football.http_client as http_module
 from core.config import _reset_settings_cache_for_tests
 
 
@@ -38,7 +36,6 @@ def env(monkeypatch):
 
 
 def test_fetch_stats_success_no_retry(monkeypatch):
-    # Risposta immediata 200
     payload = {
         "response": [
             {
@@ -49,6 +46,7 @@ def test_fetch_stats_success_no_retry(monkeypatch):
             }
         ]
     }
+    from providers.api_football import http_client as http_module  # local import to patch
     monkeypatch.setattr(
         "providers.api_football.http_client.requests.Session.get",
         build_sequence([FakeResponse(200, payload)]),
@@ -64,7 +62,6 @@ def test_fetch_stats_success_no_retry(monkeypatch):
 
 
 def test_fetch_stats_with_retry(monkeypatch):
-    # Primo tentativo 500, poi 200
     payload_ok = {
         "response": [
             {
@@ -108,7 +105,6 @@ def test_fetch_stats_rate_limit_exhausted(monkeypatch):
     with pytest.raises(Exception):
         provider.fetch_fixtures()
     stats = provider.get_last_stats()
-    # attempts = 2 (ultimo fallimento)
     assert stats["attempts"] == 2
     assert stats["retries"] == 1
     assert stats["last_status"] == 429
