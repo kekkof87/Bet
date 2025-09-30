@@ -23,18 +23,16 @@ def main() -> None:
       5. Salva nuove fixtures come latest.
       6. Logga un riepilogo dei conteggi delta + esempio prima fixture.
 
-    Nota:
-      - Il provider httpx (ApiFootballFixturesProvider) NON salva di suo; la persistenza
-        avviene qui esplicitamente.
-      - Se vuoi limitare il confronto a certe chiavi (es. punteggi) puoi modificare la
-        chiamata a diff_fixtures aggiungendo compare_keys=[...].
+    Note:
+      - Il provider non salva direttamente: la persistenza avviene qui.
+      - Per confrontare solo alcune chiavi in futuro: compare_keys=["home_score", "away_score", "status"].
     """
     logger = get_logger("scripts.fetch_fixtures")
 
     try:
         settings = get_settings()
     except ValueError as e:
-        logger.error(str(e))
+        logger.error("%s", e)
         logger.error(
             "Aggiungi API_FOOTBALL_KEY nel file .env oppure come variabile ambiente."
         )
@@ -55,18 +53,18 @@ def main() -> None:
     # 3. Calcolo delta
     added, removed, modified = diff_fixtures(old, new)
 
-    # 4. Salva snapshot previous (solo se c'era qualcosa prima)
+    # 4. Salvataggio snapshot previous (solo se esistevano dati)
     if old:
         try:
             save_previous_fixtures(old)
-        except Exception as exc:
+        except Exception as exc:  # pragma: no cover (best effort)
             logger.error("Errore salvataggio snapshot previous: %s", exc)
 
-    # 5. Salva nuovo stato (se non vuoto — opzionale, puoi salvare anche vuoto se preferisci pulire)
+    # 5. Salvataggio nuovo stato (anche se vuoto, rappresenta lo stato corrente)
     try:
         save_latest_fixtures(new)
-    except Exception as exc:
-        logger.error("Errore salvataggio fixtures latest: %s", exc)
+    except Exception as exc:  # pragma: no cover
+            logger.error("Errore salvataggio fixtures latest: %s", exc)
 
     # 6. Logging riepilogo delta
     summary = summarize_delta(added, removed, modified, len(new))
