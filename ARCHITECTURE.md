@@ -190,3 +190,34 @@ Futuri miglioramenti:
 - Filtri /fixtures?status=LIVE
 - Parametri timeframe upcoming
 - Paginazione
+
+### Alerts (Nuovo)
+Sistema di generazione eventi derivati da modifiche:
+- score_update: variazione punteggio (home_score o away_score).
+- status_transition: cambio status conforme alla sequenza (default: NS → 1H → HT → 2H → ET → P → AET → FT).  
+Se `ALERT_STATUS_SEQUENCE` è definita (lista CSV), sostituisce il default; se `ALERT_INCLUDE_FINAL=false` le transizioni verso FT sono ignorate.
+
+File generato (se eventi presenti e `ENABLE_ALERTS_FILE=true`):
+`alerts/last_alerts.json`
+```json
+{
+  "generated_at": "...",
+  "events": [
+    {"type":"score_update","fixture_id":123,"old_score":"0-0","new_score":"1-0","status":"1H"},
+    {"type":"status_transition","fixture_id":123,"from":"NS","to":"1H"}
+  ],
+  "count": 2
+}
+```
+
+Logging:
+Riga `fixtures_alerts` con `alerts_count`.
+
+Variabili:
+- ENABLE_ALERTS_FILE (default true)
+- ALERTS_DIR (default alerts)
+- ALERT_STATUS_SEQUENCE (opzionale, CSV)
+- ALERT_INCLUDE_FINAL (default true)
+
+Integrazione:
+Generato in `scripts/fetch_fixtures.py` dopo delta e prima dello scoreboard.
