@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List
-import math
+from typing import Dict, List
 
 
 class BaselineModel:
@@ -10,14 +9,14 @@ class BaselineModel:
     - Punto di partenza: home=0.33, draw=0.33, away=0.34
     - Aggiusta home/away in base a score_diff (0.05 * diff) limitato
     - Ricalibra per mantenere somma = 1 con draw come residuo
-    - Forza ogni prob >= 0.01
+    - Forza ogni prob >= 0.05 per draw e >= 0.05 per home/away (dopo clamp)
     """
 
     def __init__(self, version: str = "baseline-v1") -> None:
         self.version = version
 
-    def predict(self, features: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        out: List[Dict[str, Any]] = []
+    def predict(self, features: List[Dict]) -> List[Dict]:
+        out: List[Dict] = []
         for ft in features:
             base_home = 0.33
             base_away = 0.34
@@ -53,10 +52,10 @@ class BaselineModel:
             home /= s
             draw /= s
             away /= s
-            # arrotondamento (manteniamo somma = 1 con correzione minima)
+
             home_r = round(home, 4)
             draw_r = round(draw, 4)
-            away_r = round(1.0 - home_r - draw_r, 4)
+            away_r = round(1.0 - home_r - draw_r, 4)  # correzione somma
 
             out.append(
                 {
