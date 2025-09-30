@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from core.config import get_settings
-from core.diff import diff_fixtures, summarize_delta
+from core.diff import diff_fixtures_detailed, summarize_delta
 from core.logging import get_logger
 from core.persistence import (
     load_latest_fixtures,
@@ -15,7 +15,7 @@ from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 
 def main() -> None:
     """
-    Fetch + delta con compare keys opzionali (DELTA_COMPARE_KEYS) e abort su lista vuota se configurato.
+    Fetch + delta classification (score/status) + structured logging.
     """
     logger = get_logger("scripts.fetch_fixtures")
 
@@ -48,15 +48,22 @@ def main() -> None:
 
     compare_keys: Optional[List[str]] = settings.delta_compare_keys
 
+    # Diff dettagliato
     try:
-        added, removed, modified = diff_fixtures(
+        detailed = diff_fixtures_detailed(
             old,
             new,
             compare_keys=compare_keys if compare_keys else None,
+            classify=True,
         )
     except Exception as exc:  # pragma: no cover
-        logger.error("Errore diff: %s", exc)
-        added, removed, modified = [], [], []
+        logger.error("Errore diff dettagliato: %s", exc)
+        detailed = {"added": [], "removed": [], "modified": [], "change_breakdown": {"score_change": 0, "status_change": 0, "both": 0, "other": 0}}
+
+    added = detailed["added"]
+    removed = detailed["removed"]
+    modified = detailed["modified"]
+    change_breakdown = detailed["change_breakdown"]
 
     if old:
         try:
@@ -73,8 +80,7 @@ def main() -> None:
     if compare_keys:
         summary = {**summary, "compare_keys": ",".join(compare_keys)}
 
-    # Structured logging con extra
-    logger.info("fixtures_delta", extra={"delta_summary": summary})
+    logger.info("fixtures_delta", extra={"delta_summary": summary, "change_breakdown": change_breakdown})
 
     if new:
         logger.info("Esempio prima fixture", extra={"first_fixture": new[0]})
