@@ -1,20 +1,20 @@
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 def normalize_api_football_fixture(item: Dict[str, Any]) -> Dict[str, Any]:
     """
     Normalizza un record grezzo dell'API-Football (struttura 'fixture','league','teams','goals')
-    in un dizionario coerente con FixtureRecord.to_dict().
-    Campi mancanti o strutture inattese vengono degradate a None.
+    in un dizionario coerente col modello interno (FixtureRecord.to_dict()).
+    Campi mancanti -> None, conversioni intere difensive.
     """
     fixture = item.get("fixture", {}) or {}
     league = item.get("league", {}) or {}
     teams = item.get("teams", {}) or {}
     goals = item.get("goals", {}) or {}
 
-    def _as_int(v: Any):
+    def _as_int(v: Any) -> Optional[int]:
         try:
             return int(v) if v is not None else None
         except (ValueError, TypeError):
