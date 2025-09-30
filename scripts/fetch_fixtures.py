@@ -21,8 +21,9 @@ from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 from predictions.pipeline import run_baseline_predictions
 from consensus.pipeline import run_consensus_pipeline
 
-if TYPE_CHECKING:  # solo per mypy; a runtime non serve davvero
-    from core.fixture_record import FixtureRecord
+if TYPE_CHECKING:
+    # Usa il tipo atteso dalle funzioni di persistence
+    from core.models import FixtureRecord  # noqa: F401
 
 
 def _load_json_if_exists(path: Path) -> Optional[Dict[str, Any]]:
@@ -52,8 +53,7 @@ def main() -> None:
     if not isinstance(loaded_old, list):
         logger.warning("Snapshot precedente non valido, uso old=[]")
         loaded_old = []
-    # Cast per mypy: i record sono dict ma li trattiamo come FixtureRecord serializzati
-    old: List["FixtureRecord"] = cast(List["FixtureRecord"], loaded_old)
+    old = cast(List["FixtureRecord"], loaded_old)
 
     logger.info("Avvio fetch fixtures (API-Football)...")
     provider = ApiFootballFixturesProvider()
@@ -65,14 +65,13 @@ def main() -> None:
     if not isinstance(loaded_new, list):
         logger.error("Provider ha restituito tipo inatteso %s, forzo lista vuota", type(loaded_new))
         loaded_new = []
-    new: List["FixtureRecord"] = cast(List["FixtureRecord"], loaded_new)
+    new = cast(List["FixtureRecord"], loaded_new)
 
     if settings.fetch_abort_on_empty and not new:
         logger.warning("Fetch vuoto e FETCH_ABORT_ON_EMPTY=1: abort senza aggiornare stato.")
         return
 
     compare_keys: Optional[List[str]] = settings.delta_compare_keys
-
     try:
         detailed = diff_fixtures_detailed(
             cast(List[Dict[str, Any]], old),
@@ -101,23 +100,22 @@ def main() -> None:
 
     if old:
         try:
-            save_previous_fixtures(cast(List["FixtureRecord"], old))
+            save_previous_fixtures(old)
         except Exception as exc:  # pragma: no cover
             logger.error("Errore salvataggio previous: %s", exc)
 
     try:
-        save_latest_fixtures(cast(List["FixtureRecord"], new))
+        save_latest_fixtures(new)
     except Exception as exc:  # pragma: no cover
         logger.error("Errore salvataggio latest: %s", exc)
 
     if settings.enable_history:
         try:
-            save_history_snapshot(cast(List["FixtureRecord"], new))
+            save_history_snapshot(new)
             rotate_history(settings.history_max)
         except Exception as exc:  # pragma: no cover
             logger.error("Errore history: %s", exc)
 
-    # summarize_delta ritorna Dict[str, int]; lo ampliamo con chiave string → serve Any
     base_summary = summarize_delta(added, removed, modified, len(new))
     summary: Dict[str, Any] = dict(base_summary)
     if compare_keys:
