@@ -159,3 +159,24 @@ Il provider delle fixtures ora utilizza un unico client con retry/backoff (reque
 - attempts / retries / latency_ms / last_status
 La normalizzazione è centralizzata in `core/normalization.py`.
 Il vecchio client httpx è deprecato (vedi `providers/api_football/client.py`) e verrà rimosso in futuro.
+
+### Metrics & Events (Nuovo)
+Se `ENABLE_METRICS_FILE=true` viene scritto `metrics/last_run.json` (dentro `BET_DATA_DIR`) con:
+```json
+{
+  "summary": {...},
+  "change_breakdown": {...},
+  "fetch_stats": {...},
+  "total_fixtures": N
+}
+```
+Se `ENABLE_EVENTS_FILE=true` e il delta non è vuoto viene scritto `events/last_delta.json` con i dettagli (added/removed/modified + breakdown).
+
+Variabili:
+- ENABLE_METRICS_FILE (default true)
+- ENABLE_EVENTS_FILE (default true)
+- METRICS_DIR (default metrics)
+- EVENTS_DIR (default events)
+
+### Validazione date_utc
+La normalizzazione aggiunge `valid_date_utc` basato su regex ISO 8601 semplice. In caso di mismatch viene loggato un warning solo alla prima occorrenza.
