@@ -48,11 +48,15 @@ class Settings:
     metrics_dir: str
     events_dir: str
 
-    # NEW (alerts)
     enable_alerts_file: bool
     alerts_dir: str
     alert_status_sequence: Optional[List[str]]
     alert_include_final: bool
+
+    # NEW (predictions)
+    enable_predictions: bool
+    predictions_dir: str
+    model_baseline_version: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -118,6 +122,10 @@ class Settings:
         alert_status_sequence = _parse_list(os.getenv("ALERT_STATUS_SEQUENCE"))
         alert_include_final = _parse_bool(os.getenv("ALERT_INCLUDE_FINAL"), True)
 
+        enable_predictions = _parse_bool(os.getenv("ENABLE_PREDICTIONS"), False)
+        predictions_dir = os.getenv("PREDICTIONS_DIR", "predictions")
+        model_baseline_version = os.getenv("MODEL_BASELINE_VERSION", "baseline-v1")
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -142,6 +150,9 @@ class Settings:
             alerts_dir=alerts_dir,
             alert_status_sequence=alert_status_sequence,
             alert_include_final=alert_include_final,
+            enable_predictions=enable_predictions,
+            predictions_dir=predictions_dir,
+            model_baseline_version=model_baseline_version,
         )
 
 
