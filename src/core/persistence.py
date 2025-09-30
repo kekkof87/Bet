@@ -16,7 +16,6 @@ LATEST_FIXTURES_FILE = Path("data") / "fixtures_latest.json"
 LATEST_FIXTURES_FILE_NAME = "fixtures_latest.json"
 PREVIOUS_FIXTURES_FILE_NAME = "fixtures_previous.json"
 
-
 # ---------------------------------------------------------------------------
 # Path helpers (runtime: rispettano BET_DATA_DIR se impostata)
 # ---------------------------------------------------------------------------
@@ -120,10 +119,27 @@ def clear_latest_fixtures_file() -> None:
 
 
 def load_previous_fixtures() -> FixtureDataset:
+    """
+    Carica lo snapshot previous (se esiste), altrimenti lista vuota.
+    """
     return _load_json_list(_previous_dynamic_path())
 
 
+def save_previous_fixtures(fixtures: FixtureDataset) -> None:
+    """
+    Salva lo snapshot precedente (previous) per audit / diff.
+    - Non salva se la lista è vuota.
+    - Sovrascrive sempre il file esistente.
+    """
+    if not fixtures:
+        return
+    _write_json_atomic(_previous_dynamic_path(), fixtures)
+
+
 def save_fixtures_atomic(path: Path, fixtures: FixtureDataset) -> None:
+    """
+    Utility generica (attualmente non usata esternamente) per salvataggi diretti.
+    """
     if not fixtures:
         return
     _write_json_atomic(path, fixtures)
