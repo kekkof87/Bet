@@ -14,23 +14,11 @@ from core.persistence import (
 )
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 
-# Placeholder per future stats unificate (quando il provider userà il client con retry)
-try:
-    from providers.api_football.http_client import get_http_client  # type: ignore
-except Exception:  # pragma: no cover
-    get_http_client = None  # type: ignore
-
 
 def main() -> None:
     """
-    Fetch fixtures + diff dettagliato (classification) + history opzionale + structured logging.
-
-    Funzionalità:
-      - Abort su fetch vuoto se FETCH_ABORT_ON_EMPTY=1
-      - Compare keys (DELTA_COMPARE_KEYS)
-      - Classification (score_change / status_change / both / other)
-      - History snapshots se ENABLE_HISTORY=1 (rotazione HISTORY_MAX)
-      - Structured logging: delta_summary, change_breakdown, fetch_stats (placeholder)
+    Fetch fixtures + diff dettagliato (classification) + history opzionale + structured logging
+    con fetch_stats REALI (retry/latency) dal client unificato.
     """
     logger = get_logger("scripts.fetch_fixtures")
 
@@ -48,7 +36,7 @@ def main() -> None:
 
     logger.info("Avvio fetch fixtures (API-Football)...")
     provider = ApiFootballFixturesProvider()
-    new: List[Dict[str, Any]] = provider.fetch_fixtures(
+    new = provider.fetch_fixtures(
         league_id=settings.default_league_id,
         season=settings.default_season,
         date=None,
@@ -63,7 +51,6 @@ def main() -> None:
 
     compare_keys: Optional[List[str]] = settings.delta_compare_keys
 
-    # Diff dettagliato con classification
     try:
         detailed = diff_fixtures_detailed(
             old,
@@ -90,20 +77,17 @@ def main() -> None:
     modified = detailed["modified"]
     change_breakdown = detailed["change_breakdown"]
 
-    # Salva previous solo se esisteva un old
     if old:
         try:
             save_previous_fixtures(old)
         except Exception as exc:  # pragma: no cover
             logger.error("Errore salvataggio previous: %s", exc)
 
-    # Salva latest (anche vuoto se non abortito)
     try:
         save_latest_fixtures(new)
     except Exception as exc:  # pragma: no cover
         logger.error("Errore salvataggio latest: %s", exc)
 
-    # History opzionale
     if settings.enable_history:
         try:
             save_history_snapshot(new)
@@ -111,17 +95,11 @@ def main() -> None:
         except Exception as exc:  # pragma: no cover
             logger.error("Errore history: %s", exc)
 
-    # Riepilogo delta
     summary = summarize_delta(added, removed, modified, len(new))
     if compare_keys:
         summary["compare_keys"] = ",".join(compare_keys)
 
-    # Telemetria fetch (placeholder finché non si unifica il client)
-    fetch_stats: Dict[str, Any] = {}
-    if get_http_client:
-        # get_http_client() qui creerebbe una nuova istanza senza stats utili
-        # Verrà sostituito quando il provider userà il client con retry condiviso
-        pass
+    fetch_stats = provider.get_last_stats()
 
     logger.info(
         "fixtures_delta",
