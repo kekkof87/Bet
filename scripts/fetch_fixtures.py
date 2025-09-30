@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
+import json
+from pathlib import Path
 
 from core.config import get_settings
 from core.diff import diff_fixtures_detailed, summarize_delta
@@ -13,12 +15,22 @@ from core.persistence import (
     rotate_history,
 )
 from core.metrics import write_metrics_snapshot, write_last_delta_event
+from core.scoreboard import build_scoreboard, write_scoreboard
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
+
+
+def _load_json_if_exists(path: Path) -> Optional[Dict[str, Any]]:
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
 
 
 def main() -> None:
     """
-    Fetch fixtures + diff dettagliato + history opzionale + metrics/events snapshot.
+    Fetch fixtures + diff dettagliato + history opzionale + metrics/events + scoreboard.
     """
     logger = get_logger("scripts.fetch_fixtures")
 
@@ -110,7 +122,6 @@ def main() -> None:
         },
     )
 
-    # Metrics file (ultima run)
     metrics_payload = {
         "summary": summary,
         "change_breakdown": change_breakdown,
@@ -122,7 +133,6 @@ def main() -> None:
     except Exception as exc:  # pragma: no cover
         logger.error("Errore scrittura metrics snapshot: %s", exc)
 
-    # Events file (ultimo delta) - solo se ci sono modifiche o added/removed
     delta_event = {
         "added": added,
         "removed": removed,
@@ -134,6 +144,18 @@ def main() -> None:
             write_last_delta_event(delta_event)
     except Exception as exc:  # pragma: no cover
         logger.error("Errore scrittura delta event: %s", exc)
+
+    # Costruzione scoreboard (usa i dati appena generati)
+    try:
+        scoreboard = build_scoreboard(
+            fixtures=new,
+            metrics=metrics_payload,
+            delta=delta_event if (added or removed or modified) else None,
+        )
+        write_scoreboard(scoreboard)
+        logger.info("scoreboard_generated", extra={"live": scoreboard["live_count"], "upcoming": scoreboard["upcoming_count_next_24h"]})
+    except Exception as exc:  # pragma: no cover
+        logger.error("Errore generazione scoreboard: %s", exc)
 
     if new:
         logger.info("Esempio prima fixture", extra={"first_fixture": new[0]})
