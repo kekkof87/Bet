@@ -53,10 +53,13 @@ class Settings:
     alert_status_sequence: Optional[List[str]]
     alert_include_final: bool
 
-    # NEW (predictions)
     enable_predictions: bool
     predictions_dir: str
     model_baseline_version: str
+
+    # NEW (consensus)
+    enable_consensus: bool
+    consensus_dir: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -126,6 +129,9 @@ class Settings:
         predictions_dir = os.getenv("PREDICTIONS_DIR", "predictions")
         model_baseline_version = os.getenv("MODEL_BASELINE_VERSION", "baseline-v1")
 
+        enable_consensus = _parse_bool(os.getenv("ENABLE_CONSENSUS"), False)
+        consensus_dir = os.getenv("CONSENSUS_DIR", "consensus")
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -153,6 +159,8 @@ class Settings:
             enable_predictions=enable_predictions,
             predictions_dir=predictions_dir,
             model_baseline_version=model_baseline_version,
+            enable_consensus=enable_consensus,
+            consensus_dir=consensus_dir,
         )
 
 
