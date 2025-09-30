@@ -16,6 +16,7 @@ from core.persistence import (
 )
 from core.metrics import write_metrics_snapshot, write_last_delta_event
 from core.scoreboard import build_scoreboard, write_scoreboard
+from core.alerts import build_alerts, write_alerts
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 
 
@@ -30,7 +31,7 @@ def _load_json_if_exists(path: Path) -> Optional[Dict[str, Any]]:
 
 def main() -> None:
     """
-    Fetch fixtures + diff dettagliato + history opzionale + metrics/events + scoreboard.
+    Fetch fixtures + diff dettagliato + history opzionale + metrics/events + alerts + scoreboard.
     """
     logger = get_logger("scripts.fetch_fixtures")
 
@@ -145,7 +146,16 @@ def main() -> None:
     except Exception as exc:  # pragma: no cover
         logger.error("Errore scrittura delta event: %s", exc)
 
-    # Costruzione scoreboard (usa i dati appena generati)
+    # Alerts (score / status transition)
+    try:
+        alerts = build_alerts(modified)
+        if alerts:
+            write_alerts(alerts)
+        logger.info("fixtures_alerts", extra={"alerts_count": len(alerts)})
+    except Exception as exc:  # pragma: no cover
+        logger.error("Errore generazione alerts: %s", exc)
+
+    # Scoreboard
     try:
         scoreboard = build_scoreboard(
             fixtures=new,
