@@ -17,16 +17,15 @@ def _parse_dt(value: Optional[str]) -> Optional[datetime]:
 
 def build_features(fixtures: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Costruisce feature basilari utilizzate dal modello baseline:
-    - is_live: bool
-    - score_diff: (home_score - away_score) oppure 0 se None
-    - hours_to_kickoff: se status=NS e data futura
-    - status_code: mapping semplice di status a numero (per eventuali modelli futuri)
+    Feature basilari per baseline:
+      - is_live
+      - score_diff
+      - hours_to_kickoff (se NS futura)
+      - status_code (assegnato dinamicamente)
     """
     out: List[Dict[str, Any]] = []
     now = datetime.now(timezone.utc)
-    status_map = {}
-    # Assegnazione codici deterministici (ordine di apparizione)
+    status_map: Dict[str, int] = {}
     next_code = 1
 
     def status_code(st: Optional[str]) -> int:
@@ -43,19 +42,15 @@ def build_features(fixtures: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         is_live = st in _LIVE_STATUSES
         hs = fx.get("home_score")
         as_ = fx.get("away_score")
-        if hs is None or as_ is None:
+        try:
+            score_diff = int(hs) - int(as_) if hs is not None and as_ is not None else 0
+        except Exception:
             score_diff = 0
-        else:
-            try:
-                score_diff = int(hs) - int(as_)
-            except Exception:
-                score_diff = 0
 
         dt = _parse_dt(fx.get("date_utc"))
-        hours_to_kickoff: Optional[float] = None
+        hours_to_kickoff = None
         if st == "NS" and dt:
-            delta = (dt - now).total_seconds() / 3600.0
-            hours_to_kickoff = round(delta, 3)
+            hours_to_kickoff = round((dt - now).total_seconds() / 3600.0, 3)
 
         out.append(
             {
