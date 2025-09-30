@@ -40,9 +40,14 @@ class Settings:
     delta_compare_keys: Optional[List[str]]
     fetch_abort_on_empty: bool
 
-    # History / retention
     enable_history: bool
     history_max: int
+
+    # NEW (metrics / events)
+    enable_metrics_file: bool
+    enable_events_file: bool
+    metrics_dir: str
+    events_dir: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -98,6 +103,11 @@ class Settings:
         enable_history = _parse_bool(os.getenv("ENABLE_HISTORY"), False)
         history_max = _int("HISTORY_MAX", 30)
 
+        enable_metrics_file = _parse_bool(os.getenv("ENABLE_METRICS_FILE"), True)
+        enable_events_file = _parse_bool(os.getenv("ENABLE_EVENTS_FILE"), True)
+        metrics_dir = os.getenv("METRICS_DIR", "metrics")
+        events_dir = os.getenv("EVENTS_DIR", "events")
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -114,6 +124,10 @@ class Settings:
             fetch_abort_on_empty=fetch_abort_on_empty,
             enable_history=enable_history,
             history_max=history_max,
+            enable_metrics_file=enable_metrics_file,
+            enable_events_file=enable_events_file,
+            metrics_dir=metrics_dir,
+            events_dir=events_dir,
         )
 
 

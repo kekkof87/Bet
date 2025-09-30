@@ -12,13 +12,13 @@ from core.persistence import (
     save_history_snapshot,
     rotate_history,
 )
+from core.metrics import write_metrics_snapshot, write_last_delta_event
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 
 
 def main() -> None:
     """
-    Fetch fixtures + diff dettagliato (classification) + history opzionale + structured logging
-    con fetch_stats REALI (retry/latency) dal client unificato.
+    Fetch fixtures + diff dettagliato + history opzionale + metrics/events snapshot.
     """
     logger = get_logger("scripts.fetch_fixtures")
 
@@ -109,6 +109,31 @@ def main() -> None:
             "fetch_stats": fetch_stats,
         },
     )
+
+    # Metrics file (ultima run)
+    metrics_payload = {
+        "summary": summary,
+        "change_breakdown": change_breakdown,
+        "fetch_stats": fetch_stats,
+        "total_fixtures": len(new),
+    }
+    try:
+        write_metrics_snapshot(metrics_payload)
+    except Exception as exc:  # pragma: no cover
+        logger.error("Errore scrittura metrics snapshot: %s", exc)
+
+    # Events file (ultimo delta) - solo se ci sono modifiche o added/removed
+    delta_event = {
+        "added": added,
+        "removed": removed,
+        "modified": modified,
+        "change_breakdown": change_breakdown,
+    }
+    try:
+        if added or removed or modified:
+            write_last_delta_event(delta_event)
+    except Exception as exc:  # pragma: no cover
+        logger.error("Errore scrittura delta event: %s", exc)
 
     if new:
         logger.info("Esempio prima fixture", extra={"first_fixture": new[0]})
