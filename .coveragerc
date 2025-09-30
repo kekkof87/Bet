@@ -1,0 +1,24 @@
+[run]
+branch = True
+parallel = False
+source =
+    src
+omit =
+    */__init__.py
+    src/providers/api_football/client.py
+    src/providers/api_football/base.py
+    src/core/fixture_record.py
+    tests/*
+    deprecated/*
+    */.venv/*
+    */site-packages/*
+
+[report]
+show_missing = True
+skip_covered = False
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    raise NotImplementedError
+    pass
+    # no cov
