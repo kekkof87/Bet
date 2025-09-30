@@ -37,7 +37,8 @@ class Settings:
     persist_fixtures: bool
     bet_data_dir: str
 
-    delta_compare_keys: Optional[List[str]]  # NEW
+    delta_compare_keys: Optional[List[str]]
+    fetch_abort_on_empty: bool  # NEW
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -88,6 +89,7 @@ class Settings:
         bet_data_dir = os.getenv("BET_DATA_DIR", "data")
 
         delta_compare_keys = _parse_list(os.getenv("DELTA_COMPARE_KEYS"))
+        fetch_abort_on_empty = _parse_bool(os.getenv("FETCH_ABORT_ON_EMPTY"), False)
 
         return cls(
             api_football_key=key,
@@ -102,6 +104,7 @@ class Settings:
             persist_fixtures=persist_fixtures,
             bet_data_dir=bet_data_dir,
             delta_compare_keys=delta_compare_keys,
+            fetch_abort_on_empty=fetch_abort_on_empty,
         )
 
 
