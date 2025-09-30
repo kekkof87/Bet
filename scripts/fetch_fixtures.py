@@ -15,7 +15,7 @@ from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 
 def main() -> None:
     """
-    Fetch + delta con compare keys opzionali (DELTA_COMPARE_KEYS).
+    Fetch + delta con compare keys opzionali (DELTA_COMPARE_KEYS) e abort su lista vuota se configurato.
     """
     logger = get_logger("scripts.fetch_fixtures")
 
@@ -42,6 +42,10 @@ def main() -> None:
         logger.error("Provider ha restituito tipo inatteso %s, forzo lista vuota", type(new))
         new = []
 
+    if settings.fetch_abort_on_empty and not new:
+        logger.warning("Fetch vuoto e FETCH_ABORT_ON_EMPTY=1: non salvo stato, non aggiorno previous.")
+        return
+
     compare_keys: Optional[List[str]] = settings.delta_compare_keys
 
     try:
@@ -67,13 +71,13 @@ def main() -> None:
 
     summary = summarize_delta(added, removed, modified, len(new))
     if compare_keys:
-        summary_with_keys = {**summary, "compare_keys": ",".join(compare_keys)}
-        logger.info("fixtures_delta: %s", summary_with_keys)
-    else:
-        logger.info("fixtures_delta: %s", summary)
+        summary = {**summary, "compare_keys": ",".join(compare_keys)}
+
+    # Structured logging con extra
+    logger.info("fixtures_delta", extra={"delta_summary": summary})
 
     if new:
-        logger.info("Esempio prima fixture: %s", new[0])
+        logger.info("Esempio prima fixture", extra={"first_fixture": new[0]})
     else:
         logger.info("Nessuna fixture ottenuta.")
 
