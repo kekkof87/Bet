@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 from core.config import get_settings
 from core.logging import get_logger
 from core.persistence import clear_latest_fixtures_file, save_latest_fixtures
+from core.fixture_record import FixtureRecord
 
 from .client import ApiFootballClient
 from .http_client import _client_singleton, get_http_client  # noqa: F401
@@ -14,8 +15,7 @@ log = get_logger(__name__)
 
 class APIFootballFixturesProvider:
     """
-    Provider che usa un client basato su 'requests'.
-    Mantiene compatibilità con test che importano _client_singleton.
+    Provider che usa un client basato su 'requests' con persistenza integrata (legacy).
     """
 
     def __init__(self) -> None:
@@ -58,7 +58,7 @@ class APIFootballFixturesProvider:
 
 class ApiFootballFixturesProvider:
     """
-    Provider httpx che normalizza i record.
+    Provider httpx che normalizza i record in FixtureRecord e restituisce dict coerenti.
     """
 
     def __init__(self, client: Optional[ApiFootballClient] = None) -> None:
@@ -89,27 +89,9 @@ class ApiFootballFixturesProvider:
         if not isinstance(response, list):
             log.warning("Formato inatteso: 'response' non è una lista")
             return []
-        return [self._normalize(item) for item in response]
-
-    @staticmethod
-    def _normalize(item: Dict[str, Any]) -> Dict[str, Any]:
-        fixture = item.get("fixture", {})
-        league = item.get("league", {})
-        teams = item.get("teams", {})
-        goals = item.get("goals", {})
-
-        return {
-            "fixture_id": fixture.get("id"),
-            "league_id": league.get("id"),
-            "season": league.get("season"),
-            "date_utc": fixture.get("date"),
-            "home_team": teams.get("home", {}).get("name"),
-            "away_team": teams.get("away", {}).get("name"),
-            "status": (fixture.get("status") or {}).get("short"),
-            "home_score": goals.get("home"),
-            "away_score": goals.get("away"),
-            "provider": "api_football",
-        }
-
-
-ApiFootballFixturesProvider = ApiFootballFixturesProvider  # compat
+        out: List[Dict[str, Any]] = []
+        for item in response:
+            # item è il blocco completo {"fixture": {...}, "league": {...}, "teams": {...}, "goals": {...}}
+            rec = FixtureRecord.from_api(item)
+            out.append(rec.to_dict())
+        return out
