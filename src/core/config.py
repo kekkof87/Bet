@@ -1,32 +1,252 @@
-# ... (tutto il contenuto precedente invariato FINO alla dataclass Settings)
+import os
+from dataclasses import dataclass
+from functools import lru_cache
+from typing import Optional, List
+
+
+def _parse_bool(value: Optional[str], default: bool) -> bool:
+    if value is None or value == "":
+        return default
+    v = value.strip().lower()
+    if v in {"0", "false", "no"}:
+        return False
+    return True
+
+
+def _parse_list(value: Optional[str]) -> Optional[List[str]]:
+    if not value:
+        return None
+    parts = [p.strip() for p in value.split(",")]
+    clean = [p for p in parts if p]
+    return clean or None
+
 
 @dataclass
 class Settings:
-    # (campi già esistenti)
+    api_football_key: str
+    default_league_id: Optional[int]
+    default_season: Optional[int]
+    log_level: str
+
+    api_football_max_attempts: int
+    api_football_backoff_base: float
+    api_football_backoff_factor: float
+    api_football_backoff_jitter: float
+    api_football_timeout: float
+
+    persist_fixtures: bool
+    bet_data_dir: str
+
+    delta_compare_keys: Optional[List[str]]
+    fetch_abort_on_empty: bool
+
+    enable_history: bool
+    history_max: int
+
+    enable_metrics_file: bool
+    enable_events_file: bool
+    metrics_dir: str
+    events_dir: str
+
+    enable_alerts_file: bool
+    alerts_dir: str
+    alert_status_sequence: Optional[List[str]]
+    alert_include_final: bool
+
+    enable_predictions: bool
+    predictions_dir: str
+    model_baseline_version: str
+    enable_predictions_use_odds: bool
+
+    enable_consensus: bool
+    consensus_dir: str
+    consensus_baseline_weight: float
+
+    enable_telegram_parser: bool
+    telegram_raw_dir: str
+    telegram_parsed_dir: str
+
+    enable_prometheus_exporter: bool
+    prometheus_port: int
+
+    enable_odds_ingestion: bool
+    odds_dir: str
+    odds_provider: str
+    odds_default_source: str
+
+    enable_alert_dispatch: bool
+    alert_dispatch_mode: str
+    alert_webhook_url: Optional[str]
+    alert_telegram_bot_token: Optional[str]
+    alert_telegram_chat_id: Optional[str]
+
     enable_value_detection: bool
     value_min_edge: float
     value_include_adjusted: bool
 
-    # Value alerts (NEW)
     enable_value_alerts: bool
     value_alerts_dir: str
 
     @classmethod
     def from_env(cls) -> "Settings":
-        # ... parsing precedente invariato ...
+        key = os.getenv("API_FOOTBALL_KEY")
+        if not key:
+            raise ValueError("API_FOOTBALL_KEY non impostata. Aggiungi a .env: API_FOOTBALL_KEY=LA_TUA_CHIAVE")
+
+        def _opt_int(name: str) -> Optional[int]:
+            raw = os.getenv(name)
+            if not raw:
+                return None
+            try:
+                return int(raw)
+            except ValueError as e:
+                raise ValueError(f"Variabile {name} deve essere un intero (valore: {raw!r})") from e
+
+        def _int(name: str, default: int) -> int:
+            raw = os.getenv(name)
+            if not raw:
+                return default
+            try:
+                return int(raw)
+            except ValueError as e:
+                raise ValueError(f"Variabile {name} deve essere un intero (valore: {raw!r})") from e
+
+        def _float(name: str, default: float) -> float:
+            raw = os.getenv(name)
+            if not raw:
+                return default
+            try:
+                return float(raw)
+            except ValueError as e:
+                raise ValueError(f"Variabile {name} deve essere un numero (valore: {raw!r})") from e
+
+        league_id = _opt_int("API_FOOTBALL_DEFAULT_LEAGUE_ID")
+        season = _opt_int("API_FOOTBALL_DEFAULT_SEASON")
+        log_level = os.getenv("BET_LOG_LEVEL", "INFO").upper()
+
+        max_attempts = _int("API_FOOTBALL_MAX_ATTEMPTS", 5)
+        backoff_base = _float("API_FOOTBALL_BACKOFF_BASE", 0.5)
+        backoff_factor = _float("API_FOOTBALL_BACKOFF_FACTOR", 2.0)
+        backoff_jitter = _float("API_FOOTBALL_BACKOFF_JITTER", 0.2)
+        timeout = _float("API_FOOTBALL_TIMEOUT", 10.0)
+
+        persist_fixtures = _parse_bool(os.getenv("API_FOOTBALL_PERSIST_FIXTURES"), True)
+        bet_data_dir = os.getenv("BET_DATA_DIR", "data")
+
+        delta_compare_keys = _parse_list(os.getenv("DELTA_COMPARE_KEYS"))
+        fetch_abort_on_empty = _parse_bool(os.getenv("FETCH_ABORT_ON_EMPTY"), False)
+
+        enable_history = _parse_bool(os.getenv("ENABLE_HISTORY"), False)
+        history_max = _int("HISTORY_MAX", 30)
+
+        enable_metrics_file = _parse_bool(os.getenv("ENABLE_METRICS_FILE"), True)
+        enable_events_file = _parse_bool(os.getenv("ENABLE_EVENTS_FILE"), True)
+        metrics_dir = os.getenv("METRICS_DIR", "metrics")
+        events_dir = os.getenv("EVENTS_DIR", "events")
+
+        enable_alerts_file = _parse_bool(os.getenv("ENABLE_ALERTS_FILE"), True)
+        alerts_dir = os.getenv("ALERTS_DIR", "alerts")
+        alert_status_sequence = _parse_list(os.getenv("ALERT_STATUS_SEQUENCE"))
+        alert_include_final = _parse_bool(os.getenv("ALERT_INCLUDE_FINAL"), True)
+
+        enable_predictions = _parse_bool(os.getenv("ENABLE_PREDICTIONS"), False)
+        predictions_dir = os.getenv("PREDICTIONS_DIR", "predictions")
+        model_baseline_version = os.getenv("MODEL_BASELINE_VERSION", "baseline-v1")
+        enable_predictions_use_odds = _parse_bool(os.getenv("ENABLE_PREDICTIONS_USE_ODDS"), False)
+
+        enable_consensus = _parse_bool(os.getenv("ENABLE_CONSENSUS"), False)
+        consensus_dir = os.getenv("CONSENSUS_DIR", "consensus")
+        consensus_baseline_weight = _float("CONSENSUS_BASELINE_WEIGHT", 0.6)
+        if consensus_baseline_weight < 0:
+            consensus_baseline_weight = 0.0
+        if consensus_baseline_weight > 1:
+            consensus_baseline_weight = 1.0
+
+        enable_telegram_parser = _parse_bool(os.getenv("ENABLE_TELEGRAM_PARSER"), False)
+        telegram_raw_dir = os.getenv("TELEGRAM_RAW_DIR", "telegram/raw")
+        telegram_parsed_dir = os.getenv("TELEGRAM_PARSED_DIR", "telegram/parsed")
+
+        enable_prometheus_exporter = _parse_bool(os.getenv("ENABLE_PROMETHEUS_EXPORTER"), False)
+        prometheus_port = _int("PROMETHEUS_PORT", 9100)
+
+        enable_odds_ingestion = _parse_bool(os.getenv("ENABLE_ODDS_INGESTION"), False)
+        odds_dir = os.getenv("ODDS_DIR", "odds")
+        odds_provider = os.getenv("ODDS_PROVIDER", "stub")
+        odds_default_source = os.getenv("ODDS_DEFAULT_SOURCE", "stub-book")
+
+        enable_alert_dispatch = _parse_bool(os.getenv("ENABLE_ALERT_DISPATCH"), False)
+        alert_dispatch_mode = os.getenv("ALERT_DISPATCH_MODE", "stdout").lower()
+        alert_webhook_url = os.getenv("ALERT_WEBHOOK_URL")
+        alert_telegram_bot_token = os.getenv("ALERT_TELEGRAM_BOT_TOKEN")
+        alert_telegram_chat_id = os.getenv("ALERT_TELEGRAM_CHAT_ID")
+
         enable_value_detection = _parse_bool(os.getenv("ENABLE_VALUE_DETECTION"), False)
         value_min_edge = _float("VALUE_MIN_EDGE", 0.05)
         value_include_adjusted = _parse_bool(os.getenv("VALUE_INCLUDE_ADJUSTED"), True)
 
-        # NEW
         enable_value_alerts = _parse_bool(os.getenv("ENABLE_VALUE_ALERTS"), False)
         value_alerts_dir = os.getenv("VALUE_ALERTS_DIR", "value_alerts")
 
         return cls(
-            # ... tutti i parametri precedenti ...
+            api_football_key=key,
+            default_league_id=league_id,
+            default_season=season,
+            log_level=log_level,
+            api_football_max_attempts=max_attempts,
+            api_football_backoff_base=backoff_base,
+            api_football_backoff_factor=backoff_factor,
+            api_football_backoff_jitter=backoff_jitter,
+            api_football_timeout=timeout,
+            persist_fixtures=persist_fixtures,
+            bet_data_dir=bet_data_dir,
+            delta_compare_keys=delta_compare_keys,
+            fetch_abort_on_empty=fetch_abort_on_empty,
+            enable_history=enable_history,
+            history_max=history_max,
+            enable_metrics_file=enable_metrics_file,
+            enable_events_file=enable_events_file,
+            metrics_dir=metrics_dir,
+            events_dir=events_dir,
+            enable_alerts_file=enable_alerts_file,
+            alerts_dir=alerts_dir,
+            alert_status_sequence=alert_status_sequence,
+            alert_include_final=alert_include_final,
+            enable_predictions=enable_predictions,
+            predictions_dir=predictions_dir,
+            model_baseline_version=model_baseline_version,
+            enable_predictions_use_odds=enable_predictions_use_odds,
+            enable_consensus=enable_consensus,
+            consensus_dir=consensus_dir,
+            consensus_baseline_weight=consensus_baseline_weight,
+            enable_telegram_parser=enable_telegram_parser,
+            telegram_raw_dir=telegram_raw_dir,
+            telegram_parsed_dir=telegram_parsed_dir,
+            enable_prometheus_exporter=enable_prometheus_exporter,
+            prometheus_port=prometheus_port,
+            enable_odds_ingestion=enable_odds_ingestion,
+            odds_dir=odds_dir,
+            odds_provider=odds_provider,
+            odds_default_source=odds_default_source,
+            enable_alert_dispatch=enable_alert_dispatch,
+            alert_dispatch_mode=alert_dispatch_mode,
+            alert_webhook_url=alert_webhook_url,
+            alert_telegram_bot_token=alert_telegram_bot_token,
+            alert_telegram_chat_id=alert_telegram_chat_id,
             enable_value_detection=enable_value_detection,
             value_min_edge=value_min_edge,
             value_include_adjusted=value_include_adjusted,
             enable_value_alerts=enable_value_alerts,
             value_alerts_dir=value_alerts_dir,
         )
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    return Settings.from_env()
+
+
+def _reset_settings_cache_for_tests() -> None:
+    get_settings.cache_clear()
+
+
+__all__ = ["Settings", "get_settings", "_reset_settings_cache_for_tests"]
