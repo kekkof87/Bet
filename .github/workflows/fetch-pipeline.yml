@@ -1,0 +1,71 @@
+name: Fetch Pipeline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "5 * * * *"   # ogni ora al minuto 5 (UTC) -> modifica se vuoi meno frequente
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: fetch-pipeline
+  cancel-in-progress: true
+
+jobs:
+  fetch-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read   # solo lettura (non servono write se non fai commit)
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+            python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install -e .; fi
+
+      - name: Run tests (optional)
+        run: |
+          pytest -q || exit 1
+
+      - name: Run fetch pipeline
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          ENABLE_ODDS_INGESTION: ${{ vars.ENABLE_ODDS_INGESTION }}
+          ENABLE_PREDICTIONS: ${{ vars.ENABLE_PREDICTIONS }}
+          ENABLE_PREDICTIONS_USE_ODDS: ${{ vars.ENABLE_PREDICTIONS_USE_ODDS }}
+          ENABLE_VALUE_DETECTION: ${{ vars.ENABLE_VALUE_DETECTION }}
+          ENABLE_VALUE_ALERTS: ${{ vars.ENABLE_VALUE_ALERTS }}
+          ENABLE_ROI_TRACKING: ${{ vars.ENABLE_ROI_TRACKING }}
+          ENABLE_VALUE_HISTORY: ${{ vars.ENABLE_VALUE_HISTORY }}
+          ROI_MIN_EDGE: ${{ vars.ROI_MIN_EDGE }}
+        run: |
+          python scripts/fetch_fixtures.py
+          ls -R data || true
+
+      - name: Upload data artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-data
+          path: data
+          retention-days: 7
+
+      - name: Print ROI metrics if present
+        run: |
+          if [ -f data/roi/roi_metrics.json ]; then cat data/roi/roi_metrics.json; else echo "No ROI metrics yet"; fi
