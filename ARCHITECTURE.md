@@ -453,3 +453,27 @@ Evoluzioni:
 - Persist DB / DataLake
 - Filtri live-only / pre-match separati
 - Integrazione con ROI tracking (post-match outcome)
+
+### Model Adjust (Iterazione 22)
+Blending diretto delle probabilità baseline con le implied odds all’interno delle predictions.
+
+Flag:
+- ENABLE_MODEL_ADJUST (default false)
+- MODEL_ADJUST_WEIGHT (default 0.7, clamp [0,1]) = peso baseline (1-w mercato)
+
+Per prediction (se odds disponibili e flag attivo):
+- prob_adjusted: probabilità ricalcolate
+- prob invariato (baseline puro)
+- value detection resta basata su prob baseline (next step: versione su adjusted se necessario)
+
+Formula:
+p_adj = w * p_model + (1 - w) * p_implied → normalizzazione → round(6)
+
+Motivazioni:
+- Evita drift eccessivo delle quote quando il modello è stabile.
+- Passo intermedio prima di calibration più sofisticata (Platt / isotonic / bayes blending).
+
+Future evoluzioni:
+- Dynamic weight: diverso se live vs pre-match
+- Confidence factor (varianza modello → peso)
+- Adjust pipeline su consensus invece che singolo modello
