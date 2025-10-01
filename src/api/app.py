@@ -9,6 +9,7 @@ from api.routes.health import router as health_router
 from api.routes.fixtures import router as fixtures_router
 from api.routes.delta import router as delta_router
 from api.routes.scoreboard import router as scoreboard_router
+from api.routes.metrics import router as metrics_router
 from api.routes.predictions import router as predictions_router
 
 logger = get_logger("api.app")
@@ -25,6 +26,7 @@ def create_app() -> FastAPI:
     app.include_router(fixtures_router)
     app.include_router(delta_router)
     app.include_router(scoreboard_router)
+    app.include_router(metrics_router)
     app.include_router(predictions_router)
     return app
 
