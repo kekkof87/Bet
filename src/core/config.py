@@ -56,6 +56,7 @@ class Settings:
     enable_predictions: bool
     predictions_dir: str
     model_baseline_version: str
+    enable_predictions_use_odds: bool
 
     enable_consensus: bool
     consensus_dir: str
@@ -67,7 +68,6 @@ class Settings:
     enable_prometheus_exporter: bool
     prometheus_port: int
 
-    # Odds ingestion
     enable_odds_ingestion: bool
     odds_dir: str
     odds_provider: str
@@ -77,9 +77,7 @@ class Settings:
     def from_env(cls) -> "Settings":
         key = os.getenv("API_FOOTBALL_KEY")
         if not key:
-            raise ValueError(
-                "API_FOOTBALL_KEY non impostata. Aggiungi a .env: API_FOOTBALL_KEY=LA_TUA_CHIAVE"
-            )
+            raise ValueError("API_FOOTBALL_KEY non impostata. Aggiungi a .env: API_FOOTBALL_KEY=LA_TUA_CHIAVE")
 
         def _opt_int(name: str) -> Optional[int]:
             raw = os.getenv(name)
@@ -140,6 +138,7 @@ class Settings:
         enable_predictions = _parse_bool(os.getenv("ENABLE_PREDICTIONS"), False)
         predictions_dir = os.getenv("PREDICTIONS_DIR", "predictions")
         model_baseline_version = os.getenv("MODEL_BASELINE_VERSION", "baseline-v1")
+        enable_predictions_use_odds = _parse_bool(os.getenv("ENABLE_PREDICTIONS_USE_ODDS"), False)
 
         enable_consensus = _parse_bool(os.getenv("ENABLE_CONSENSUS"), False)
         consensus_dir = os.getenv("CONSENSUS_DIR", "consensus")
@@ -183,6 +182,7 @@ class Settings:
             enable_predictions=enable_predictions,
             predictions_dir=predictions_dir,
             model_baseline_version=model_baseline_version,
+            enable_predictions_use_odds=enable_predictions_use_odds,
             enable_consensus=enable_consensus,
             consensus_dir=consensus_dir,
             enable_telegram_parser=enable_telegram_parser,
