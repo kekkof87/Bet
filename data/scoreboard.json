@@ -1,0 +1,20 @@
+{
+  "generated_at": "2025-10-01T14:10:50.009014+00:00",
+  "total": 0,
+  "live_count": 0,
+  "upcoming_count_next_24h": 0,
+  "recent_delta": {
+    "added": 0,
+    "removed": 0,
+    "modified": 0
+  },
+  "change_breakdown": {
+    "score_change": 0,
+    "status_change": 0,
+    "both": 0,
+    "other": 0
+  },
+  "live_fixtures": [],
+  "upcoming_next_24h": [],
+  "last_fetch_total_new": 0
+}

@@ -1,0 +1,9 @@
+{
+  "model_version": "baseline-v1",
+  "count": 0,
+  "enriched_with_odds": false,
+  "value_detection": true,
+  "model_adjust_enabled": false,
+  "model_adjust_weight": null,
+  "predictions": []
+}

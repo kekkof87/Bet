@@ -1,0 +1,21 @@
+{
+  "summary": {
+    "added": 0,
+    "removed": 0,
+    "modified": 0,
+    "total_new": 0
+  },
+  "change_breakdown": {
+    "score_change": 0,
+    "status_change": 0,
+    "both": 0,
+    "other": 0
+  },
+  "fetch_stats": {
+    "attempts": 1,
+    "retries": 0,
+    "latency_ms": 317.72,
+    "last_status": 200
+  },
+  "total_fixtures": 0
+}
