@@ -30,9 +30,9 @@ def create_app() -> FastAPI:
     app.include_router(scoreboard_router)
     app.include_router(metrics_router)
     app.include_router(predictions_router)
+    app.include_router(consensus_router)
+    app.include_router(value_alerts_router)
     return app
 
 
 app = create_app()
-    app.include_router(value_alerts_router)
-app.include_router(consensus_router)
