@@ -126,6 +126,12 @@ def save_metrics(base: Path, metrics: Dict[str, Any]) -> None:
 
 
 def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
+    """
+    Stub ROI tracking:
+    - Genera picks da value_alerts (solo status NS, edge >= soglia)
+    - Settle picks quando status diventa FT
+    - Stake fisso, odds stimate placeholder (2.0) -> TODO: sostituire con odds reali
+    """
     settings = get_settings()
     if not settings.enable_roi_tracking:
         return
@@ -160,21 +166,14 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         if not fx:
             continue
         status = fx.get("status")
-        # Pre-match only (NS)
         if status != "NS":
             continue
         key = (fid, source)
         if key in ledger_index:
-            continue  # già tracciato
+            continue
         side = alert.get("value_side")
-        # Calcolo quota stimata
-        implied_prob = None
-        # Se predictions file arricchito con odds, edge arriva da quell’origine; non riapriamo predictions qui per rapidità.
-        # Usiamo edge solo come filtro, la quota stimata = 1 / max(prob lato, 0.01)
-        # Migliorabile successivamente leggendo odds/consensus per quota reale.
-        implied_prob = max(0.01, 0.5)  # fallback neutro
-        # Mark: se in futuro vogliamo precisione, leggere file predictions e ricavare prob del lato.
-        est_odds = 1 / implied_prob
+        # TODO: integrare odds reali -> per ora odds stimata = 2.0
+        est_odds = 2.0
         pick = {
             "created_at": now_ts,
             "fixture_id": fid,
@@ -183,21 +182,19 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
             "side": side,
             "edge": edge,
             "stake": stake_units,
-            "est_odds": round(est_odds, 4),
+            "est_odds": est_odds,
             "settled": False,
         }
         ledger.append(pick)
         ledger_index[key] = pick
 
-    # Settle picks concluse
+    # Settle picks
     for p in ledger:
         if p.get("settled"):
             continue
         fid = p.get("fixture_id")
         fx = fixtures_map.get(int(fid)) if isinstance(fid, int) else None
-        if not fx:
-            continue
-        if fx.get("status") != "FT":
+        if not fx or fx.get("status") != "FT":
             continue
         outcome = _outcome_from_scores(fx.get("home_score"), fx.get("away_score"))
         if not outcome:
@@ -217,4 +214,7 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     save_ledger(base, ledger)
     metrics = compute_metrics(ledger)
     save_metrics(base, metrics)
-    logger.info("roi_updated", extra={"picks": metrics["total_picks"], "settled": metrics["settled_picks"]})
+    logger.info(
+        "roi_updated",
+        extra={"picks": metrics["total_picks"], "settled": metrics["settled_picks"]},
+    )
