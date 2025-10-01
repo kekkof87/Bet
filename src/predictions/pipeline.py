@@ -14,6 +14,26 @@ from predictions.value import compute_value_block
 logger = get_logger("predictions.pipeline")
 
 
+def _blend_adjust(
+    base_prob: Dict[str, float],
+    odds_implied: Dict[str, float],
+    weight: float,
+) -> Dict[str, float]:
+    keys = ["home_win", "draw", "away_win"]
+    w = max(0.0, min(1.0, weight))
+    w_market = 1.0 - w
+    out: Dict[str, float] = {}
+    for k in keys:
+        pb = float(base_prob.get(k, 0.0))
+        pi = float(odds_implied.get(k, pb))
+        out[k] = w * pb + w_market * pi
+    s = sum(out.values())
+    if s > 0:
+        for k in keys:
+            out[k] = out[k] / s
+    return {k: round(v, 6) for k, v in out.items()}
+
+
 def run_baseline_predictions(fixtures: List[Dict[str, Any]]) -> Optional[Path]:
     settings = get_settings()
     if not settings.enable_predictions:
@@ -31,6 +51,7 @@ def run_baseline_predictions(fixtures: List[Dict[str, Any]]) -> Optional[Path]:
 
     enriched_odds = any("odds_implied" in f for f in features)
     feat_map = {f["fixture_id"]: f for f in features if f.get("fixture_id") is not None}
+    model_adjust_applied = settings.enable_model_adjust and enriched_odds
 
     final_predictions: List[Dict[str, Any]] = []
     for pred in preds:
@@ -55,6 +76,16 @@ def run_baseline_predictions(fixtures: List[Dict[str, Any]]) -> Optional[Path]:
                     )
                     if vb:
                         pred["value"] = vb
+                # Model adjust
+                if model_adjust_applied and "odds_implied" in attach:
+                    try:
+                        pred["prob_adjusted"] = _blend_adjust(
+                            pred.get("prob", {}),
+                            attach["odds_implied"],
+                            settings.model_adjust_weight,
+                        )
+                    except Exception:  # pragma: no cover
+                        pass
         final_predictions.append(pred)
 
     payload: Dict[str, Any] = {
@@ -62,6 +93,8 @@ def run_baseline_predictions(fixtures: List[Dict[str, Any]]) -> Optional[Path]:
         "count": len(final_predictions),
         "enriched_with_odds": enriched_odds,
         "value_detection": settings.enable_value_detection,
+        "model_adjust_enabled": settings.enable_model_adjust,
+        "model_adjust_weight": settings.model_adjust_weight if settings.enable_model_adjust else None,
         "predictions": final_predictions,
     }
 
@@ -77,6 +110,7 @@ def run_baseline_predictions(fixtures: List[Dict[str, Any]]) -> Optional[Path]:
             "model_version": settings.model_baseline_version,
             "enriched_odds": enriched_odds,
             "value_detection": settings.enable_value_detection,
+            "model_adjust": model_adjust_applied,
         },
     )
     return target
