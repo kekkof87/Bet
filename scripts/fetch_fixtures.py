@@ -20,6 +20,7 @@ from core.alerts import build_alerts, write_alerts
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 from predictions.pipeline import run_baseline_predictions
 from consensus.pipeline import run_consensus_pipeline
+from odds.pipeline import run_odds_pipeline
 from monitoring.prometheus_exporter import update_prom_metrics
 
 if TYPE_CHECKING:
@@ -190,7 +191,13 @@ def main() -> None:
     except Exception as exc:  # pragma: no cover
         logger.error("Errore consensus pipeline: %s", exc)
 
-    # Prometheus exporter one-shot update
+    # Odds ingestion (stub)
+    try:
+        run_odds_pipeline(cast(List[Dict[str, Any]], new))
+    except Exception as exc:  # pragma: no cover
+        logger.error("Errore odds pipeline: %s", exc)
+
+    # Prometheus exporter one-shot
     try:
         update_prom_metrics()
     except Exception as exc:  # pragma: no cover
