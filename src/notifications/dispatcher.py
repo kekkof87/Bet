@@ -49,7 +49,7 @@ def _format_event_line(ev: Dict[str, Any]) -> str:
 
 def _dispatch_stdout(events: List[Dict[str, Any]]) -> None:
     for ev in events:
-        logger.info("alert_dispatch_stdout", extra={"msg": _format_event_line(ev)})
+        logger.info("alert_dispatch_stdout", extra={"alert_line": _format_event_line(ev)})
 
 
 def _dispatch_webhook(events: List[Dict[str, Any]], url: str) -> None:
