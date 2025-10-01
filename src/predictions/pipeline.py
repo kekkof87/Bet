@@ -9,19 +9,12 @@ from core.config import get_settings
 from core.logging import get_logger
 from predictions.features import build_features
 from predictions.model import BaselineModel
+from predictions.value import compute_value_block
 
 logger = get_logger("predictions.pipeline")
 
 
 def run_baseline_predictions(fixtures: List[Dict[str, Any]]) -> Optional[Path]:
-    """
-    Esegue la baseline prediction pipeline:
-    - build features (+ odds enrichment opzionale)
-    - inferenza modello baseline
-    - allega blocco odds (se enrichment presente)
-    - scrive latest_predictions.json
-    Ritorna il Path del file scritto (o None se disabilitato).
-    """
     settings = get_settings()
     if not settings.enable_predictions:
         logger.info("Predictions disabilitate (ENABLE_PREDICTIONS=0)")
@@ -36,13 +29,13 @@ def run_baseline_predictions(fixtures: List[Dict[str, Any]]) -> Optional[Path]:
     model = BaselineModel(version=settings.model_baseline_version)
     preds = model.predict(features)
 
-    enriched = any("odds_implied" in f for f in features)
+    enriched_odds = any("odds_implied" in f for f in features)
     feat_map = {f["fixture_id"]: f for f in features if f.get("fixture_id") is not None}
 
     final_predictions: List[Dict[str, Any]] = []
     for pred in preds:
         fid = pred.get("fixture_id")
-        if enriched and fid in feat_map:
+        if enriched_odds and fid in feat_map:
             fdata = feat_map[fid]
             attach: Dict[str, Any] = {}
             if "odds_original" in fdata:
@@ -53,12 +46,22 @@ def run_baseline_predictions(fixtures: List[Dict[str, Any]]) -> Optional[Path]:
                 attach["odds_margin"] = fdata["odds_margin"]
             if attach:
                 pred["odds"] = attach
+                # Value detection
+                if "odds_implied" in attach:
+                    vb = compute_value_block(
+                        pred.get("prob", {}),
+                        attach["odds_implied"],
+                        attach.get("odds_margin"),
+                    )
+                    if vb:
+                        pred["value"] = vb
         final_predictions.append(pred)
 
     payload: Dict[str, Any] = {
         "model_version": settings.model_baseline_version,
         "count": len(final_predictions),
-        "enriched_with_odds": enriched,
+        "enriched_with_odds": enriched_odds,
+        "value_detection": settings.enable_value_detection,
         "predictions": final_predictions,
     }
 
@@ -72,7 +75,8 @@ def run_baseline_predictions(fixtures: List[Dict[str, Any]]) -> Optional[Path]:
         extra={
             "count": len(final_predictions),
             "model_version": settings.model_baseline_version,
-            "enriched_odds": enriched,
+            "enriched_odds": enriched_odds,
+            "value_detection": settings.enable_value_detection,
         },
     )
     return target
