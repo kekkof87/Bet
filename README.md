@@ -1,131 +1,323 @@
-# Bet Ingestion Foundation
+# Bet Data Pipeline (ex “Bet Ingestion Foundation”)
 
-Base di partenza per il sistema di ingestione dati (fixtures, odds, ecc.).
+Pipeline incrementale per l’ingestione e l’elaborazione di fixtures di calcio (API-Football), con:
+- Fetch con retry/backoff e telemetria
+- Normalizzazione e validazione soft delle date
+- Diff incrementale (added / removed / modified + classification score/status)
+- Persistenza (latest / previous / history rotante)
+- Metrics + Delta event + Alerts (score/status transition)
+- Scoreboard aggregato
+- Predictions baseline (stub probabilità)
+- Consensus & ranking (stub)
+- API read‑only (FastAPI) per consumo esterno
+
+---
 
 ## Quick Start
 
-```
-make bootstrap     # crea virtualenv e installa dipendenze
-make run           # avvia l'app (loop schedulato)
-make smoke         # esegue test di fumo
-```
-
-Variabili d'ambiente (vedi `.env.example`):
-
-- `LOG_LEVEL` (default INFO)
-- `SCHEDULER_INTERVAL_SECONDS` (default 5)
-- `PROVIDER_MOCK_ENABLED` (true/false)
-- `DRY_RUN=1` (se impostato esegue un solo ciclo e termina)
-
-## Struttura
+Se usi `make` (adatta se il nuovo progetto non usa più bootstrap originale):
 
 ```
-Makefile
-requirements.txt
-.env.example
-migrations/
-  0001_init.sql
+make bootstrap     # opzionale: crea virtualenv e installa dipendenze
+make test          # esegue test (alias se definito)
+python -m scripts.fetch_fixtures   # esegue il fetch (richiede API_FOOTBALL_KEY)
+python -m api.app                  # avvia API su :8000
+```
+
+Oppure manuale:
+
+```
+pip install -r requirements.txt
+export API_FOOTBALL_KEY=...
+python -m scripts.fetch_fixtures
+python -m api.app
+```
+
+---
+
+## Pipeline / Flusso
+
+1. Fetch (retry/backoff) dal provider API-Football
+2. Normalizzazione record + validazione soft `date_utc` (flag `valid_date_utc`)
+3. Diff incrementale + classification (score_change / status_change / both / other)
+4. Persistenza:
+   - `fixtures_previous.json`
+   - `fixtures_latest.json`
+   - snapshot storico (se abilitato)
+5. Metrics (`metrics/last_run.json`) + Delta event (`events/last_delta.json`)
+6. Alerts (`alerts/last_alerts.json`) su score/status transitions
+7. Scoreboard (`scoreboard.json`)
+8. Predictions baseline (`predictions/latest_predictions.json`) – stub
+9. Consensus & ranking (`consensus/consensus.json`) – stub
+10. API read‑only (FastAPI)
+
+---
+
+## Output Principali
+
+| File | Descrizione |
+|------|-------------|
+| data/fixtures_latest.json | Stato corrente normalizzato |
+| data/fixtures_previous.json | Stato precedente |
+| data/history/*.json | Snapshot storici (rotazione su HISTORY_MAX) |
+| data/metrics/last_run.json | Telemetria ultima run (summary + fetch_stats) |
+| data/events/last_delta.json | Ultimo delta non vuoto |
+| data/alerts/last_alerts.json | Eventi score_update / status_transition |
+| data/scoreboard.json | Aggregato sintetico (live / upcoming / delta counts) |
+| data/predictions/latest_predictions.json | Probabilità baseline (se abilitate) |
+| data/consensus/consensus.json | Consensus & ranking stub (se abilitato) |
+
+---
+
+## API (FastAPI)
+
+Avvio:
+```
+python -m api.app  # http://localhost:8000/health
+```
+
+| Endpoint | Funzione |
+|----------|----------|
+| /health | Stato servizio |
+| /fixtures | Fixtures correnti (lista) |
+| /delta | Ultimo delta + summary |
+| /metrics | Snapshot metrics ultima run |
+| /scoreboard | Aggregato scoreboard |
+
+Futuri miglioramenti: filtri query (`?status=LIVE`), paginazione, timeframe configurabile.
+
+---
+
+## Diff & Classification
+
+- Compare keys opzionali via `DELTA_COMPARE_KEYS` (es: `home_score,away_score,status`).
+- Classification:
+  - score_change: cambia uno dei punteggi
+  - status_change: cambia solo lo status
+  - both: punteggio e status insieme
+  - other: altre differenze (se non limitato da compare keys)
+
+Esempio `delta_summary`:
+```json
+{
+  "added": 2,
+  "removed": 1,
+  "modified": 3,
+  "total_new": 120,
+  "compare_keys": "home_score,away_score,status"
+}
+```
+
+---
+
+## Alerts
+
+Generati su:
+- Variazione punteggio → `score_update`
+- Transizione status forward (sequenza default: NS → 1H → HT → 2H → ET → P → AET → FT) → `status_transition`
+
+File: `alerts/last_alerts.json`
+
+Disabilitazione: `ENABLE_ALERTS_FILE=false`
+
+Personalizzazione:
+- `ALERT_STATUS_SEQUENCE` (CSV)
+- `ALERT_INCLUDE_FINAL=false` per ignorare FT
+
+---
+
+## Predictions (Baseline Stub)
+
+Caratteristiche:
+- Features minime: is_live, score_diff, hours_to_kickoff, status_code
+- Probabilità base: home=0.33, draw=0.33, away=0.34 (aggiustate con score_diff)
+- File output: `predictions/latest_predictions.json`
+- Abilitazione: `ENABLE_PREDICTIONS=1`
+
+---
+
+## Consensus & Ranking (Stub)
+
+- Usa direttamente le probabilità baseline
+- `consensus_confidence = max(home_win, draw, away_win)`
+- `ranking_score = home_win - away_win`
+- File: `consensus/consensus.json`
+- Abilitazione: `ENABLE_CONSENSUS=1`
+
+---
+
+## Variabili d’Ambiente Principali
+
+| Variabile | Default | Effetto |
+|-----------|---------|---------|
+| API_FOOTBALL_KEY | (obbligatoria) | Chiave API-Football |
+| BET_DATA_DIR | data | Directory base output |
+| API_FOOTBALL_MAX_ATTEMPTS | 5 | Numero tentativi fetch |
+| API_FOOTBALL_BACKOFF_BASE | 0.5 | Backoff base (s) |
+| API_FOOTBALL_BACKOFF_FACTOR | 2.0 | Fattore crescita backoff |
+| API_FOOTBALL_BACKOFF_JITTER | 0.2 | Jitter random |
+| API_FOOTBALL_TIMEOUT | 10.0 | Timeout HTTP (s) |
+| DELTA_COMPARE_KEYS | (vuoto) | Campi usati per diff |
+| FETCH_ABORT_ON_EMPTY | false | Ignora fetch vuoto |
+| ENABLE_HISTORY | false | Attiva snapshot storici |
+| HISTORY_MAX | 30 | Numero snapshot mantenuti |
+| ENABLE_METRICS_FILE | true | Scrive metrics/last_run.json |
+| ENABLE_EVENTS_FILE | true | Scrive events/last_delta.json |
+| ENABLE_ALERTS_FILE | true | Scrive alerts/last_alerts.json |
+| ALERT_STATUS_SEQUENCE | (default interno) | Sequenza status |
+| ALERT_INCLUDE_FINAL | true | Includi transizioni verso FT |
+| ENABLE_PREDICTIONS | false | Genera predictions baseline |
+| PREDICTIONS_DIR | predictions | Cartella predictions |
+| MODEL_BASELINE_VERSION | baseline-v1 | Versione modello baseline |
+| ENABLE_CONSENSUS | false | Genera consensus |
+| CONSENSUS_DIR | consensus | Cartella consensus |
+
+---
+
+## Telemetria Fetch
+
+`fetch_stats` esempio:
+```json
+{
+  "attempts": 1,
+  "retries": 0,
+  "latency_ms": 123.4,
+  "last_status": 200
+}
+```
+
+---
+
+## Scoreboard
+
+File sintetico `scoreboard.json`:
+- total, live_count, upcoming_count_next_24h
+- recent_delta (conteggi)
+- change_breakdown
+- subset `live_fixtures` e `upcoming_next_24h` (limite 10)
+- last_fetch_total_new
+
+---
+
+## Struttura Progetto (attuale)
+
+```
 scripts/
-  smoke_test.sh
-src/
+  fetch_fixtures.py
+api/
   app.py
+src/
   core/
-    contracts.py
+    config.py
+    diff.py
+    normalization.py
+    persistence.py
+    metrics.py
+    alerts.py
+    scoreboard.py
   providers/
-    __init__.py
-    mock_provider.py
-    registry.py
-  scheduler/
-    basic_scheduler.py
+    api_football/
+      http_client.py
+      fixtures_provider.py
+  predictions/
+    features.py
+    model.py
+    pipeline.py
+  consensus/
+    pipeline.py
+tests/
+  ... (unit e integrazione)
 ```
 
-## Flusso di esecuzione
+---
 
-1. `app.py` carica configurazione ed environment.
-2. Registra i provider (per ora solo `MockProvider`).
-3. Avvia `BasicScheduler`.
-4. Ogni intervallo: invoca tutti i provider e stampa log strutturato (linee `PROVIDER_FETCH_OK`).
-5. In modalità `DRY_RUN=1` esegue una sola iterazione e termina (usato dallo smoke test).
+## Qualità & CI
 
-## Roadmap (estratto)
+- Pytest + coverage (threshold 80% via `--cov-fail-under=80`)
+- Ruff (lint)
+- mypy (type checking)
+- Workflow GitHub Actions:
+  - tests / lint / typecheck / coverage
+  - fetch (schedule + manual)
+- Structured logging JSON
 
-- Provider reale (API-Football)
-- Strato persistenza (db + repository + migrazioni)
-- Health & diagnostics endpoints
-- Logging JSON + masking segreti
-- Retry / circuit breaker provider
-- Notifiche (Telegram / webhook)
-- Metrics & analytics base
-- Docker + Compose
-- CI (lint, test, build image)
-- Documentazione architetturale (ARCHITECTURE.md / PROVIDERS.md / SECURITY.md)
-
-## Estendere un Provider
-
-Implementare un oggetto con:
-```python
-class MyProvider:
-    def name(self) -> str: ...
-    def fetch_fixtures(self) -> list[dict]: ...
+Esempio riga log delta:
+```json
+{
+  "msg": "fixtures_delta",
+  "delta_summary": {"added":2,"removed":1,"modified":3,"total_new":120},
+  "change_breakdown":{"score_change":2,"status_change":1,"both":0,"other":0},
+  "fetch_stats":{"attempts":1,"retries":0,"latency_ms":250.7,"last_status":200}
+}
 ```
 
-Registrarlo:
-```python
-from providers.registry import ProviderRegistry
-ProviderRegistry.add(MyProvider())
+---
+
+## Sviluppo
+
+### Test & Lint
 ```
-
-## Licenza
-TBD
-
-## Environment variables
-
-Configure these variables in your local environment (via a `.env` file or shell exports) and in CI as needed:
-
-- `API_FOOTBALL_KEY`: your API-Football key (keep it secret; in GitHub, store it as Actions secret `API_FOOTBALL_KEY`).
-- `API_FOOTBALL_PERSIST_FIXTURES` (default: `true`): if `true`, saves the latest fixtures to `data/fixtures_latest.json`.
-- `BET_DATA_DIR` (default: `data`): directory where persisted files are written.
-
-## CI Workflows
-
-- Tests (`.github/workflows/tests.yml`)
-  - Triggers: on push to `main`, on pull requests, and manually via "Run workflow".
-  - Runs `pytest` on Ubuntu with Python 3.11.
-
-- Fetch fixtures (`.github/workflows/fetch-fixtures.yml`)
-  - Triggers: daily at 03:00 UTC (05:00 Naples during CEST) and manually via "Run workflow".
-  - Inputs: optional `date` in `YYYY-MM-DD`.
-  - Requirements: repository Actions secret `API_FOOTBALL_KEY` must be set.
-  - Artifacts: uploads `fixtures-latest` containing `data/fixtures_latest.json` when present.
-## Development
-
-### Test e Lint
-```bash
-# Eseguire test
 pytest -q
-
-# Lint (Ruff)
 ruff check .
-
-# Type check (mypy)
 mypy --pretty src
 ```
 
-### Variabili d’ambiente chiave
-- `API_FOOTBALL_KEY`: chiave per API-Football (necessaria per chiamate reali).
-- `API_FOOTBALL_PERSIST_FIXTURES` (default `true`): se `true`, salva l’ultima risposta in `data/fixtures_latest.json`.
-- `BET_DATA_DIR` (default `data`): directory di output. I test usano una cartella temporanea; manteniamo in sync anche `data/fixtures_latest.json` quando opportuno.
-- `API_FOOTBALL_MAX_ATTEMPTS`, `API_FOOTBALL_BACKOFF_BASE`, `API_FOOTBALL_BACKOFF_FACTOR`, `API_FOOTBALL_BACKOFF_JITTER`, `API_FOOTBALL_TIMEOUT`: controllano retry/backoff del client.
+### Esecuzione manuale fetch
+```
+export API_FOOTBALL_KEY=...
+python -m scripts.fetch_fixtures
+```
 
-### Provider
-- `APIFootballFixturesProvider` (requests): implementa retry/backoff, integrazione con persistenza.
-- `ApiFootballFixturesProvider` (httpx): restituisce un output normalizzato (usato nei test di normalizzazione).
+### Avvio API
+```
+python -m api.app
+```
 
-### Script utili
-- `scripts/fetch_fixtures.py`: estrae fixtures tramite provider reale (richiede `API_FOOTBALL_KEY`).
-- `scripts/dump_latest_fixtures.py`: stampa il contenuto persistito (se presente).
+---
 
-### CI
-- Workflow `tests`: esegue la suite di test.
-- Workflow `lint`: esegue Ruff.
-- Workflow `typecheck`: esegue mypy.
+## Estendere
+
+### Aggiungere Modello di Predictions Futuro
+1. Creare nuovo file in `predictions/` (es. `advanced_model.py`).
+2. Integrare in nuova pipeline o aggiornare `run_baseline_predictions`.
+3. Salvare in un file distinto (es. `latest_predictions_v2.json`).
+
+### Aggiungere Provider Extra
+1. Implementare classe con metodo `fetch_fixtures()`.
+2. Integrare in orchestrazione (eventuale step multi-provider futuro).
+
+---
+
+## Roadmap (Prossimi Passi)
+
+| Area | Prossimo Step | Stato |
+|------|---------------|-------|
+| Alerts Dispatch | Integrazione Telegram / Webhook | TODO |
+| Odds Integration | Parsing quote pre‑match | TODO |
+| Advanced Predictions | Modelli multipli + feature arricchite | TODO |
+| Consensus Evoluto | Pesi dinamici multi-modello | TODO |
+| Monitoring | Prometheus /metrics + dashboard Grafana | TODO |
+| Storage Analitico | DuckDB / Postgres per query storiche | TODO |
+| Telegram Parser | Mapping messaggi live a fixtures | TODO |
+| Security | Firma / hash snapshots | TODO |
+
+---
+
+## Contributi
+
+PR incrementali e piccole: preferibile una feature per PR.  
+Assicurati che i workflow CI siano verdi prima del merge.
+
+---
+
+## Licenza
+
+TBD (imposta ad esempio MIT se appropriato).
+
+---
+
+## Note Storiche
+
+Il progetto nasce come “Bet Ingestion Foundation” con un loop schedulato mock; evoluto ora in una pipeline strutturata basata su file JSON + API read‑only, per iterare rapidamente prima dell’introduzione di un data store relazionale o colonnare.
+
+---

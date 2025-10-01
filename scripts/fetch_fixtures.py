@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast, TYPE_CHECKING
 import json
 from pathlib import Path
 
@@ -20,6 +20,10 @@ from core.alerts import build_alerts, write_alerts
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 from predictions.pipeline import run_baseline_predictions
 from consensus.pipeline import run_consensus_pipeline
+
+if TYPE_CHECKING:
+    # Usa il tipo atteso dalle funzioni di persistence
+    from core.models import FixtureRecord  # noqa: F401
 
 
 def _load_json_if_exists(path: Path) -> Optional[Dict[str, Any]]:
@@ -45,32 +49,33 @@ def main() -> None:
         logger.error("Aggiungi API_FOOTBALL_KEY nel file .env oppure come variabile ambiente.")
         return
 
-    old: List[Dict[str, Any]] = load_latest_fixtures()
-    if not isinstance(old, list):
+    loaded_old = load_latest_fixtures()
+    if not isinstance(loaded_old, list):
         logger.warning("Snapshot precedente non valido, uso old=[]")
-        old = []
+        loaded_old = []
+    old = cast(List["FixtureRecord"], loaded_old)
 
     logger.info("Avvio fetch fixtures (API-Football)...")
     provider = ApiFootballFixturesProvider()
-    new = provider.fetch_fixtures(
+    loaded_new = provider.fetch_fixtures(
         league_id=settings.default_league_id,
         season=settings.default_season,
         date=None,
     )
-    if not isinstance(new, list):
-        logger.error("Provider ha restituito tipo inatteso %s, forzo lista vuota", type(new))
-        new = []
+    if not isinstance(loaded_new, list):
+        logger.error("Provider ha restituito tipo inatteso %s, forzo lista vuota", type(loaded_new))
+        loaded_new = []
+    new = cast(List["FixtureRecord"], loaded_new)
 
     if settings.fetch_abort_on_empty and not new:
         logger.warning("Fetch vuoto e FETCH_ABORT_ON_EMPTY=1: abort senza aggiornare stato.")
         return
 
     compare_keys: Optional[List[str]] = settings.delta_compare_keys
-
     try:
         detailed = diff_fixtures_detailed(
-            old,
-            new,
+            cast(List[Dict[str, Any]], old),
+            cast(List[Dict[str, Any]], new),
             compare_keys=compare_keys if compare_keys else None,
             classify=True,
         )
@@ -111,7 +116,8 @@ def main() -> None:
         except Exception as exc:  # pragma: no cover
             logger.error("Errore history: %s", exc)
 
-    summary = summarize_delta(added, removed, modified, len(new))
+    base_summary = summarize_delta(added, removed, modified, len(new))
+    summary: Dict[str, Any] = dict(base_summary)
     if compare_keys:
         summary["compare_keys"] = ",".join(compare_keys)
 
@@ -161,7 +167,7 @@ def main() -> None:
     # Scoreboard
     try:
         scoreboard = build_scoreboard(
-            fixtures=new,
+            fixtures=cast(List[Dict[str, Any]], new),
             metrics=metrics_payload,
             delta=delta_event if (added or removed or modified) else None,
         )
@@ -178,7 +184,7 @@ def main() -> None:
 
     # Predictions (baseline)
     try:
-        run_baseline_predictions(new)
+        run_baseline_predictions(cast(List[Dict[str, Any]], new))
     except Exception as exc:  # pragma: no cover
         logger.error("Errore predictions baseline: %s", exc)
 
@@ -189,7 +195,7 @@ def main() -> None:
         logger.error("Errore consensus pipeline: %s", exc)
 
     if new:
-        logger.info("Esempio prima fixture", extra={"first_fixture": new[0]})
+        logger.info("Esempio prima fixture", extra={"first_fixture": cast(List[Dict[str, Any]], new)[0]})
     else:
         logger.info("Nessuna fixture ottenuta.")
 
