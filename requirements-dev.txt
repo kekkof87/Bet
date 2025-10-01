@@ -1,0 +1,7 @@
+# Dipendenze runtime (se hai già un requirements.txt puoi includerlo)
+-r requirements.txt
+
+# Test / strumenti
+pytest
+httpx
+prometheus-client
