@@ -57,9 +57,13 @@ class Settings:
     predictions_dir: str
     model_baseline_version: str
 
-    # NEW (consensus)
     enable_consensus: bool
     consensus_dir: str
+
+    # Telegram parser (nuovo)
+    enable_telegram_parser: bool
+    telegram_raw_dir: str
+    telegram_parsed_dir: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -132,6 +136,10 @@ class Settings:
         enable_consensus = _parse_bool(os.getenv("ENABLE_CONSENSUS"), False)
         consensus_dir = os.getenv("CONSENSUS_DIR", "consensus")
 
+        enable_telegram_parser = _parse_bool(os.getenv("ENABLE_TELEGRAM_PARSER"), False)
+        telegram_raw_dir = os.getenv("TELEGRAM_RAW_DIR", "telegram/raw")
+        telegram_parsed_dir = os.getenv("TELEGRAM_PARSED_DIR", "telegram/parsed")
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -161,6 +169,9 @@ class Settings:
             model_baseline_version=model_baseline_version,
             enable_consensus=enable_consensus,
             consensus_dir=consensus_dir,
+            enable_telegram_parser=enable_telegram_parser,
+            telegram_raw_dir=telegram_raw_dir,
+            telegram_parsed_dir=telegram_parsed_dir,
         )
 
 
