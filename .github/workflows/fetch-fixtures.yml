@@ -23,39 +23,80 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: List repository (debug)
+        run: |
+          echo "== ROOT FILES =="
+          ls -1a .
+          echo "== FIRST TWO LEVELS (preview) =="
+          find . -maxdepth 2 -type f -print | head -n 200
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
       - name: Cache pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements*.txt', 'pyproject.toml', 'setup.cfg') }}
           restore-keys: |
             pip-${{ runner.os }}-
 
-      - name: Install project (editable if possible)
+      - name: Install dependencies (robust)
         run: |
-          if [ -f pyproject.toml ] || [ -f setup.cfg ] || [ -f setup.py ]; then
-            pip install -e .
+          set -e
+          echo "== Installation start =="
+          if [ -f requirements-dev.txt ]; then
+            echo "[INFO] Using requirements-dev.txt"
+            python -m pip install -r requirements-dev.txt
           elif [ -f requirements.txt ]; then
-            pip install -r requirements.txt
+            echo "[INFO] Using requirements.txt"
+            python -m pip install -r requirements.txt
           else
-            echo "Nessun file di installazione trovato, installerò solo dipendenze base (se servono)."
+            echo "[WARN] No requirements*.txt found, installing minimal base"
+            python -m pip install fastapi uvicorn pydantic requests
           fi
-          pip list | grep -i bet || true
+          # Garantisce sempre le dipendenze test / monitoring
+          python -m pip install --upgrade pytest httpx prometheus-client
+          echo "== Show key packages =="
+          python -m pip show pytest || true
+          python -m pip show httpx || true
+          python -m pip show prometheus-client || true
+          echo "== Pip freeze (preview) =="
+          pip freeze | head -n 60
 
       - name: Export PYTHONPATH (src layout)
+        run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+
+      - name: Smoke import
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
-          echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+          python - <<'EOF'
+          import sys
+          print("sys.executable:", sys.executable)
+          print("PYTHONPATH contains src? ->", any(p.endswith("/src") for p in sys.path))
+          try:
+              import pytest
+              print("pytest version:", pytest.__version__)
+          except Exception as e:
+              print("FAILED import pytest:", e)
+          try:
+              import core
+              print("core import OK:", core.__file__)
+          except Exception as e:
+              print("FAILED import core:", e)
+          EOF
 
       - name: Run tests (optional)
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
-          pytest -q || exit 1
+          python -m pytest -q
 
       - name: Run fetch pipeline
         env:
@@ -70,10 +111,10 @@ jobs:
           ENABLE_VALUE_HISTORY: ${{ vars.ENABLE_VALUE_HISTORY }}
           ROI_MIN_EDGE: ${{ vars.ROI_MIN_EDGE }}
         run: |
-            echo "PYTHONPATH=$PYTHONPATH"
-            python scripts/fetch_fixtures.py
-            echo "Lista file generati sotto data/:"
-            find data -maxdepth 4 -type f -print || true
+          echo "== Running fetch pipeline =="
+          python scripts/fetch_fixtures.py
+          echo "== Generated data files =="
+          find data -maxdepth 4 -type f -print || true
 
       - name: Show key outputs
         if: always()
@@ -85,14 +126,14 @@ jobs:
             data/odds/odds_latest.json; do
             if [ -f "$f" ]; then
               echo "----- $f -----"
-              sed -e 's/{/{\n/g' -e 's/}/\n}/g' "$f" | head -n 60
+              head -n 120 "$f"
             fi
           done
 
       - name: Upload data artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pipeline-data
-            # Se vuoi solo certe sotto-cartelle, modifica path
           path: data
           retention-days: 7
