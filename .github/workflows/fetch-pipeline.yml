@@ -3,7 +3,7 @@ name: Fetch Pipeline
 on:
   workflow_dispatch:
   schedule:
-    - cron: "5 * * * *"   # ogni ora (UTC) al minuto 5
+    - cron: "5 * * * *"
   push:
     branches: ["main"]
 
@@ -23,10 +23,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: List repo root (debug)
+        run: |
+          echo "== REPO ROOT FILES =="
+          ls -1a .
+          echo "== SUBDIRS (1 livello) =="
+          find . -maxdepth 2 -type f -print | head -n 200
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
 
       - name: Cache pip
         uses: actions/cache@v4
@@ -36,39 +46,56 @@ jobs:
           restore-keys: |
             pip-${{ runner.os }}-
 
-      - name: Install dependencies (dev)
+      - name: Install dependencies (robust)
         run: |
           set -e
+          echo "== Attempting dependency installation =="
           if [ -f requirements-dev.txt ]; then
-            pip install -r requirements-dev.txt
+            echo "[INFO] Found requirements-dev.txt"
+            python -m pip install -r requirements-dev.txt
           elif [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-            pip install pytest httpx
+            echo "[INFO] Found requirements.txt (no dev)"
+            python -m pip install -r requirements.txt
+            python -m pip install pytest httpx prometheus-client
           else
-            echo "Nessun requirements file trovato, installo manualmente pacchetti base"
-            pip install fastapi uvicorn pydantic requests prometheus-client pytest httpx
+            echo "[WARN] No requirements*.txt found: installing minimal set"
+            python -m pip install fastapi uvicorn pydantic requests prometheus-client pytest httpx
           fi
-          echo "== Installed packages =="
-          pip list
+          echo "== Ensure pytest/httpx/prometheus-client present =="
+          python -m pip install --upgrade pytest httpx prometheus-client
+          echo "== Final package list (grep key packages) =="
+          python -m pip show pytest || true
+          python -m pip show httpx || true
+          python -m pip show prometheus-client || true
+          echo "== DONE installation =="
 
       - name: Export PYTHONPATH
-        run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+        run: |
+          echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+          echo "Exported PYTHONPATH=$PWD/src"
 
-      - name: Smoke import
+      - name: Smoke import core
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
           python - <<'EOF'
           import sys
-          print("sys.path:", sys.path)
+          print("sys.executable:", sys.executable)
+          print("sys.path contains src?:", any(p.endswith("/src") for p in sys.path))
+          try:
+              import pytest
+              print("pytest version:", pytest.__version__)
+          except Exception as e:
+              print("PYTEST IMPORT FAILED:", e)
           import core
-          print("Import core OK ->", core.__file__)
+          print("core import OK at:", core.__file__)
           EOF
 
       - name: Run tests
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
-        run: pytest -q
+        run: |
+          python -m pytest -q
 
       - name: Run fetch pipeline
         env:
@@ -84,7 +111,7 @@ jobs:
           ROI_MIN_EDGE: ${{ vars.ROI_MIN_EDGE }}
         run: |
           python scripts/fetch_fixtures.py
-          echo "---- Elenco file data/ ----"
+          echo "---- Elenco file generati in data/ ----"
           find data -maxdepth 4 -type f -print || true
 
       - name: Show key outputs
