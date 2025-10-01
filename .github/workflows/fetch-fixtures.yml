@@ -9,7 +9,7 @@ on:
 
 concurrency:
   group: fetch-pipeline
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   fetch-run:
