@@ -67,6 +67,12 @@ class Settings:
     enable_prometheus_exporter: bool
     prometheus_port: int
 
+    # Odds ingestion
+    enable_odds_ingestion: bool
+    odds_dir: str
+    odds_provider: str
+    odds_default_source: str
+
     @classmethod
     def from_env(cls) -> "Settings":
         key = os.getenv("API_FOOTBALL_KEY")
@@ -145,6 +151,11 @@ class Settings:
         enable_prometheus_exporter = _parse_bool(os.getenv("ENABLE_PROMETHEUS_EXPORTER"), False)
         prometheus_port = _int("PROMETHEUS_PORT", 9100)
 
+        enable_odds_ingestion = _parse_bool(os.getenv("ENABLE_ODDS_INGESTION"), False)
+        odds_dir = os.getenv("ODDS_DIR", "odds")
+        odds_provider = os.getenv("ODDS_PROVIDER", "stub")
+        odds_default_source = os.getenv("ODDS_DEFAULT_SOURCE", "stub-book")
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -179,6 +190,10 @@ class Settings:
             telegram_parsed_dir=telegram_parsed_dir,
             enable_prometheus_exporter=enable_prometheus_exporter,
             prometheus_port=prometheus_port,
+            enable_odds_ingestion=enable_odds_ingestion,
+            odds_dir=odds_dir,
+            odds_provider=odds_provider,
+            odds_default_source=odds_default_source,
         )
 
 

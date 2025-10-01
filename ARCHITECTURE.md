@@ -198,4 +198,46 @@ Diff O(n). Memoria: dizionari indicizzati + delta struct.
 | /scoreboard | Aggregato sintetico |
 
 ## Sintesi
+
+### Odds Ingestion (Iterazione 13 – Stub)
+Scopo: introdurre pipeline minima di acquisizione quote per fixture correnti.
+
+Flag:
+- ENABLE_ODDS_INGESTION (default false)
+- ODDS_DIR (default odds)
+- ODDS_PROVIDER (default stub)
+- ODDS_DEFAULT_SOURCE (default stub-book)
+
+Provider Stub:
+- Deriva pseudo-probabilità da score_diff (bias lineare)
+- Converte in odds decimali (1 / prob con jitter)
+- Non rappresenta dati reali: placeholder per wiring
+
+Output:
+`odds/odds_latest.json`
+```json
+{
+  "provider": "stub",
+  "count": N,
+  "entries": [
+    {
+      "fixture_id": 123,
+      "source": "stub-book",
+      "fetched_at": "...",
+      "market": {
+        "home_win": 2.15,
+        "draw": 3.40,
+        "away_win": 3.10
+      }
+    }
+  ]
+}
+```
+
+Evoluzioni:
+- Integrazione reale API-Football odds endpoint
+- Normalizzazione multi-book (mapping source)
+- Calcolo implied probabilities e margin removal
+- Feature enrichment per modello predictions
+- Calibrazione differenze (value detection)
 Pipeline incrementale osservabile: diff + classification + metrics + alerts + scoreboard + predictions + consensus + esportazione Prometheus, pronta a evoluzioni (odds, ensemble, notifiche).
