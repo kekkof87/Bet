@@ -60,10 +60,12 @@ class Settings:
     enable_consensus: bool
     consensus_dir: str
 
-    # Telegram parser (nuovo)
     enable_telegram_parser: bool
     telegram_raw_dir: str
     telegram_parsed_dir: str
+
+    enable_prometheus_exporter: bool
+    prometheus_port: int
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -140,6 +142,9 @@ class Settings:
         telegram_raw_dir = os.getenv("TELEGRAM_RAW_DIR", "telegram/raw")
         telegram_parsed_dir = os.getenv("TELEGRAM_PARSED_DIR", "telegram/parsed")
 
+        enable_prometheus_exporter = _parse_bool(os.getenv("ENABLE_PROMETHEUS_EXPORTER"), False)
+        prometheus_port = _int("PROMETHEUS_PORT", 9100)
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -172,6 +177,8 @@ class Settings:
             enable_telegram_parser=enable_telegram_parser,
             telegram_raw_dir=telegram_raw_dir,
             telegram_parsed_dir=telegram_parsed_dir,
+            enable_prometheus_exporter=enable_prometheus_exporter,
+            prometheus_port=prometheus_port,
         )
 
 
