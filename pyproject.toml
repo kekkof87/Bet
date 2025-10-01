@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bet-pipeline"
+version = "0.1.0"
+description = "Football fixtures incremental ingestion pipeline"
+requires-python = ">=3.11"
+dependencies = [
+    "requests>=2.32.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.23.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
