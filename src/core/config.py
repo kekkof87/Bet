@@ -87,11 +87,14 @@ class Settings:
     enable_value_alerts: bool
     value_alerts_dir: str
 
-    # Value history
     enable_value_history: bool
     value_history_dir: str
     value_history_max_files: int
     value_history_mode: str  # daily | rolling
+
+    # Model adjust (nuovo)
+    enable_model_adjust: bool
+    model_adjust_weight: float
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -200,6 +203,13 @@ class Settings:
         if value_history_mode not in {"daily", "rolling"}:
             value_history_mode = "daily"
 
+        enable_model_adjust = _parse_bool(os.getenv("ENABLE_MODEL_ADJUST"), False)
+        model_adjust_weight = _float("MODEL_ADJUST_WEIGHT", 0.7)
+        if model_adjust_weight < 0:
+            model_adjust_weight = 0.0
+        if model_adjust_weight > 1:
+            model_adjust_weight = 1.0
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -254,6 +264,8 @@ class Settings:
             value_history_dir=value_history_dir,
             value_history_max_files=value_history_max_files,
             value_history_mode=value_history_mode,
+            enable_model_adjust=enable_model_adjust,
+            model_adjust_weight=model_adjust_weight,
         )
 
 
