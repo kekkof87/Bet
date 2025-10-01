@@ -20,7 +20,6 @@ def env(monkeypatch, tmp_path):
 
 
 def test_roi_tracking_picks_and_settlement(tmp_path: Path):
-    # Fixtures: one not started, one finished
     fixtures = [
         {
             "fixture_id": 1,
@@ -40,7 +39,6 @@ def test_roi_tracking_picks_and_settlement(tmp_path: Path):
         },
     ]
 
-    # Value alerts: one for fixture 1 (pre-match), one for fixture 2 (but already FT -> non crea pick)
     alerts_dir = tmp_path / "value_alerts"
     alerts_dir.mkdir(parents=True, exist_ok=True)
     (alerts_dir / "value_alerts.json").write_text(
@@ -78,20 +76,21 @@ def test_roi_tracking_picks_and_settlement(tmp_path: Path):
     assert metrics_path.exists()
 
     ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
-    # Only fixture 1 pick created (fixture 2 non NS)
     assert len(ledger) == 1
     assert ledger[0]["fixture_id"] == 1
     assert ledger[0]["settled"] is False
 
-    # Now settle: mark fixture 1 final
+    # Settle
     fixtures[0]["home_score"] = 1
     fixtures[0]["away_score"] = 0
     fixtures[0]["status"] = "FT"
 
     build_or_update_roi(fixtures)
+
     ledger2 = json.loads(ledger_path.read_text(encoding="utf-8"))
     settled = [p for p in ledger2 if p["fixture_id"] == 1][0]
     assert settled["settled"] is True
     assert settled["result"] in {"win", "loss"}
+
     metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
     assert "profit_units" in metrics
