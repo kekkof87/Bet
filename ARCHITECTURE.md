@@ -312,3 +312,47 @@ Evoluzioni Future:
 - /predictions/value (solo summary)
 - Aggregazione su margini e distribuzione edge
 - Caching in memoria
+
+### Consensus v2 (Iterazione 18)
+Blending tra probabilità baseline e odds implied.
+
+Configurazione:
+- ENABLE_CONSENSUS
+- CONSENSUS_BASELINE_WEIGHT (default 0.6) → peso del modello baseline; 1-peso applicato a implied odds.
+
+Per ogni prediction:
+- blended_prob: w * prob_model + (1-w) * odds_implied (normalizzato)
+- consensus_confidence: max(blended_prob)
+- ranking_score: blended_home_win - blended_away_win
+- consensus_value (se odds presenti):
+  - deltas = blended - odds_implied
+  - value_side = esito con delta max
+  - value_edge = delta max
+  - active = value_edge > 0
+
+File: consensus/consensus.json
+```json
+{
+  "count": N,
+  "baseline_weight": 0.6,
+  "entries": [
+    {
+      "fixture_id": 123,
+      "blended_prob": {"home_win":0.45,"draw":0.30,"away_win":0.25},
+      "consensus_confidence":0.45,
+      "ranking_score":0.20,
+      "consensus_value":{
+        "active":true,
+        "value_side":"home_win",
+        "value_edge":0.03,
+        "deltas":{"home_win":0.03,"draw":-0.01,"away_win":-0.02}
+      }
+    }
+  ]
+}
+```
+
+Evoluzioni:
+- Ponderazioni dinamiche per status (live vs pre-match)
+- Aggiunta modello avanzato (ensemble multi-sorgente)
+- Integrazione value detection globale vs consensus_value
