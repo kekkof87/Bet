@@ -64,7 +64,6 @@ class Settings:
     telegram_raw_dir: str
     telegram_parsed_dir: str
 
-    # Prometheus exporter
     enable_prometheus_exporter: bool
     prometheus_port: int
 
