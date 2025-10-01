@@ -3,7 +3,7 @@ name: Fetch Pipeline
 on:
   workflow_dispatch:
   schedule:
-    - cron: "5 * * * *"   # ogni ora (UTC) al minuto 5
+    - cron: "5 * * * *"
   push:
     branches: ["main"]
 
@@ -32,46 +32,43 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements*.txt', 'pyproject.toml', 'setup.cfg') }}
           restore-keys: |
             pip-${{ runner.os }}-
 
-      - name: Install base deps (editable if possible) + pytest
+      - name: Install dependencies (dev)
         run: |
           set -e
-          if [ -f pyproject.toml ] || [ -f setup.cfg ] || [ -f setup.py ]; then
-            pip install -e .
+          if [ -f requirements-dev.txt ]; then
+            pip install -r requirements-dev.txt
           elif [ -f requirements.txt ]; then
             pip install -r requirements.txt
+            pip install pytest httpx prometheus-client
           else
-            echo "Nessun file install pacchetto: installo solo dipendenze test"
+            echo "Nessun requirements*.txt trovato: installo base minima"
+            pip install pytest httpx prometheus-client fastapi uvicorn
           fi
-          # Assicuriamo pytest
-          pip install pytest
-          echo "Dipendenze installate:"
+          echo "== Installed packages =="
           pip list
 
-      - name: Export PYTHONPATH (src layout)
-        run: |
-          echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
-          echo "Impostato PYTHONPATH=$PWD/src"
+      - name: Export PYTHONPATH
+        run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
 
-      - name: Smoke import check
+      - name: Smoke import
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
           python - <<'EOF'
           import sys
-          print("sys.path:", sys.path)
+          print("sys.path OK, contains src?:", any(p.endswith("/src") for p in sys.path))
           import core
           print("Import core OK ->", core.__file__)
           EOF
 
-      - name: Run tests (optional)
+      - name: Run tests
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
-        run: |
-          pytest -q
+        run: pytest -q
 
       - name: Run fetch pipeline
         env:
@@ -86,9 +83,8 @@ jobs:
           ENABLE_VALUE_HISTORY: ${{ vars.ENABLE_VALUE_HISTORY }}
           ROI_MIN_EDGE: ${{ vars.ROI_MIN_EDGE }}
         run: |
-          echo "Eseguo fetch..."
           python scripts/fetch_fixtures.py
-          echo "Contenuto data/:"
+          echo "---- Elenco file data/ ----"
           find data -maxdepth 4 -type f -print || true
 
       - name: Show key outputs
@@ -101,7 +97,7 @@ jobs:
             data/roi/roi_metrics.json; do
             if [ -f "$f" ]; then
               echo "----- $f -----"
-              head -n 200 "$f"
+              head -n 80 "$f"
             fi
           done
 
