@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Dict, Any
@@ -42,7 +41,11 @@ def _rotate_if_needed(base: Path, max_files: int) -> None:
 
 def append_value_history(alerts: List[Dict[str, Any]]) -> None:
     """
-    Salva ogni alert come riga JSON (JSONL).
+    Appende gli alert di value (prediction + consensus) come righe JSONL.
+    Rispetta:
+      - ENABLE_VALUE_HISTORY
+      - VALUE_HISTORY_MODE (daily|rolling)
+      - VALUE_HISTORY_MAX_FILES (solo rolling)
     """
     settings = get_settings()
     if not settings.enable_value_history:
@@ -53,14 +56,13 @@ def append_value_history(alerts: List[Dict[str, Any]]) -> None:
     base = Path(settings.bet_data_dir or "data") / settings.value_history_dir
     base.mkdir(parents=True, exist_ok=True)
 
-    # Scegli file
     if settings.value_history_mode == "rolling":
         target = _rolling_filename(base)
     else:
         target = _daily_filename(base)
 
-    lines: List[str] = []
     ts = _now_iso()
+    lines: List[str] = []
     for a in alerts:
         try:
             rec = {
@@ -71,20 +73,24 @@ def append_value_history(alerts: List[Dict[str, Any]]) -> None:
                 "value_side": a.get("value_side"),
                 "value_edge": a.get("value_edge"),
             }
-            if a.get("model_version"):
-                rec["model_version"] = a.get("model_version")
-            # add consensus weight if available in consensus value (not stored here by default)
+            mv = a.get("model_version")
+            if mv:
+                rec["model_version"] = mv
             lines.append(json.dumps(rec, ensure_ascii=False))
         except Exception:
             continue
 
     if lines:
-        with open(target, "a", encoding="utf-8") as f:
+        with target.open("a", encoding="utf-8") as f:
             for ln in lines:
                 f.write(ln + "\n")
         logger.info(
             "value_history_appended",
-            extra={"file": str(target), "count": len(lines), "mode": settings.value_history_mode},
+            extra={
+                "file": str(target),
+                "count": len(lines),
+                "mode": settings.value_history_mode,
+            },
         )
 
     if settings.value_history_mode == "rolling":
