@@ -3,7 +3,7 @@ name: Fetch Pipeline Commit
 on:
   workflow_dispatch:
   schedule:
-    - cron: "15 * * * *"  # ogni ora al minuto 15
+    - cron: "15 * * * *"
   push:
     branches: ["main"]
 
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
-      contents: write  # necessario per push
+      contents: write
       actions: read
 
     steps:
@@ -35,32 +35,29 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: pip-${{ runner.os }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements*.txt', 'pyproject.toml', 'setup.cfg') }}
           restore-keys: |
             pip-${{ runner.os }}-
 
-      - name: Install base deps + pytest
+      - name: Install dependencies (dev)
         run: |
           set -e
-            if [ -f pyproject.toml ] || [ -f setup.cfg ] || [ -f setup.py ]; then
-            pip install -e .
+          if [ -f requirements-dev.txt ]; then
+            pip install -r requirements-dev.txt
           elif [ -f requirements.txt ]; then
             pip install -r requirements.txt
+            pip install pytest httpx
           else
-            echo "Nessun file install pacchetto: installerò solo pytest"
+            pip install fastapi uvicorn pydantic requests prometheus-client pytest httpx
           fi
-          pip install pytest
-          pip list
 
       - name: Export PYTHONPATH
-        run: |
-          echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+        run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
 
       - name: Tests
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
-        run: |
-          pytest -q
+        run: pytest -q
 
       - name: Run fetch pipeline
         env:
@@ -77,16 +74,7 @@ jobs:
         run: |
           python scripts/fetch_fixtures.py
 
-      - name: Show key outputs
-        run: |
-          for f in data/roi/roi_metrics.json data/value_alerts/value_alerts.json; do
-            if [ -f "$f" ]; then
-              echo "---- $f ----"
-              head -n 120 "$f"
-            fi
-          done
-
-      - name: Commit & Push
+      - name: Commit & Push data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
