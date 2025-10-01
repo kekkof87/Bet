@@ -60,7 +60,7 @@ class Settings:
 
     enable_consensus: bool
     consensus_dir: str
-    consensus_baseline_weight: float  # NEW
+    consensus_baseline_weight: float
 
     enable_telegram_parser: bool
     telegram_raw_dir: str
@@ -83,6 +83,9 @@ class Settings:
     enable_value_detection: bool
     value_min_edge: float
     value_include_adjusted: bool
+
+    enable_value_alerts: bool
+    value_alerts_dir: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -181,6 +184,9 @@ class Settings:
         value_min_edge = _float("VALUE_MIN_EDGE", 0.05)
         value_include_adjusted = _parse_bool(os.getenv("VALUE_INCLUDE_ADJUSTED"), True)
 
+        enable_value_alerts = _parse_bool(os.getenv("ENABLE_VALUE_ALERTS"), False)
+        value_alerts_dir = os.getenv("VALUE_ALERTS_DIR", "value_alerts")
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -229,6 +235,8 @@ class Settings:
             enable_value_detection=enable_value_detection,
             value_min_edge=value_min_edge,
             value_include_adjusted=value_include_adjusted,
+            enable_value_alerts=enable_value_alerts,
+            value_alerts_dir=value_alerts_dir,
         )
 
 

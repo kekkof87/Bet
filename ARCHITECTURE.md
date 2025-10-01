@@ -356,3 +356,50 @@ Evoluzioni:
 - Ponderazioni dinamiche per status (live vs pre-match)
 - Aggiunta modello avanzato (ensemble multi-sorgente)
 - Integrazione value detection globale vs consensus_value
+
+### Value Alerts (Iterazione 19)
+Obiettivo: estrarre segnali di "value" attivi da predictions (value.active) e consensus (consensus_value.active) producendo un file unificato.
+
+Flag:
+- ENABLE_VALUE_ALERTS (default false)
+- VALUE_ALERTS_DIR (default value_alerts)
+
+File: value_alerts/value_alerts.json
+```json
+{
+  "count": N,
+  "alerts": [
+    {
+      "source": "prediction|consensus",
+      "value_type": "prediction_value|consensus_value",
+      "fixture_id": 123,
+      "value_side": "home_win",
+      "value_edge": 0.07,
+      "deltas": {...}
+    }
+  ]
+}
+```
+
+Dispatch opzionale:
+Riutilizza notifications.dispatcher convertendo gli alert in eventi `type=value_alert`.
+
+Evoluzioni:
+- Soglia edge minima configurabile dedicata
+- Raggruppamento per partita
+- Notifica combinata (prediction + consensus)
+
+### Consensus API (Iterazione 19)
+Endpoint: GET /consensus
+
+Filtri:
+- min_confidence
+- min_value_edge
+- value_only
+- limit
+
+Ordinamento:
+- Se filtro value attivo: per value_edge desc
+- Altrimenti: fixture_id asc
+
+Preparazione a dashboard ranking + watchlist.
