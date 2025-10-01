@@ -20,9 +20,9 @@ from core.alerts import build_alerts, write_alerts
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 from predictions.pipeline import run_baseline_predictions
 from consensus.pipeline import run_consensus_pipeline
+from monitoring.prometheus_exporter import update_prom_metrics
 
 if TYPE_CHECKING:
-    # Usa il tipo atteso dalle funzioni di persistence
     from core.models import FixtureRecord  # noqa: F401
 
 
@@ -36,10 +36,6 @@ def _load_json_if_exists(path: Path) -> Optional[Dict[str, Any]]:
 
 
 def main() -> None:
-    """
-    Fetch fixtures + diff + history + metrics/events + alerts + scoreboard +
-    predictions (baseline) + consensus stub.
-    """
     logger = get_logger("scripts.fetch_fixtures")
 
     try:
@@ -182,17 +178,23 @@ def main() -> None:
     except Exception as exc:  # pragma: no cover
         logger.error("Errore generazione scoreboard: %s", exc)
 
-    # Predictions (baseline)
+    # Predictions
     try:
         run_baseline_predictions(cast(List[Dict[str, Any]], new))
     except Exception as exc:  # pragma: no cover
         logger.error("Errore predictions baseline: %s", exc)
 
-    # Consensus (stub)
+    # Consensus
     try:
         run_consensus_pipeline()
     except Exception as exc:  # pragma: no cover
         logger.error("Errore consensus pipeline: %s", exc)
+
+    # Prometheus exporter one-shot update
+    try:
+        update_prom_metrics()
+    except Exception as exc:  # pragma: no cover
+        logger.error("Errore aggiornamento metriche Prometheus: %s", exc)
 
     if new:
         logger.info("Esempio prima fixture", extra={"first_fixture": cast(List[Dict[str, Any]], new)[0]})
