@@ -431,3 +431,25 @@ Evoluzioni future:
 - Aggiunta timestamp generazione per alert
 - Dedup per fixture (merge prediction + consensus)
 - Segmentazione live/pre-match
+
+### Value History (Iterazione 21)
+Scopo: registrare append-only degli edge di value (prediction + consensus) per analisi storiche.
+
+Flag:
+- ENABLE_VALUE_HISTORY (default false)
+- VALUE_HISTORY_DIR (default value_history)
+- VALUE_HISTORY_MAX_FILES (default 30, solo per rolling)
+- VALUE_HISTORY_MODE: daily | rolling (default daily)
+
+Modalità:
+- daily: un file JSONL per giorno (timestamp UTC), append continuo.
+- rolling: un file JSONL per ogni run, rotazione per numero massimo file.
+
+Record JSONL:
+{"ts":"2025-10-01T12:00:00.000000+00:00","fixture_id":123,"source":"prediction","value_type":"prediction_value","value_side":"home_win","value_edge":0.07,"model_version":"baseline-v1"}
+
+Evoluzioni:
+- Aggregatore giornaliero (edge stats, distribuzioni)
+- Persist DB / DataLake
+- Filtri live-only / pre-match separati
+- Integrazione con ROI tracking (post-match outcome)

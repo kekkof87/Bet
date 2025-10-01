@@ -87,6 +87,12 @@ class Settings:
     enable_value_alerts: bool
     value_alerts_dir: str
 
+    # Value history
+    enable_value_history: bool
+    value_history_dir: str
+    value_history_max_files: int
+    value_history_mode: str  # daily | rolling
+
     @classmethod
     def from_env(cls) -> "Settings":
         key = os.getenv("API_FOOTBALL_KEY")
@@ -187,6 +193,13 @@ class Settings:
         enable_value_alerts = _parse_bool(os.getenv("ENABLE_VALUE_ALERTS"), False)
         value_alerts_dir = os.getenv("VALUE_ALERTS_DIR", "value_alerts")
 
+        enable_value_history = _parse_bool(os.getenv("ENABLE_VALUE_HISTORY"), False)
+        value_history_dir = os.getenv("VALUE_HISTORY_DIR", "value_history")
+        value_history_max_files = _int("VALUE_HISTORY_MAX_FILES", 30)
+        value_history_mode = os.getenv("VALUE_HISTORY_MODE", "daily").lower()
+        if value_history_mode not in {"daily", "rolling"}:
+            value_history_mode = "daily"
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -237,6 +250,10 @@ class Settings:
             value_include_adjusted=value_include_adjusted,
             enable_value_alerts=enable_value_alerts,
             value_alerts_dir=value_alerts_dir,
+            enable_value_history=enable_value_history,
+            value_history_dir=value_history_dir,
+            value_history_max_files=value_history_max_files,
+            value_history_mode=value_history_mode,
         )
 
 
