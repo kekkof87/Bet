@@ -179,7 +179,7 @@ def main() -> None:
     except Exception as exc:  # pragma: no cover
         logger.error("Errore generazione scoreboard: %s", exc)
 
-    # Odds ingestion (prima delle predictions)
+    # Odds ingestion
     try:
         run_odds_pipeline(cast(List[Dict[str, Any]], new))
     except Exception as exc:  # pragma: no cover
@@ -230,7 +230,7 @@ def main() -> None:
     except Exception as exc:  # pragma: no cover
         logger.error("Errore value alerts pipeline: %s", exc)
 
-    # ROI tracking (post value alerts e dopo eventuali fixture FT)
+    # ROI tracking (usa odds reali ora)
     try:
         if settings.enable_roi_tracking:
             from analytics.roi import build_or_update_roi

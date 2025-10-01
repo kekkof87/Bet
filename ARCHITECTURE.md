@@ -517,3 +517,108 @@ Evoluzioni future:
 - Esclusione consensus o pesi separati
 - ROI segmentato per source / month / league
 - Dashboard trending curve
+
+### ROI Real Odds & API (Iterazione 24)
+
+Aggiornamenti:
+1. ROI con odds reali:
+   - Recupero decimal odds prioritario:
+     a) odds_latest.json -> entries[].market[esito]
+     b) predictions/latest_predictions.json -> prediction.odds.odds_original[esito]
+     c) fallback 2.0
+   - Campi pick:
+     {
+       "fixture_id": ...,
+       "source": "prediction|consensus",
+       "side": "...",
+       "edge": 0.07,
+       "stake": 1.0,
+       "decimal_odds": 2.25,
+       "est_odds": 2.25,          (backward compatibility)
+       "fair_prob": 0.444444,
+       "odds_source": "odds_latest|predictions_odds|fallback",
+       "settled": false
+     }
+
+2. Settlement:
+   - outcome derivato da (home_score, away_score).
+   - profit se win = (decimal_odds - 1) * stake.
+   - Altrimenti -stake (gestito come payout=0 e calcolo in aggregato).
+
+3. ROI API /roi:
+   Parametri:
+   - detail (bool) -> includi/le pick
+   - source= (ripetibile) filtra (prediction, consensus)
+   - open_only (bool)
+   - limit (int, max 1000)
+   Output:
+   {
+     "enabled": true,
+     "metrics": {...},
+     "items": [...],
+     "filters": {...},
+     "detail_included": true|false
+   }
+
+4. File scritti:
+   - roi/ledger.json
+   - roi/roi_metrics.json
+
+5. Evoluzioni Possibili:
+   - Storage odds reali specifiche del pick al momento della creazione (snapshot vs latest).
+   - Odds drift tracking.
+   - Stake dinamico (Kelly / Edge scaling).
+   - Filtri orari (solo pre-match > X minuti all’avvio).
+
+---
+
+### Guida Semplice: Come Aggiungere/Migliorare l’Uso delle Odds Reali
+
+1. Fonte odds (odds_latest.json):
+   - Generato dalla pipeline odds (run_odds_pipeline).
+   - Struttura: {"entries":[{"fixture_id":123,"market":{"home_win":2.1,"draw":3.3,"away_win":3.4}, ...}]}
+
+2. Arricchimento predictions:
+   - Durante run_baseline_predictions, se presenti odds_latest.json e ENABLE_PREDICTIONS_USE_ODDS=1:
+     - calcola implied (p = 1/odds normalizzate).
+     - salva in prediction.odds.odds_original (decimal) e odds.odds_implied (prob).
+
+3. Value detection:
+   - Usa differenza model vs implied (pred.prob vs odds_implied).
+   - Attiva con ENABLE_VALUE_DETECTION.
+
+4. Value alerts:
+   - build_value_alerts legge prediction.value (active) e consensus.consensus_value (active).
+   - Genera value_alerts.json.
+
+5. ROI picks:
+   - Per ogni alert eligible:
+     a) Legge status fixture (NS richiesto).
+     b) edge >= ROI_MIN_EDGE.
+     c) Cerca odds in odds_latest.json (priorità).
+     d) Se non trova, cerca prediction.odds.odds_original.
+     e) Se ancora niente, fallback 2.0.
+
+6. Controllo rapido:
+   - Esegui l’intera pipeline (script fetch).
+   - Verifica file:
+     data/odds/odds_latest.json
+     data/predictions/latest_predictions.json
+     data/value_alerts/value_alerts.json
+     data/roi/ledger.json
+
+7. Debug se le picks mostrano decimal_odds=2.0 (fallback):
+   - Assicurati che l’esito (home_win/draw/away_win) sia presente come key in market.
+   - Controlla che fixture_id combaci (numeri coerenti).
+   - Verifica che run_odds_pipeline sia stato eseguito prima di run_baseline_predictions (ordine già adeguato nello script).
+
+8. Estensioni future (facili):
+   - Salvare nel pick anche "market_snapshot": copia del blocco market per audit.
+   - Calcolare implied_margin per valutare qualità bookmaker (sum(1/odds)-1).
+   - Integrare odds live (nuovo file es: odds_live.json).
+
+---
+
+Questa iterazione sblocca:
+- Profit tracking più realistico.
+- Esposizione rapida via API per dashboard o grafici esterni.

@@ -19,7 +19,31 @@ def env(monkeypatch, tmp_path):
     _reset_settings_cache_for_tests()
 
 
-def test_roi_tracking_picks_and_settlement(tmp_path: Path):
+def test_roi_tracking_real_odds_and_settlement(tmp_path: Path):
+    # Simula odds_latest con decimal odds reali per fixture 1
+    odds_dir = tmp_path / "odds"
+    odds_dir.mkdir(parents=True, exist_ok=True)
+    (odds_dir / "odds_latest.json").write_text(
+        json.dumps(
+            {
+                "provider": "stub",
+                "entries": [
+                    {
+                        "fixture_id": 1,
+                        "source": "stub-book",
+                        "fetched_at": "2025-01-01T00:00:00Z",
+                        "market": {
+                            "home_win": 2.2,
+                            "draw": 3.4,
+                            "away_win": 3.3,
+                        },
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
     fixtures = [
         {
             "fixture_id": 1,
@@ -76,11 +100,15 @@ def test_roi_tracking_picks_and_settlement(tmp_path: Path):
     assert metrics_path.exists()
 
     ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
-    assert len(ledger) == 1
-    assert ledger[0]["fixture_id"] == 1
-    assert ledger[0]["settled"] is False
+    assert len(ledger) == 1  # fixture 2 già FT, nessuna pick
+    pick = ledger[0]
+    assert pick["fixture_id"] == 1
+    assert pick["settled"] is False
+    # Verifica odds reali usate
+    assert abs(pick["decimal_odds"] - 2.2) < 1e-9
+    assert pick["odds_source"] == "odds_latest"
 
-    # Settle
+    # Settling
     fixtures[0]["home_score"] = 1
     fixtures[0]["away_score"] = 0
     fixtures[0]["status"] = "FT"
@@ -91,6 +119,5 @@ def test_roi_tracking_picks_and_settlement(tmp_path: Path):
     settled = [p for p in ledger2 if p["fixture_id"] == 1][0]
     assert settled["settled"] is True
     assert settled["result"] in {"win", "loss"}
-
     metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
     assert "profit_units" in metrics
