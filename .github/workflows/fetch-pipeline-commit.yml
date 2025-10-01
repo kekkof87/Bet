@@ -1,0 +1,99 @@
+name: Fetch Pipeline Commit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 * * * *"  # ogni ora al minuto 15
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: fetch-pipeline-commit
+  cancel-in-progress: true
+
+jobs:
+  fetch-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write  # necessario per push
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
+
+      - name: Install base deps + pytest
+        run: |
+          set -e
+            if [ -f pyproject.toml ] || [ -f setup.cfg ] || [ -f setup.py ]; then
+            pip install -e .
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "Nessun file install pacchetto: installerò solo pytest"
+          fi
+          pip install pytest
+          pip list
+
+      - name: Export PYTHONPATH
+        run: |
+          echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+
+      - name: Tests
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+        run: |
+          pytest -q
+
+      - name: Run fetch pipeline
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          ENABLE_ODDS_INGESTION: ${{ vars.ENABLE_ODDS_INGESTION }}
+          ENABLE_PREDICTIONS: ${{ vars.ENABLE_PREDICTIONS }}
+          ENABLE_PREDICTIONS_USE_ODDS: ${{ vars.ENABLE_PREDICTIONS_USE_ODDS }}
+          ENABLE_VALUE_DETECTION: ${{ vars.ENABLE_VALUE_DETECTION }}
+          ENABLE_VALUE_ALERTS: ${{ vars.ENABLE_VALUE_ALERTS }}
+          ENABLE_ROI_TRACKING: ${{ vars.ENABLE_ROI_TRACKING }}
+          ENABLE_VALUE_HISTORY: ${{ vars.ENABLE_VALUE_HISTORY }}
+          ROI_MIN_EDGE: ${{ vars.ROI_MIN_EDGE }}
+        run: |
+          python scripts/fetch_fixtures.py
+
+      - name: Show key outputs
+        run: |
+          for f in data/roi/roi_metrics.json data/value_alerts/value_alerts.json; do
+            if [ -f "$f" ]; then
+              echo "---- $f ----"
+              head -n 120 "$f"
+            fi
+          done
+
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "Nessuna modifica da committare."
+          else
+            git commit -m "chore(data): update pipeline outputs [skip ci]"
+            git push
+          fi
