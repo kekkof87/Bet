@@ -60,6 +60,7 @@ class Settings:
 
     enable_consensus: bool
     consensus_dir: str
+    consensus_baseline_weight: float  # NEW
 
     enable_telegram_parser: bool
     telegram_raw_dir: str
@@ -79,7 +80,6 @@ class Settings:
     alert_telegram_bot_token: Optional[str]
     alert_telegram_chat_id: Optional[str]
 
-    # Value detection
     enable_value_detection: bool
     value_min_edge: float
     value_include_adjusted: bool
@@ -153,6 +153,11 @@ class Settings:
 
         enable_consensus = _parse_bool(os.getenv("ENABLE_CONSENSUS"), False)
         consensus_dir = os.getenv("CONSENSUS_DIR", "consensus")
+        consensus_baseline_weight = _float("CONSENSUS_BASELINE_WEIGHT", 0.6)
+        if consensus_baseline_weight < 0:
+            consensus_baseline_weight = 0.0
+        if consensus_baseline_weight > 1:
+            consensus_baseline_weight = 1.0
 
         enable_telegram_parser = _parse_bool(os.getenv("ENABLE_TELEGRAM_PARSER"), False)
         telegram_raw_dir = os.getenv("TELEGRAM_RAW_DIR", "telegram/raw")
@@ -206,6 +211,7 @@ class Settings:
             enable_predictions_use_odds=enable_predictions_use_odds,
             enable_consensus=enable_consensus,
             consensus_dir=consensus_dir,
+            consensus_baseline_weight=consensus_baseline_weight,
             enable_telegram_parser=enable_telegram_parser,
             telegram_raw_dir=telegram_raw_dir,
             telegram_parsed_dir=telegram_parsed_dir,
