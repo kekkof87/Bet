@@ -479,4 +479,41 @@ Future evoluzioni:
 - Adjust pipeline su consensus invece che singolo modello
 =======
 - Integrazione con ROI tracking (post-match outcome)
-- 
+
+### ROI Tracking (Iterazione 23 – Stub)
+Scopo: simulare strategia elementare basata su value alerts per calcolo profit/loss cumulato.
+
+Configurazione:
+- ENABLE_ROI_TRACKING (default false)
+- ROI_DIR (default roi)
+- ROI_MIN_EDGE (default 0.05)
+- ROI_INCLUDE_CONSENSUS (default true)
+- ROI_STAKE_UNITS (default 1.0)
+
+Logica:
+1. Carica value_alerts.json
+2. Filtra alert attivi con edge >= ROI_MIN_EDGE
+3. Genera pick solo se:
+   - fixture status = NS
+   - nessuna pick esistente per (fixture_id, source)
+4. Ogni pick: stake fisso (ROI_STAKE_UNITS), est_odds stimata (stub 2.0 baseline – evoluzione leggendo odds reali)
+5. Settlement:
+   - Quando fixture passa a FT
+   - outcome: home_win / draw / away_win da punteggio finale
+   - profit pick win: (est_odds - 1) * stake
+   - loss: -stake
+6. Ledger: roi/ledger.json
+7. Metriche aggregate: roi/roi_metrics.json
+   - total_picks, settled_picks, open_picks
+   - wins, losses
+   - profit_units
+   - yield (profit / somma stake)
+   - hit_rate (wins / settled)
+8. Integrazione fetch: dopo value alerts (quindi picks possono vedere status aggiornato).
+
+Evoluzioni future:
+- Uso odds reali (decimal) per payout più credibile
+- Multi-stake (Kelly / Edge weighted)
+- Esclusione consensus o pesi separati
+- ROI segmentato per source / month / league
+- Dashboard trending curve
