@@ -23,11 +23,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: List repo root (debug)
+      - name: List repository (debug)
         run: |
-          echo "== REPO ROOT FILES =="
+          echo "== ROOT FILES =="
           ls -1a .
-          echo "== SUBDIRS (1 livello) =="
+          echo "== FIRST TWO LEVELS =="
           find . -maxdepth 2 -type f -print | head -n 200
 
       - name: Setup Python
@@ -49,46 +49,47 @@ jobs:
       - name: Install dependencies (robust)
         run: |
           set -e
-          echo "== Attempting dependency installation =="
+          echo "== Installation start =="
           if [ -f requirements-dev.txt ]; then
-            echo "[INFO] Found requirements-dev.txt"
+            echo "[INFO] Using requirements-dev.txt"
             python -m pip install -r requirements-dev.txt
           elif [ -f requirements.txt ]; then
-            echo "[INFO] Found requirements.txt (no dev)"
+            echo "[INFO] Using requirements.txt"
             python -m pip install -r requirements.txt
             python -m pip install pytest httpx prometheus-client
           else
-            echo "[WARN] No requirements*.txt found: installing minimal set"
+            echo "[WARN] No requirements files found, installing minimal set"
             python -m pip install fastapi uvicorn pydantic requests prometheus-client pytest httpx
           fi
-          echo "== Ensure pytest/httpx/prometheus-client present =="
+          echo "== Ensure core test deps =="
           python -m pip install --upgrade pytest httpx prometheus-client
-          echo "== Final package list (grep key packages) =="
+          echo "== Show key packages =="
           python -m pip show pytest || true
           python -m pip show httpx || true
           python -m pip show prometheus-client || true
-          echo "== DONE installation =="
 
       - name: Export PYTHONPATH
-        run: |
-          echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
-          echo "Exported PYTHONPATH=$PWD/src"
+        run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
 
-      - name: Smoke import core
+      - name: Smoke import
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
           python - <<'EOF'
           import sys
           print("sys.executable:", sys.executable)
-          print("sys.path contains src?:", any(p.endswith("/src") for p in sys.path))
+          print("PYTHONPATH set includes src? ->", any(p.endswith("/src") for p in sys.path))
+          import importlib
           try:
               import pytest
               print("pytest version:", pytest.__version__)
           except Exception as e:
-              print("PYTEST IMPORT FAILED:", e)
-          import core
-          print("core import OK at:", core.__file__)
+              print("FAILED import pytest:", e)
+          try:
+              import core
+              print("core import OK:", core.__file__)
+          except Exception as e:
+              print("FAILED import core:", e)
           EOF
 
       - name: Run tests
@@ -110,8 +111,9 @@ jobs:
           ENABLE_VALUE_HISTORY: ${{ vars.ENABLE_VALUE_HISTORY }}
           ROI_MIN_EDGE: ${{ vars.ROI_MIN_EDGE }}
         run: |
+          echo "== Running fetch pipeline =="
           python scripts/fetch_fixtures.py
-          echo "---- Elenco file generati in data/ ----"
+          echo "== Generated data files =="
           find data -maxdepth 4 -type f -print || true
 
       - name: Show key outputs
@@ -124,7 +126,7 @@ jobs:
             data/roi/roi_metrics.json; do
             if [ -f "$f" ]; then
               echo "----- $f -----"
-              head -n 120 "$f"
+              head -n 150 "$f"
             fi
           done
 
