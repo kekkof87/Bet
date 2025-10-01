@@ -1,26 +1,23 @@
-name: fetch-fixtures
+name: Fetch Pipeline
 
 on:
   workflow_dispatch:
-    inputs:
-      date:
-        description: 'Data (YYYY-MM-DD), opzionale'
-        required: false
   schedule:
-    - cron: '0 3 * * *'   # 03:00 UTC
+    - cron: "5 * * * *"   # ogni ora al minuto 5 (UTC)
+  push:
+    branches: ["main"]
 
-# Evita che più run simultanee del medesimo workflow si accavallino
 concurrency:
-  group: fetch-fixtures
-  cancel-in-progress: false
+  group: fetch-pipeline
+  cancel-in-progress: true
 
 jobs:
-  fetch:
+  fetch-run:
     runs-on: ubuntu-latest
-    env:
-      API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
-      API_FOOTBALL_PERSIST_FIXTURES: 'true'
-      BET_DATA_DIR: 'data'
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      actions: read
 
     steps:
       - name: Checkout
@@ -29,42 +26,73 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: requirements.txt
+          python-version: "3.11"
 
-      - name: Install dependencies
-        run: |
-            python -m pip install --upgrade pip
-            python -m pip install -r requirements.txt
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
 
-      - name: Verifica prerequisiti
+      - name: Install project (editable if possible)
         run: |
-          if [ -z "${API_FOOTBALL_KEY}" ]; then
-            echo "ERRORE: manca la variabile segreta API_FOOTBALL_KEY"
-            exit 1
-          fi
-          echo "Requisiti OK."
-
-      - name: Fetch fixtures
-        env:
-          DATE: ${{ github.event.inputs.date }}
-          PYTHONPATH: src
-        run: |
-          set -euo pipefail
-          echo "Avvio fetch fixtures..."
-          if [ -n "${DATE:-}" ]; then
-            echo " -> Uso data specificata: $DATE"
+          if [ -f pyproject.toml ] || [ -f setup.cfg ] || [ -f setup.py ]; then
+            pip install -e .
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
           else
-            echo " -> Nessuna data specificata, uso default nel codice."
+            echo "Nessun file di installazione trovato, installerò solo dipendenze base (se servono)."
           fi
-          python scripts/fetch_fixtures.py
-          echo "Esecuzione completata."
+          pip list | grep -i bet || true
 
-      - name: Upload latest fixtures artifact
+      - name: Export PYTHONPATH (src layout)
+        run: |
+          echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+
+      - name: Run tests (optional)
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+        run: |
+          pytest -q || exit 1
+
+      - name: Run fetch pipeline
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          ENABLE_ODDS_INGESTION: ${{ vars.ENABLE_ODDS_INGESTION }}
+          ENABLE_PREDICTIONS: ${{ vars.ENABLE_PREDICTIONS }}
+          ENABLE_PREDICTIONS_USE_ODDS: ${{ vars.ENABLE_PREDICTIONS_USE_ODDS }}
+          ENABLE_VALUE_DETECTION: ${{ vars.ENABLE_VALUE_DETECTION }}
+          ENABLE_VALUE_ALERTS: ${{ vars.ENABLE_VALUE_ALERTS }}
+          ENABLE_ROI_TRACKING: ${{ vars.ENABLE_ROI_TRACKING }}
+          ENABLE_VALUE_HISTORY: ${{ vars.ENABLE_VALUE_HISTORY }}
+          ROI_MIN_EDGE: ${{ vars.ROI_MIN_EDGE }}
+        run: |
+            echo "PYTHONPATH=$PYTHONPATH"
+            python scripts/fetch_fixtures.py
+            echo "Lista file generati sotto data/:"
+            find data -maxdepth 4 -type f -print || true
+
+      - name: Show key outputs
         if: always()
+        run: |
+          for f in \
+            data/predictions/latest_predictions.json \
+            data/value_alerts/value_alerts.json \
+            data/roi/roi_metrics.json \
+            data/odds/odds_latest.json; do
+            if [ -f "$f" ]; then
+              echo "----- $f -----"
+              sed -e 's/{/{\n/g' -e 's/}/\n}/g' "$f" | head -n 60
+            fi
+          done
+
+      - name: Upload data artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fixtures-latest
-          path: data/fixtures_latest.json
-          if-no-files-found: ignore
+          name: pipeline-data
+            # Se vuoi solo certe sotto-cartelle, modifica path
+          path: data
+          retention-days: 7
