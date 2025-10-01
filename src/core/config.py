@@ -87,6 +87,7 @@ class Settings:
     enable_value_alerts: bool
     value_alerts_dir: str
 
+    # Value history
     enable_value_history: bool
     value_history_dir: str
     value_history_max_files: int

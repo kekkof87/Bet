@@ -477,3 +477,6 @@ Future evoluzioni:
 - Dynamic weight: diverso se live vs pre-match
 - Confidence factor (varianza modello → peso)
 - Adjust pipeline su consensus invece che singolo modello
+=======
+- Integrazione con ROI tracking (post-match outcome)
+- 
