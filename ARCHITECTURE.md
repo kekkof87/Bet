@@ -240,4 +240,42 @@ Evoluzioni:
 - Calcolo implied probabilities e margin removal
 - Feature enrichment per modello predictions
 - Calibrazione differenze (value detection)
-Pipeline incrementale osservabile: diff + classification + metrics + alerts + scoreboard + predictions + consensus + esportazione Prometheus, pronta a evoluzioni (odds, ensemble, notifiche).
+Pipeline incrementale osservabile: diff + classification + metrics + alerts + scoreboard + predictions + consensus + esportazione Prometheus, pronta a evoluzioni (odds, ensemble, 
+
+### Predictions – Odds Enrichment (Iterazione 14)
+Obiettivo: integrare odds nel flusso predictions senza alterare ancora le probabilità modello.
+
+Meccanismo:
+1. Se ENABLE_PREDICTIONS_USE_ODDS=1 e `odds/odds_latest.json` presente:
+   - Per ogni fixture con odds: converte quote decimali → implied probabilities (1/odds)
+   - Calcola margin = somma(implied_raw) - 1
+   - Normalizza (implied_norm = implied_raw / somma)
+2. Arricchisce feature set:
+   - odds_original.{home_win,draw,away_win}
+   - odds_implied.{home_win,draw,away_win}
+   - odds_margin
+3. Pipeline predictions allega a ciascuna prediction un blocco `odds` (non modifica `prob` modello)
+
+Output (estratto prediction singola):
+```json
+{
+  "fixture_id": 101,
+  "prob": {"home_win":0.45,"draw":0.30,"away_win":0.25},
+  "model_version":"baseline-v1",
+  "odds": {
+    "odds_original": {"home_win":1.9,"draw":3.5,"away_win":4.0},
+    "odds_implied": {"home_win":0.52,"draw":0.28,"away_win":0.20},
+    "odds_margin":0.05
+  }
+}
+```
+
+Flag:
+- ENABLE_PREDICTIONS_USE_ODDS (default false)
+
+Prossime evoluzioni:
+- Adjust delle probabilità modello usando odds (calibration / blending)
+- Value detection (prob_model vs implied odds)
+- Feature engineering storica su drift delle quote
+
+notifiche).
