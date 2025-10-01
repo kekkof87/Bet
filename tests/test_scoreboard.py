@@ -1,6 +1,5 @@
 import json
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
 import pytest
 
@@ -10,7 +9,6 @@ from core.config import _reset_settings_cache_for_tests
 
 @pytest.fixture(autouse=True)
 def env(monkeypatch, tmp_path):
-    # Config minima per evitare errori
     monkeypatch.setenv("API_FOOTBALL_KEY", "DUMMY")
     monkeypatch.setenv("BET_DATA_DIR", str(tmp_path))
     _reset_settings_cache_for_tests()
@@ -21,7 +19,6 @@ def env(monkeypatch, tmp_path):
 def test_build_scoreboard_with_delta(tmp_path):
     now = datetime.now(timezone.utc)
     fixtures = [
-        # LIVE fixture
         {
             "fixture_id": 1,
             "status": "1H",
@@ -29,7 +26,6 @@ def test_build_scoreboard_with_delta(tmp_path):
             "home_score": 1,
             "away_score": 0,
         },
-        # Upcoming (entro 24h)
         {
             "fixture_id": 2,
             "status": "NS",
@@ -37,13 +33,11 @@ def test_build_scoreboard_with_delta(tmp_path):
             "home_score": None,
             "away_score": None,
         },
-        # Non upcoming (oltre 24h)
         {
             "fixture_id": 3,
             "status": "NS",
             "date_utc": (now + timedelta(hours=30)).isoformat(),
         },
-        # Invalid date string (copre _parse_dt failure)
         {
             "fixture_id": 4,
             "status": "NS",
@@ -79,7 +73,6 @@ def test_build_scoreboard_with_delta(tmp_path):
 
 
 def test_build_scoreboard_without_delta_fallback_metrics():
-    # Nessun delta => recent_delta zero e change_breakdown preso da metrics
     fixtures = [
         {"fixture_id": 1, "status": "2H", "date_utc": datetime.now(timezone.utc).isoformat()},
         {"fixture_id": 2, "status": "NS", "date_utc": (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()},
@@ -91,5 +84,4 @@ def test_build_scoreboard_without_delta_fallback_metrics():
     sb = build_scoreboard(fixtures, metrics, delta=None)
     assert sb["recent_delta"] == {"added": 0, "removed": 0, "modified": 0}
     assert sb["change_breakdown"]["score_change"] == 5
-    # upcoming_count_next_24h deve essere 1 (fixture_id 2)
     assert sb["upcoming_count_next_24h"] == 1
