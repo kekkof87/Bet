@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,29 +20,29 @@ def _parse_iso(dt: str) -> Optional[datetime]:
 
 def load_odds_map() -> Dict[int, Dict[str, Any]]:
     """
-    Carica odds_latest.json se feature odds abilitata.
-    Ritorna mapping fixture_id -> {market, implied_norm, margin}.
+    Carica odds_latest.json se abilitato l'enrichment con odds.
+    Mapping: fixture_id -> {odds_original, odds_implied, odds_margin}
     """
     settings = get_settings()
     if not settings.enable_predictions_use_odds:
         return {}
     base = Path(settings.bet_data_dir or "data")
-    f = base / settings.odds_dir / "odds_latest.json"
-    if not f.exists():
-        logger.debug("Odds file non trovato: %s", f)
+    fpath = base / settings.odds_dir / "odds_latest.json"
+    if not fpath.exists():
+        logger.debug("Odds file non trovato: %s", fpath)
         return {}
     try:
-        raw = json.loads(f.read_text(encoding="utf-8"))
-    except Exception as e:  # pragma: no cover
-        logger.error("Errore lettura odds file: %s", e)
+        raw = json.loads(fpath.read_text(encoding="utf-8"))
+    except Exception as exc:  # pragma: no cover
+        logger.error("Errore lettura odds file: %s", exc)
         return {}
 
     entries = raw.get("entries") or []
     mapping: Dict[int, Dict[str, Any]] = {}
-    for e in entries:
-        fid = e.get("fixture_id")
-        market = (e.get("market") or {}) if isinstance(e.get("market"), dict) else {}
-        if fid is None or not market:
+    for entry in entries:
+        fid = entry.get("fixture_id")
+        market = entry.get("market")
+        if fid is None or not isinstance(market, dict):
             continue
         try:
             home_odds = float(market.get("home_win"))
@@ -54,11 +53,11 @@ def load_odds_map() -> Dict[int, Dict[str, Any]]:
             imp_home = 1 / home_odds
             imp_draw = 1 / draw_odds
             imp_away = 1 / away_odds
-            total = imp_home + imp_draw + imp_away
-            margin = total - 1.0
-            norm_home = imp_home / total
-            norm_draw = imp_draw / total
-            norm_away = imp_away / total
+            total_raw = imp_home + imp_draw + imp_away
+            margin = total_raw - 1.0
+            norm_home = imp_home / total_raw
+            norm_draw = imp_draw / total_raw
+            norm_away = imp_away / total_raw
             mapping[int(fid)] = {
                 "odds_original": {
                     "home_win": home_odds,
@@ -81,16 +80,20 @@ def load_odds_map() -> Dict[int, Dict[str, Any]]:
 def build_features(fixtures: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     now = datetime.now(timezone.utc)
     odds_map = load_odds_map()
-
     out: List[Dict[str, Any]] = []
+
+    status_map = {"NS": 0, "1H": 1, "HT": 2, "2H": 3, "ET": 4, "AET": 5, "P": 6, "FT": 7}
+    live_status = {"1H", "2H", "HT", "ET", "AET", "P"}
+
     for fx in fixtures:
         fid = fx.get("fixture_id")
         date_raw = fx.get("date_utc")
         dt = _parse_iso(date_raw) if isinstance(date_raw, str) else None
+
         hours_to_kickoff: Optional[float] = None
         if dt:
-            diff = (dt - now).total_seconds() / 3600.0
-            hours_to_kickoff = round(diff, 3)
+            diff_h = (dt - now).total_seconds() / 3600.0
+            hours_to_kickoff = round(diff_h, 3)
 
         hs = fx.get("home_score")
         as_ = fx.get("away_score")
@@ -102,11 +105,10 @@ def build_features(fixtures: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             score_diff = 0
 
         status = fx.get("status") or "UNK"
-        status_map = {"NS": 0, "1H": 1, "HT": 2, "2H": 3, "ET": 4, "AET": 5, "P": 6, "FT": 7}
         status_code = status_map.get(status, -1)
-        is_live = status in {"1H", "2H", "HT", "ET", "AET", "P"}
+        is_live = status in live_status
 
-        feat = {
+        feat: Dict[str, Any] = {
             "fixture_id": fid,
             "is_live": is_live,
             "score_diff": score_diff,
@@ -114,7 +116,6 @@ def build_features(fixtures: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             "status_code": status_code,
         }
 
-        # Enrichment odds se presente
         if isinstance(fid, int) and fid in odds_map:
             feat.update(odds_map[fid])
 
