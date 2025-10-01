@@ -214,4 +214,29 @@ Diff O(n); memoria per snapshot e delta.
 | /scoreboard | Aggregato sintetico |
 
 ## Sintesi
+
+### Alert Dispatch (Iterazione 15 – Stub)
+Funzione: invio rapido degli eventi alerts (score/status) verso canali esterni.
+
+Flag:
+- ENABLE_ALERT_DISPATCH (default false)
+- ALERT_DISPATCH_MODE=stdout|webhook|telegram (default stdout)
+- ALERT_WEBHOOK_URL (se mode=webhook)
+- ALERT_TELEGRAM_BOT_TOKEN / ALERT_TELEGRAM_CHAT_ID (se mode=telegram)
+
+Flusso:
+1. Generazione alerts (alerts/last_alerts.json)
+2. Dispatch manuale: `python -m scripts.dispatch_alerts`
+3. (Opzionale) Hook automatico in fetch script dopo write_alerts
+
+Formati:
+- stdout: log line per evento
+- webhook: POST JSON {dispatched_at, count, events}
+- telegram: invio singolo messaggio per evento (sendMessage)
+
+Evoluzioni:
+- Batch Telegram unico
+- Rate limit / deduplica
+- Retry con backoff
+- Template formattazione messaggi
 Pipeline incrementale osservabile: diff + classification + metrics + alerts + scoreboard + predictions + consensus + odds + exporter Prometheus. Pronta per introduzione rapida di value detection, dispatch notifiche e modelli avanzati.
