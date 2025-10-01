@@ -73,12 +73,16 @@ class Settings:
     odds_provider: str
     odds_default_source: str
 
-    # NEW: alert dispatch
     enable_alert_dispatch: bool
     alert_dispatch_mode: str
     alert_webhook_url: Optional[str]
     alert_telegram_bot_token: Optional[str]
     alert_telegram_chat_id: Optional[str]
+
+    # Value detection
+    enable_value_detection: bool
+    value_min_edge: float
+    value_include_adjusted: bool
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -168,6 +172,10 @@ class Settings:
         alert_telegram_bot_token = os.getenv("ALERT_TELEGRAM_BOT_TOKEN")
         alert_telegram_chat_id = os.getenv("ALERT_TELEGRAM_CHAT_ID")
 
+        enable_value_detection = _parse_bool(os.getenv("ENABLE_VALUE_DETECTION"), False)
+        value_min_edge = _float("VALUE_MIN_EDGE", 0.05)
+        value_include_adjusted = _parse_bool(os.getenv("VALUE_INCLUDE_ADJUSTED"), True)
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -212,6 +220,9 @@ class Settings:
             alert_webhook_url=alert_webhook_url,
             alert_telegram_bot_token=alert_telegram_bot_token,
             alert_telegram_chat_id=alert_telegram_chat_id,
+            enable_value_detection=enable_value_detection,
+            value_min_edge=value_min_edge,
+            value_include_adjusted=value_include_adjusted,
         )
 
 

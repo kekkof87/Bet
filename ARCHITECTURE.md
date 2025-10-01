@@ -239,4 +239,42 @@ Evoluzioni:
 - Rate limit / deduplica
 - Retry con backoff
 - Template formattazione messaggi
-Pipeline incrementale osservabile: diff + classification + metrics + alerts + scoreboard + predictions + consensus + odds + exporter Prometheus. Pronta per introduzione rapida di value detection, dispatch notifiche e modelli avanzati.
+Pipeline incrementale osservabile: diff + classification + metrics + alerts + scoreboard + 
+predictions + consensus + odds + exporter Prometheus. Pronta per introduzione rapida di value detection, dispatch notifiche e modelli avanzati.
+
+### Value Detection (Iterazione 16 – Stub)
+Scopo: primo segnale di “value” confrontando probabilità modello vs implied odds.
+
+Logica:
+- delta_esito = p_model_esito - p_implied_esito
+- value_side = esito con delta massimo
+- value_edge = delta massimo
+- Attivo solo se value_edge >= VALUE_MIN_EDGE
+- adjusted_edge (opzionale) = value_edge * (1 + odds_margin)
+
+Flag:
+- ENABLE_VALUE_DETECTION (default false)
+- VALUE_MIN_EDGE (default 0.05)
+- VALUE_INCLUDE_ADJUSTED (default true)
+
+Output prediction:
+```json
+{
+  "fixture_id": 123,
+  "prob": {...},
+  "odds": {...},
+  "value": {
+    "active": true,
+    "value_side": "home_win",
+    "value_edge": 0.07,
+    "adjusted_edge": 0.0735,
+    "deltas": {"home_win":0.07,"draw":-0.02,"away_win":-0.05}
+  }
+}
+```
+
+Evoluzioni future:
+- Filtri per priorità segnale
+- Notifiche automatiche high-value
+- Integrazione consensus (pesi value)
+- Backtesting ROI vs edge
