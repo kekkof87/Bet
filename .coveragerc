@@ -1,15 +1,12 @@
 [run]
 branch = True
-parallel = False
 source =
     src
 omit =
     */__init__.py
-    src/providers/api_football/client.py
-    src/providers/api_football/base.py
     src/core/fixture_record.py
-    tests/*
     deprecated/*
+    tests/*
     */.venv/*
     */site-packages/*
 
@@ -21,4 +18,3 @@ exclude_lines =
     if __name__ == .__main__.:
     raise NotImplementedError
     pass
-    # no cov
