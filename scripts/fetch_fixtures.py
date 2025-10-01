@@ -179,25 +179,25 @@ def main() -> None:
     except Exception as exc:  # pragma: no cover
         logger.error("Errore generazione scoreboard: %s", exc)
 
-    # Odds ingestion (prima delle predictions per arricchimento immediato)
+    # Odds ingestion (prima delle predictions)
     try:
         run_odds_pipeline(cast(List[Dict[str, Any]], new))
     except Exception as exc:  # pragma: no cover
         logger.error("Errore odds pipeline: %s", exc)
 
-    # Predictions (baseline + odds enrichment + value detection)
+    # Predictions
     try:
         run_baseline_predictions(cast(List[Dict[str, Any]], new))
     except Exception as exc:  # pragma: no cover
         logger.error("Errore predictions baseline: %s", exc)
 
-    # Consensus (v2 blending)
+    # Consensus
     try:
         run_consensus_pipeline()
     except Exception as exc:  # pragma: no cover
         logger.error("Errore consensus pipeline: %s", exc)
 
-    # Value alerts + history
+    # Value alerts + history + dispatch
     value_alerts_list: List[Dict[str, Any]] = []
     try:
         if settings.enable_value_alerts:
@@ -205,14 +205,12 @@ def main() -> None:
             value_alerts_list = build_value_alerts()
             if value_alerts_list:
                 write_value_alerts(value_alerts_list)
-                # Append history if enabled
                 if settings.enable_value_history:
                     try:
                         from predictions.value_history import append_value_history
                         append_value_history(value_alerts_list)
                     except Exception as exc2:  # pragma: no cover
                         logger.error("Errore append value history: %s", exc2)
-                # Dispatch (riuso dispatcher) se abilitato
                 if settings.enable_alert_dispatch:
                     try:
                         from notifications.dispatcher import dispatch_alerts
@@ -231,6 +229,14 @@ def main() -> None:
                         logger.error("Errore dispatch value alerts: %s", exc2)
     except Exception as exc:  # pragma: no cover
         logger.error("Errore value alerts pipeline: %s", exc)
+
+    # ROI tracking (post value alerts e dopo eventuali fixture FT)
+    try:
+        if settings.enable_roi_tracking:
+            from analytics.roi import build_or_update_roi
+            build_or_update_roi(cast(List[Dict[str, Any]], new))
+    except Exception as exc:  # pragma: no cover
+        logger.error("Errore ROI tracking: %s", exc)
 
     # Prometheus exporter one-shot
     try:
