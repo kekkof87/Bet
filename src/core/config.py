@@ -87,15 +87,20 @@ class Settings:
     enable_value_alerts: bool
     value_alerts_dir: str
 
-    # Value history
     enable_value_history: bool
     value_history_dir: str
     value_history_max_files: int
     value_history_mode: str  # daily | rolling
 
-    # Model adjust (nuovo)
     enable_model_adjust: bool
     model_adjust_weight: float
+
+    # ROI tracking
+    enable_roi_tracking: bool
+    roi_dir: str
+    roi_min_edge: float
+    roi_include_consensus: bool
+    roi_stake_units: float
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -211,6 +216,12 @@ class Settings:
         if model_adjust_weight > 1:
             model_adjust_weight = 1.0
 
+        enable_roi_tracking = _parse_bool(os.getenv("ENABLE_ROI_TRACKING"), False)
+        roi_dir = os.getenv("ROI_DIR", "roi")
+        roi_min_edge = _float("ROI_MIN_EDGE", 0.05)
+        roi_include_consensus = _parse_bool(os.getenv("ROI_INCLUDE_CONSENSUS"), True)
+        roi_stake_units = _float("ROI_STAKE_UNITS", 1.0)
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -267,6 +278,11 @@ class Settings:
             value_history_mode=value_history_mode,
             enable_model_adjust=enable_model_adjust,
             model_adjust_weight=model_adjust_weight,
+            enable_roi_tracking=enable_roi_tracking,
+            roi_dir=roi_dir,
+            roi_min_edge=roi_min_edge,
+            roi_include_consensus=roi_include_consensus,
+            roi_stake_units=roi_stake_units,
         )
 
 
