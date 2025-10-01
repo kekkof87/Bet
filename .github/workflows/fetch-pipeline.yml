@@ -3,7 +3,7 @@ name: Fetch Pipeline
 on:
   workflow_dispatch:
   schedule:
-    - cron: "5 * * * *"
+    - cron: "5 * * * *"   # ogni ora (UTC) al minuto 5
   push:
     branches: ["main"]
 
@@ -43,10 +43,10 @@ jobs:
             pip install -r requirements-dev.txt
           elif [ -f requirements.txt ]; then
             pip install -r requirements.txt
-            pip install pytest httpx prometheus-client
+            pip install pytest httpx
           else
-            echo "Nessun requirements*.txt trovato: installo base minima"
-            pip install pytest httpx prometheus-client fastapi uvicorn
+            echo "Nessun requirements file trovato, installo manualmente pacchetti base"
+            pip install fastapi uvicorn pydantic requests prometheus-client pytest httpx
           fi
           echo "== Installed packages =="
           pip list
@@ -60,7 +60,7 @@ jobs:
         run: |
           python - <<'EOF'
           import sys
-          print("sys.path OK, contains src?:", any(p.endswith("/src") for p in sys.path))
+          print("sys.path:", sys.path)
           import core
           print("Import core OK ->", core.__file__)
           EOF
@@ -97,7 +97,7 @@ jobs:
             data/roi/roi_metrics.json; do
             if [ -f "$f" ]; then
               echo "----- $f -----"
-              head -n 80 "$f"
+              head -n 120 "$f"
             fi
           done
 
