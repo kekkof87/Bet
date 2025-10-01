@@ -12,6 +12,7 @@ from api.routes.scoreboard import router as scoreboard_router
 from api.routes.metrics import router as metrics_router
 from api.routes.predictions import router as predictions_router
 from api.routes.consensus import router as consensus_router
+from api.routes.value_alerts import router as value_alerts_router
 
 logger = get_logger("api.app")
 
@@ -29,8 +30,9 @@ def create_app() -> FastAPI:
     app.include_router(scoreboard_router)
     app.include_router(metrics_router)
     app.include_router(predictions_router)
+    app.include_router(consensus_router)
+    app.include_router(value_alerts_router)
     return app
 
 
 app = create_app()
-app.include_router(consensus_router)

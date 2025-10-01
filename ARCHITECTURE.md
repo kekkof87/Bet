@@ -403,3 +403,31 @@ Ordinamento:
 - Altrimenti: fixture_id asc
 
 Preparazione a dashboard ranking + watchlist.
+
+### Value Alerts API (Iterazione 20)
+Endpoint: GET /value_alerts
+
+Origine: value_alerts/value_alerts.json generato da pipeline (prediction + consensus).
+
+Filtri:
+- source=prediction|consensus (ripetibile)
+- min_edge (>=0)
+- limit (1–500)
+
+Ordinamento:
+- Se min_edge presente: value_edge desc
+- Altrimenti: fixture_id asc + source
+
+Response:
+{
+  "count": N,
+  "total_available": M,
+  "filters": {"sources": [], "min_edge": null, "limit": null},
+  "items": [...],
+  "value_filter_applied": bool
+}
+
+Evoluzioni future:
+- Aggiunta timestamp generazione per alert
+- Dedup per fixture (merge prediction + consensus)
+- Segmentazione live/pre-match
