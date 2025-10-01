@@ -310,5 +310,51 @@ Prossimi sviluppi possibili:
 | Security | Firma snapshot | Integrity chain |
 Evoluzioni future:
 - Media pesata multi-modello
+
+### Telegram Parser (Skeleton – Iterazione 11)
+Funzione: parsing euristico rapido di messaggi Telegram testuali (goal / status / score update).
+
+Approccio attuale:
+- Pattern base (regex): GOAL / GOL! / emoji ⚽
+- Score detection: regex `(\d+)\s*-\s*(\d+)`
+- Status detection: HT, FT, 1H, 2H, ET, AET, P
+- Fixture ID: `fixture_id=12345` oppure `fixture id: 12345` oppure numero isolato 5–7 cifre (euristico)
+- Classificazione messaggio: goal > status > score_update (in base alla prima condizione che matcha)
+- Output file (se ENABLE_TELEGRAM_PARSER=1): `telegram/parsed/last_parsed.json`
+
+Struttura output:
+```json
+{
+  "generated_at": "...",
+  "count": N,
+  "events": [
+    {
+      "raw_text": "...",
+      "type": "goal|status|score_update",
+      "fixture_id": 12345,
+      "home_score": 1,
+      "away_score": 0,
+      "status": "1H",
+      "detected_at": "..."
+    }
+  ]
+}
+```
+
+Variabili:
+- ENABLE_TELEGRAM_PARSER (default false)
+- TELEGRAM_RAW_DIR (default telegram/raw)  [placeholder per futuri ingest]
+- TELEGRAM_PARSED_DIR (default telegram/parsed)
+
+Esecuzione manuale:
+```
+ENABLE_TELEGRAM_PARSER=1 python -m scripts.parse_telegram samples/messages.txt
+```
+
+Evoluzioni future:
+- Normalizzazione nomi squadre e mapping su fixtures correnti
+- De-duplicazione basata su hash / timestamp
+- Arricchimento con timeline, correlazione con alerts (score_change)
+- Pipeline integrata post-fetch
 - Filtri su confidenza minima
 - Ranking basato su expected value / probabilità calibrate
