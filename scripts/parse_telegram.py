@@ -15,8 +15,8 @@ def load_raw_messages(path: Path) -> List[str]:
     if not path.exists():
         logger.error("File non trovato: %s", path)
         return []
-    lines = [l.rstrip("\n") for l in path.read_text(encoding="utf-8").splitlines()]
-    return [l for l in lines if l.strip()]
+    lines = [line.rstrip("\n") for line in path.read_text(encoding="utf-8").splitlines()]
+    return [line for line in lines if line.strip()]
 
 
 def main() -> None:
