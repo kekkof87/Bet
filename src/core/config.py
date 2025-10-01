@@ -73,6 +73,13 @@ class Settings:
     odds_provider: str
     odds_default_source: str
 
+    # NEW: alert dispatch
+    enable_alert_dispatch: bool
+    alert_dispatch_mode: str
+    alert_webhook_url: Optional[str]
+    alert_telegram_bot_token: Optional[str]
+    alert_telegram_chat_id: Optional[str]
+
     @classmethod
     def from_env(cls) -> "Settings":
         key = os.getenv("API_FOOTBALL_KEY")
@@ -155,6 +162,12 @@ class Settings:
         odds_provider = os.getenv("ODDS_PROVIDER", "stub")
         odds_default_source = os.getenv("ODDS_DEFAULT_SOURCE", "stub-book")
 
+        enable_alert_dispatch = _parse_bool(os.getenv("ENABLE_ALERT_DISPATCH"), False)
+        alert_dispatch_mode = os.getenv("ALERT_DISPATCH_MODE", "stdout").lower()
+        alert_webhook_url = os.getenv("ALERT_WEBHOOK_URL")
+        alert_telegram_bot_token = os.getenv("ALERT_TELEGRAM_BOT_TOKEN")
+        alert_telegram_chat_id = os.getenv("ALERT_TELEGRAM_CHAT_ID")
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -194,6 +207,11 @@ class Settings:
             odds_dir=odds_dir,
             odds_provider=odds_provider,
             odds_default_source=odds_default_source,
+            enable_alert_dispatch=enable_alert_dispatch,
+            alert_dispatch_mode=alert_dispatch_mode,
+            alert_webhook_url=alert_webhook_url,
+            alert_telegram_bot_token=alert_telegram_bot_token,
+            alert_telegram_chat_id=alert_telegram_chat_id,
         )
 
 
