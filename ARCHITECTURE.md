@@ -356,5 +356,29 @@ Evoluzioni future:
 - De-duplicazione basata su hash / timestamp
 - Arricchimento con timeline, correlazione con alerts (score_change)
 - Pipeline integrata post-fetch
+
+### Prometheus Exporter (Iterazione 12)
+Scopo: esporre metriche raccolte dai file di stato senza integrare ancora un ciclo push avanzato.
+
+Flag:
+- ENABLE_PROMETHEUS_EXPORTER (default false)
+- PROMETHEUS_PORT (default 9100)
+
+Metriche:
+- bet_fetch_runs_total (Counter)
+- bet_fixtures_total (Gauge)
+- bet_delta_added / removed / modified (Gauge)
+- bet_change_score / status / both / other (Gauge)
+- bet_fetch_latency_ms / retries / attempts (Gauge)
+- bet_scoreboard_live / bet_scoreboard_upcoming_24h (Gauge)
+
+Aggiornamento:
+- Singolo update al termine di scripts/fetch_fixtures.py
+- Loop continuo con: `ENABLE_PROMETHEUS_EXPORTER=1 python -m scripts.run_prometheus_exporter`
+
+Evoluzioni future:
+- Metriche per predictions (accuracy offline)
+- Serie temporali su storicizzazione delta
+- Exporter di health (ultimo timestamp fetch)
 - Filtri su confidenza minima
 - Ranking basato su expected value / probabilità calibrate
