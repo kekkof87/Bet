@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, cast, TYPE_CHECKING
 import json
 from pathlib import Path
+from typing import Any, Dict, List, Optional, cast, TYPE_CHECKING
 
 from core.config import get_settings
 from core.diff import diff_fixtures_detailed, summarize_delta
@@ -18,9 +18,9 @@ from core.metrics import write_metrics_snapshot, write_last_delta_event
 from core.scoreboard import build_scoreboard, write_scoreboard
 from core.alerts import build_alerts, write_alerts
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
+from odds.pipeline import run_odds_pipeline
 from predictions.pipeline import run_baseline_predictions
 from consensus.pipeline import run_consensus_pipeline
-from odds.pipeline import run_odds_pipeline
 from monitoring.prometheus_exporter import update_prom_metrics
 
 if TYPE_CHECKING:
@@ -152,7 +152,7 @@ def main() -> None:
     except Exception as exc:  # pragma: no cover
         logger.error("Errore scrittura delta event: %s", exc)
 
-    # Alerts
+    # Alerts (score / status)
     try:
         alerts = build_alerts(modified)
         if alerts:
@@ -179,23 +179,58 @@ def main() -> None:
     except Exception as exc:  # pragma: no cover
         logger.error("Errore generazione scoreboard: %s", exc)
 
-    # Predictions
+    # Odds ingestion (prima delle predictions per arricchimento immediato)
+    try:
+        run_odds_pipeline(cast(List[Dict[str, Any]], new))
+    except Exception as exc:  # pragma: no cover
+        logger.error("Errore odds pipeline: %s", exc)
+
+    # Predictions (baseline + odds enrichment + value detection)
     try:
         run_baseline_predictions(cast(List[Dict[str, Any]], new))
     except Exception as exc:  # pragma: no cover
         logger.error("Errore predictions baseline: %s", exc)
 
-    # Consensus
+    # Consensus (v2 blending)
     try:
         run_consensus_pipeline()
     except Exception as exc:  # pragma: no cover
         logger.error("Errore consensus pipeline: %s", exc)
 
-    # Odds ingestion (stub)
+    # Value alerts + history
+    value_alerts_list: List[Dict[str, Any]] = []
     try:
-        run_odds_pipeline(cast(List[Dict[str, Any]], new))
+        if settings.enable_value_alerts:
+            from predictions.value_alerts import build_value_alerts, write_value_alerts
+            value_alerts_list = build_value_alerts()
+            if value_alerts_list:
+                write_value_alerts(value_alerts_list)
+                # Append history if enabled
+                if settings.enable_value_history:
+                    try:
+                        from predictions.value_history import append_value_history
+                        append_value_history(value_alerts_list)
+                    except Exception as exc2:  # pragma: no cover
+                        logger.error("Errore append value history: %s", exc2)
+                # Dispatch (riuso dispatcher) se abilitato
+                if settings.enable_alert_dispatch:
+                    try:
+                        from notifications.dispatcher import dispatch_alerts
+                        dispatch_payload = [
+                            {
+                                "type": "value_alert",
+                                "fixture_id": a.get("fixture_id"),
+                                "value_side": a.get("value_side"),
+                                "value_edge": a.get("value_edge"),
+                                "source": a.get("source"),
+                            }
+                            for a in value_alerts_list
+                        ]
+                        dispatch_alerts(dispatch_payload)
+                    except Exception as exc2:  # pragma: no cover
+                        logger.error("Errore dispatch value alerts: %s", exc2)
     except Exception as exc:  # pragma: no cover
-        logger.error("Errore odds pipeline: %s", exc)
+        logger.error("Errore value alerts pipeline: %s", exc)
 
     # Prometheus exporter one-shot
     try:
