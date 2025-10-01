@@ -3,7 +3,7 @@ name: Fetch Pipeline
 on:
   workflow_dispatch:
   schedule:
-    - cron: "5 * * * *"   # ogni ora al minuto 5 (UTC) -> modifica se vuoi meno frequente
+    - cron: "5 * * * *"   # ogni ora (UTC) al minuto 5
   push:
     branches: ["main"]
 
@@ -14,9 +14,9 @@ concurrency:
 jobs:
   fetch-run:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     permissions:
-      contents: read   # solo lettura (non servono write se non fai commit)
+      contents: read
       actions: read
 
     steps:
@@ -26,7 +26,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-            python-version: "3.11"
+          python-version: "3.11"
 
       - name: Cache pip
         uses: actions/cache@v4
@@ -36,16 +36,46 @@ jobs:
           restore-keys: |
             pip-${{ runner.os }}-
 
-      - name: Install dependencies
+      - name: Install base deps (editable if possible) + pytest
         run: |
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install -e .; fi
+          set -e
+          if [ -f pyproject.toml ] || [ -f setup.cfg ] || [ -f setup.py ]; then
+            pip install -e .
+          elif [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "Nessun file install pacchetto: installo solo dipendenze test"
+          fi
+          # Assicuriamo pytest
+          pip install pytest
+          echo "Dipendenze installate:"
+          pip list
+
+      - name: Export PYTHONPATH (src layout)
+        run: |
+          echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+          echo "Impostato PYTHONPATH=$PWD/src"
+
+      - name: Smoke import check
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+        run: |
+          python - <<'EOF'
+          import sys
+          print("sys.path:", sys.path)
+          import core
+          print("Import core OK ->", core.__file__)
+          EOF
 
       - name: Run tests (optional)
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
         run: |
-          pytest -q || exit 1
+          pytest -q
 
       - name: Run fetch pipeline
         env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
           ENABLE_ODDS_INGESTION: ${{ vars.ENABLE_ODDS_INGESTION }}
           ENABLE_PREDICTIONS: ${{ vars.ENABLE_PREDICTIONS }}
@@ -56,16 +86,29 @@ jobs:
           ENABLE_VALUE_HISTORY: ${{ vars.ENABLE_VALUE_HISTORY }}
           ROI_MIN_EDGE: ${{ vars.ROI_MIN_EDGE }}
         run: |
+          echo "Eseguo fetch..."
           python scripts/fetch_fixtures.py
-          ls -R data || true
+          echo "Contenuto data/:"
+          find data -maxdepth 4 -type f -print || true
+
+      - name: Show key outputs
+        if: always()
+        run: |
+          for f in \
+            data/odds/odds_latest.json \
+            data/predictions/latest_predictions.json \
+            data/value_alerts/value_alerts.json \
+            data/roi/roi_metrics.json; do
+            if [ -f "$f" ]; then
+              echo "----- $f -----"
+              head -n 200 "$f"
+            fi
+          done
 
       - name: Upload data artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pipeline-data
           path: data
           retention-days: 7
-
-      - name: Print ROI metrics if present
-        run: |
-          if [ -f data/roi/roi_metrics.json ]; then cat data/roi/roi_metrics.json; else echo "No ROI metrics yet"; fi
