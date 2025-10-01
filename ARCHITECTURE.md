@@ -278,3 +278,37 @@ Evoluzioni future:
 - Notifiche automatiche high-value
 - Integrazione consensus (pesi value)
 - Backtesting ROI vs edge
+
+### Predictions API (Iterazione 17)
+Endpoint: GET /predictions  
+Sorgente: predictions/latest_predictions.json
+
+Query params:
+- value_only (bool) → solo predictions con value.active true
+- min_edge (float) → soglia minima su value_edge (applica filtro, esclude predictions senza value)
+- limit (int) → max elementi (1–500)
+
+Ordinamento:
+- Se value_only o min_edge attivi: per value_edge desc
+- Altrimenti: fixture_id asc
+
+Response:
+{
+  "model_version": "...",
+  "count": N,
+  "total_available": M,
+  "value_only": false,
+  "min_edge": 0.05,
+  "value_filtered": true,
+  "items": [ ... predictions ... ]
+}
+
+Use cases:
+- Dashboard filtraggio rapido segnali value
+- Paginazione futura (limit + offset da aggiungere in evoluzione)
+- Estensioni: filtro per status, live-only, range date
+
+Evoluzioni Future:
+- /predictions/value (solo summary)
+- Aggregazione su margini e distribuzione edge
+- Caching in memoria
