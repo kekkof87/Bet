@@ -9,7 +9,9 @@
 6. Consensus & ranking (stub)
 7. Scoreboard & API read-only
 8. Prometheus exporter (opzionale)
-9. (Planned) Post-match analytics
+9. Odds ingestion (stub)
+10. Predictions odds enrichment (opzionale)
+11. (Planned) Post-match analytics
 
 ## Modules Roadmap
 - core/: configuration, logging, persistence, diff (delta logic), models
@@ -18,67 +20,67 @@
 - consensus/: consensus & ranking stub
 - telegram/: parsing euristico messaggi (skeleton)
 - monitoring/: prometheus exporter
+- odds/: odds pipeline & providers stub
 - api/: read-only HTTP service (FastAPI)
-- scripts/: operazioni manuali (fetch, parse_telegram, exporter)
+- scripts/: operazioni manuali (fetch, parse_telegram, exporter, fetch_odds)
 - tests/: suite automatizzata
 
 ## Data Contracts
-- FixtureRecord (dataclass normalizzata):  
-  fixture_id, league_id, season, date_utc, valid_date_utc, home_team, away_team, status, home_score, away_score, provider
-- Delta Output (detailed):
+- FixtureRecord: fixture_id, league_id, season, date_utc, valid_date_utc, home_team, away_team, status, home_score, away_score, provider
+- Delta Output:
   - added: List[FixtureRecord]
   - removed: List[FixtureRecord]
   - modified: List[{old: FixtureRecord, new: FixtureRecord, change_type: str}]
   - change_breakdown: Dict[str,int] (score_change, status_change, both, other)
 
 ## Quality & CI
-- Lint: Ruff
-- Typecheck: mypy
-- Test: Pytest (+ coverage soglia 80%)
-- Coverage workflow
-- Scheduled data fetch (GitHub Actions)
-- Structured logging JSON (delta_summary, change_breakdown, fetch_stats)
+- Ruff (lint)
+- mypy (type check)
+- Pytest + coverage (≥80%)
+- Scheduled fetch GitHub Actions
+- Logging JSON strutturato
 
 ## Delta Fixtures
 ### Compare Keys (Configurabile)
-Se definita `DELTA_COMPARE_KEYS` (es: `home_score,away_score,status`), il diff considera solo quei campi per determinare se una fixture è “modified”.  
-Se non impostata: confronto shallow sull’intero record.
+`DELTA_COMPARE_KEYS` (es: `home_score,away_score,status`) limita i campi da confrontare. Se non impostato confronto shallow completo.
 
 ### Change Classification
-- score_change: cambia almeno uno tra home_score / away_score
-- status_change: cambia solo lo status
-- both: cambiano punteggio e status insieme
-- other: differenze in campi fuori punteggio/status (solo se compare_keys non limita)
+- score_change
+- status_change
+- both
+- other (solo se compare_keys non limita)
 
 ### Flusso Delta
-1. Carica previous (fixtures_latest se presente)
-2. Fetch nuove fixtures
-3. Abort opzionale se vuoto + FETCH_ABORT_ON_EMPTY=1
-4. diff_fixtures_detailed
-5. Salvataggio previous + latest
-6. History (se abilitato)
+1. Carica previous
+2. Fetch new
+3. Abort se vuoto + FETCH_ABORT_ON_EMPTY=1
+4. diff + classification
+5. Salva previous + latest
+6. History opzionale
 7. metrics/last_run.json & events/last_delta.json
-8. alerts/last_alerts.json (score/status)
+8. alerts/last_alerts.json
 9. scoreboard.json
 10. predictions + consensus
-11. update Prometheus (one-shot)
+11. odds (stub)
+12. prometheus update (one-shot)
 
 ### Persistenza
 | File | Scopo | Trigger |
 |------|-------|---------|
 | fixtures_latest.json | Stato corrente | Ogni fetch |
-| fixtures_previous.json | Stato precedente | Se esisteva old |
+| fixtures_previous.json | Stato precedente | Se old esiste |
 | history/*timestamp*.json | Snapshot storico | ENABLE_HISTORY=1 |
 | metrics/last_run.json | Telemetria run | Ogni fetch |
-| events/last_delta.json | Ultimo delta non vuoto | Fetch con modifiche |
-| alerts/last_alerts.json | Eventi score/status | Se eventi generati |
+| events/last_delta.json | Ultimo delta non vuoto | Delta presente |
+| alerts/last_alerts.json | Eventi score/status | Se eventi |
 | scoreboard.json | Aggregato rapido | Ogni fetch |
-| predictions/latest_predictions.json | Probabilità baseline | Se ENABLE_PREDICTIONS=1 |
-| consensus/consensus.json | Consensus stub | Se ENABLE_CONSENSUS=1 |
-| telegram/parsed/last_parsed.json | Eventi Telegram parse | Se parser + flag abilitati |
+| predictions/latest_predictions.json | Probabilità baseline | ENABLE_PREDICTIONS=1 |
+| consensus/consensus.json | Consensus stub | ENABLE_CONSENSUS=1 |
+| telegram/parsed/last_parsed.json | Eventi Telegram | Parser abilitato |
+| odds/odds_latest.json | Quote stub | ENABLE_ODDS_INGESTION=1 |
 
 ## Algoritmo Diff (Sintesi)
-Indicizzazione primaria per fixture_id; fallback (league_id, date_utc, home_team, away_team) se mancano campi. O(n) su numero fixtures.
+Indicizzazione per fixture_id (fallback combinazione se necessario). Complessità O(n).
 
 ## Logging (Esempio)
 ```json
@@ -91,93 +93,106 @@ Indicizzazione primaria per fixture_id; fallback (league_id, date_utc, home_team
 ```
 
 ## History
-ENABLE_HISTORY=1 + HISTORY_MAX (default 30) → rotazione su numero massimo snapshot.
+ENABLE_HISTORY=1 + HISTORY_MAX (default 30).
 
 ## Fetch Stats
-`fetch_stats`: attempts, retries, latency_ms, last_status.
+attempts, retries, latency_ms, last_status.
 
 ## Error Handling Principale
 | Scenario | Comportamento |
 |----------|---------------|
-| API key assente | Abort con messaggio |
-| Salvataggio previous error | Log errore, continua |
-| Salvataggio latest error | Log errore, stato non avanza |
-| Snapshot corrotto | Warning → trattato come [] |
-| Eccezione diff | Delta vuoto + log |
+| API key assente | Abort |
+| Salvataggio previous error | Log e continua |
+| Salvataggio latest error | Log (stato non avanza) |
+| Snapshot corrotto | Warning → [] |
+| Diff exception | Delta vuoto loggato |
 | Fetch vuoto + abort_on_empty | Stato invariato |
 
 ## Retrocompatibilità
-Vecchi client deprecati rimossi (hardening iterazione 10).
+Client deprecati rimossi (hardening iterazione 10).
 
 ## Alerts
-Regole:
 - score_update: variazione punteggio
-- status_transition: status segue sequenza (default NS→1H→HT→2H→ET→P→AET→FT)
-Configurabili con ALERT_STATUS_SEQUENCE e ALERT_INCLUDE_FINAL.
-
-Output: `alerts/last_alerts.json`
+- status_transition: sequenza NS→1H→HT→2H→ET→P→AET→FT (configurabile)
+File: alerts/last_alerts.json
 
 ## Predictions (Baseline)
-- Features: is_live, score_diff, hours_to_kickoff, status_code
-- Modello semplice lineare + clamp
-- Output: predictions/latest_predictions.json
-- Flag: ENABLE_PREDICTIONS
+Features base: is_live, score_diff, hours_to_kickoff, status_code  
+Output: predictions/latest_predictions.json  
+Flag: ENABLE_PREDICTIONS
 
 ## Consensus & Ranking (Stub)
-Replica baseline:
 - consensus_confidence = max(prob)
 - ranking_score = home_win - away_win
-Output: consensus/consensus.json
-
-## Hardening (Iterazione 10)
-- Rimozione file deprecati
-- Soglia coverage 80%
-- Esclusioni coverage (.coveragerc)
-- Pipeline end-to-end stabilizzata
 
 ## Telegram Parser (Iterazione 11)
-Parsing euristico:
-- Goal pattern: GOAL / GOL! / ⚽
-- Score regex: `(\d+)\s*-\s*(\d+)`
-- Status: HT, FT, 1H, 2H, ET, AET, P
-- Fixture ID: pattern fixture_id= / fixture id: / numero 5–7 cifre
-Output (flag ENABLE_TELEGRAM_PARSER): `telegram/parsed/last_parsed.json`
+Parsing regex euristico (goal / status / score_update).  
+File: telegram/parsed/last_parsed.json
 
 ## Prometheus Exporter (Iterazione 12)
+Metriche: delta counts, change breakdown, fetch stats, scoreboard counts.  
+Flags: ENABLE_PROMETHEUS_EXPORTER, PROMETHEUS_PORT.
+
+## Odds Ingestion (Iterazione 13 – Stub)
 Flag:
-- ENABLE_PROMETHEUS_EXPORTER
-- PROMETHEUS_PORT (default 9100)
+- ENABLE_ODDS_INGESTION
+- ODDS_PROVIDER (stub)
+- ODDS_DIR
+- ODDS_DEFAULT_SOURCE
 
-Metriche:
-- bet_fetch_runs_total
-- bet_fixtures_total
-- bet_delta_added / removed / modified
-- bet_change_score / status / both / other
-- bet_fetch_latency_ms / retries / attempts
-- bet_scoreboard_live / bet_scoreboard_upcoming_24h
+Stub:
+- Genera odds pseudo-random coerenti con score_diff
+- Converte in decimal odds
+File: odds/odds_latest.json
 
-Aggiornamento:
-- One-shot in fetch script
-- Loop server: `python -m scripts.run_prometheus_exporter`
+Evoluzioni:
+- API real odds
+- Multi-book & margin removal
+- Feature enrichment predictions
+- Value detection
 
-Evoluzioni future:
-- Accuratezza predictions
-- Serie temporali delta
-- Health timestamp
+## Predictions – Odds Enrichment (Iterazione 14)
+Se `ENABLE_PREDICTIONS_USE_ODDS=1` e file odds presente:
+1. Converte quote → implied probabilities (1/odd)
+2. Calcola margin = somma(implied_raw) - 1
+3. Normalizza implied
+4. Aggiunge blocco `odds` a ciascuna prediction (non altera `prob` modello baseline)
+
+Prediction singola arricchita:
+```json
+{
+  "fixture_id": 101,
+  "prob": {"home_win":0.45,"draw":0.30,"away_win":0.25},
+  "model_version":"baseline-v1",
+  "odds": {
+    "odds_original":{"home_win":1.9,"draw":3.5,"away_win":4.0},
+    "odds_implied":{"home_win":0.52,"draw":0.28,"away_win":0.20},
+    "odds_margin":0.05
+  }
+}
+```
+
+Flag: ENABLE_PREDICTIONS_USE_ODDS
+
+Futuro:
+- Blending modello vs implied
+- Value detection
+- Tracking drift quote
 
 ## Estensioni Future (Priorità)
 | Idea | Descrizione | Priorità |
 |------|-------------|----------|
 | Multi-model predictions | Ensemble + calibration | Alta |
-| Odds ingestion | Arricchire features | Alta |
 | Alert dispatch esterno | Telegram/Webhook | Alta |
-| DB analitico | DuckDB/Postgres | Media |
-| Prometheus avanzato | Label per league / season | Media |
+| Value detection | Prob_model vs implied odds | Alta |
+| Consensus evoluto | Pesi multi-modello + odds | Media |
+| DB analitico | DuckDB / Postgres | Media |
+| Prometheus label per lega | Metriche segmentate | Media |
 | Compression history | Gzip snapshots | Bassa |
 | Integrity chain | Firma hash snapshot | Bassa |
 
 ## Complessità
-Diff O(n). Memoria: dizionari indicizzati + delta struct.
+Diff O(n); memoria per snapshot e delta.
 
 ## Rischi Mitigati
 | Rischio | Mitigazione |
@@ -185,97 +200,18 @@ Diff O(n). Memoria: dizionari indicizzati + delta struct.
 | File parziali | Scrittura atomica |
 | Crescita history | Rotazione |
 | Rumore diff | compare_keys |
-| Stato perso su fetch vuoto | fetch_abort_on_empty |
-| Metriche mancanti | fallback metrics->delta |
+| Perdita stato | fetch_abort_on_empty |
+| Metriche mancanti | fallback metrics/ delta |
+| Odds inconsistenti | Enrichment opzionale |
 
 ## API (FastAPI)
 | Endpoint | Descrizione |
 |----------|-------------|
 | /health | Stato base |
 | /fixtures | Stato corrente |
-| /delta | Ultimo delta + summary |
+| /delta | Ultimo delta |
 | /metrics | Ultima run metrics |
 | /scoreboard | Aggregato sintetico |
 
 ## Sintesi
-
-### Odds Ingestion (Iterazione 13 – Stub)
-Scopo: introdurre pipeline minima di acquisizione quote per fixture correnti.
-
-Flag:
-- ENABLE_ODDS_INGESTION (default false)
-- ODDS_DIR (default odds)
-- ODDS_PROVIDER (default stub)
-- ODDS_DEFAULT_SOURCE (default stub-book)
-
-Provider Stub:
-- Deriva pseudo-probabilità da score_diff (bias lineare)
-- Converte in odds decimali (1 / prob con jitter)
-- Non rappresenta dati reali: placeholder per wiring
-
-Output:
-`odds/odds_latest.json`
-```json
-{
-  "provider": "stub",
-  "count": N,
-  "entries": [
-    {
-      "fixture_id": 123,
-      "source": "stub-book",
-      "fetched_at": "...",
-      "market": {
-        "home_win": 2.15,
-        "draw": 3.40,
-        "away_win": 3.10
-      }
-    }
-  ]
-}
-```
-
-Evoluzioni:
-- Integrazione reale API-Football odds endpoint
-- Normalizzazione multi-book (mapping source)
-- Calcolo implied probabilities e margin removal
-- Feature enrichment per modello predictions
-- Calibrazione differenze (value detection)
-Pipeline incrementale osservabile: diff + classification + metrics + alerts + scoreboard + predictions + consensus + esportazione Prometheus, pronta a evoluzioni (odds, ensemble, 
-
-### Predictions – Odds Enrichment (Iterazione 14)
-Obiettivo: integrare odds nel flusso predictions senza alterare ancora le probabilità modello.
-
-Meccanismo:
-1. Se ENABLE_PREDICTIONS_USE_ODDS=1 e `odds/odds_latest.json` presente:
-   - Per ogni fixture con odds: converte quote decimali → implied probabilities (1/odds)
-   - Calcola margin = somma(implied_raw) - 1
-   - Normalizza (implied_norm = implied_raw / somma)
-2. Arricchisce feature set:
-   - odds_original.{home_win,draw,away_win}
-   - odds_implied.{home_win,draw,away_win}
-   - odds_margin
-3. Pipeline predictions allega a ciascuna prediction un blocco `odds` (non modifica `prob` modello)
-
-Output (estratto prediction singola):
-```json
-{
-  "fixture_id": 101,
-  "prob": {"home_win":0.45,"draw":0.30,"away_win":0.25},
-  "model_version":"baseline-v1",
-  "odds": {
-    "odds_original": {"home_win":1.9,"draw":3.5,"away_win":4.0},
-    "odds_implied": {"home_win":0.52,"draw":0.28,"away_win":0.20},
-    "odds_margin":0.05
-  }
-}
-```
-
-Flag:
-- ENABLE_PREDICTIONS_USE_ODDS (default false)
-
-Prossime evoluzioni:
-- Adjust delle probabilità modello usando odds (calibration / blending)
-- Value detection (prob_model vs implied odds)
-- Feature engineering storica su drift delle quote
-
-notifiche).
+Pipeline incrementale osservabile: diff + classification + metrics + alerts + scoreboard + predictions + consensus + odds + exporter Prometheus. Pronta per introduzione rapida di value detection, dispatch notifiche e modelli avanzati.

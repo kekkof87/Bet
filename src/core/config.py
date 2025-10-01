@@ -56,7 +56,7 @@ class Settings:
     enable_predictions: bool
     predictions_dir: str
     model_baseline_version: str
-    enable_predictions_use_odds: bool  # NEW
+    enable_predictions_use_odds: bool
 
     enable_consensus: bool
     consensus_dir: str
