@@ -1731,7 +1731,7 @@ def load_roi_timeline_raw() -> List[Dict[str, Any]]:
     return out
 
 
-def load_roi_daily() -> Dict[str, Any]]:
+def load_roi_daily() -> Dict[str, Any]:
     s = get_settings()
     if not s.enable_roi_tracking or not s.enable_roi_timeline:
         return {}
