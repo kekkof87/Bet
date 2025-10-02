@@ -763,3 +763,32 @@ Evoluzioni future:
 - Kelly frazionata con scaling tempo (dopo n picks).
 - Multi outcome book adjustment (ridurre p in presenza di overround elevato).
 - Esclusione pick negative (skip invece di fallback).
+
+
+### ROI Source Breakdown (Iterazione 29)
+
+Aggiunte metriche aggregate per distinguere performance tra sorgenti:
+Campi aggiunti in roi_metrics.json:
+- picks_prediction / picks_consensus
+- settled_prediction / settled_consensus
+- open_prediction / open_consensus
+- wins_prediction / wins_consensus
+- losses_prediction / losses_consensus
+- profit_units_prediction / profit_units_consensus
+- yield_prediction / yield_consensus
+- hit_rate_prediction / hit_rate_consensus
+
+Metodo:
+1. Raggruppo ledger per source.
+2. Riutilizzo funzione interna di calcolo profit/stats.
+3. Integro i risultati nel payload finale di metrics.
+
+Motivazione:
+- Consente analisi strategica (fonte che genera edge reale).
+- Nessuna modifica all’endpoint /roi (metrics già pass-through).
+- Backward-compat: i campi originali invariati.
+
+Evoluzioni possibili:
+- Breakdown anche per value_type (prediction_value vs consensus_value).
+- Breakdown per mese (rolling counters).
+- Aggiunta variabili per escludere una source in ROI (già parziale via ROI_INCLUDE_CONSENSUS).
