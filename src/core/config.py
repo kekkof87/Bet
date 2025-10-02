@@ -137,10 +137,27 @@ class Settings:
 
     merged_dedup_enable: bool
 
-    # Batch 35 additions
+    # Rolling (legacy single window)
     roi_rolling_window: int
+
+    # Batch 35
     enable_roi_edge_deciles: bool
     enable_roi_clv_aggregate: bool
+
+    # Batch 36 CORE + PLUS
+    roi_rolling_windows: List[int]
+    enable_roi_source_breakdown: bool
+    enable_roi_risk_metrics: bool
+    enable_roi_stake_breakdown: bool
+    roi_ledger_max_picks: int
+    roi_ledger_max_age_days: int
+    enable_roi_ledger_archive: bool
+    enable_roi_latency_metrics: bool
+    enable_roi_league_breakdown: bool
+    roi_league_max: int
+    enable_roi_time_buckets: bool
+    roi_edge_buckets_raw: Optional[str]   # stringa originale (es: "0.05-0.07,0.07-0.09,0.09-0.12,0.12-")
+    enable_roi_edge_buckets: bool
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -313,6 +330,42 @@ class Settings:
         enable_roi_edge_deciles = _parse_bool(os.getenv("ENABLE_ROI_EDGE_DECILES"), True)
         enable_roi_clv_aggregate = _parse_bool(os.getenv("ENABLE_ROI_CLV_AGGREGATE"), True)
 
+        # Batch 36
+        rolling_windows_env = os.getenv("ROI_ROLLING_WINDOWS", "7,30,90")
+        rolling_windows: List[int] = []
+        for part in rolling_windows_env.split(","):
+            part = part.strip()
+            if not part:
+                continue
+            try:
+                w = int(part)
+                if w > 0:
+                    rolling_windows.append(w)
+            except Exception:
+                continue
+        if not rolling_windows:
+            rolling_windows = [roi_rolling_window]
+
+        enable_roi_source_breakdown = _parse_bool(os.getenv("ENABLE_ROI_SOURCE_BREAKDOWN"), True)
+        enable_roi_risk_metrics = _parse_bool(os.getenv("ENABLE_ROI_RISK_METRICS"), True)
+        enable_roi_stake_breakdown = _parse_bool(os.getenv("ENABLE_ROI_STAKE_BREAKDOWN"), True)
+
+        roi_ledger_max_picks = _int("ROI_LEDGER_MAX_PICKS", 0)
+        roi_ledger_max_age_days = _int("ROI_LEDGER_MAX_AGE_DAYS", 0)
+        enable_roi_ledger_archive = _parse_bool(os.getenv("ENABLE_ROI_LEDGER_ARCHIVE"), True)
+
+        enable_roi_latency_metrics = _parse_bool(os.getenv("ENABLE_ROI_LATENCY_METRICS"), True)
+
+        enable_roi_league_breakdown = _parse_bool(os.getenv("ENABLE_ROI_LEAGUE_BREAKDOWN"), False)
+        roi_league_max = _int("ROI_LEAGUE_MAX", 10)
+        if roi_league_max < 1:
+            roi_league_max = 10
+
+        enable_roi_time_buckets = _parse_bool(os.getenv("ENABLE_ROI_TIME_BUCKETS"), False)
+
+        roi_edge_buckets_raw = os.getenv("ROI_EDGE_BUCKETS")
+        enable_roi_edge_buckets = bool(roi_edge_buckets_raw)
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -404,6 +457,19 @@ class Settings:
             roi_rolling_window=roi_rolling_window,
             enable_roi_edge_deciles=enable_roi_edge_deciles,
             enable_roi_clv_aggregate=enable_roi_clv_aggregate,
+            roi_rolling_windows=rolling_windows,
+            enable_roi_source_breakdown=enable_roi_source_breakdown,
+            enable_roi_risk_metrics=enable_roi_risk_metrics,
+            enable_roi_stake_breakdown=enable_roi_stake_breakdown,
+            roi_ledger_max_picks=roi_ledger_max_picks,
+            roi_ledger_max_age_days=roi_ledger_max_age_days,
+            enable_roi_ledger_archive=enable_roi_ledger_archive,
+            enable_roi_latency_metrics=enable_roi_latency_metrics,
+            enable_roi_league_breakdown=enable_roi_league_breakdown,
+            roi_league_max=roi_league_max,
+            enable_roi_time_buckets=enable_roi_time_buckets,
+            roi_edge_buckets_raw=roi_edge_buckets_raw,
+            enable_roi_edge_buckets=enable_roi_edge_buckets,
         )
 
 
