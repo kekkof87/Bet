@@ -144,11 +144,10 @@ def save_ledger(base: Path, ledger: List[Dict[str, Any]]) -> None:
     _save_json_atomic(base / "ledger.json", ledger)
 
 
-def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
-    settled = [p for p in ledger if p.get("settled")]
+def _compute_profit_and_stats(picks: List[Dict[str, Any]]) -> Dict[str, Any]:
+    settled = [p for p in picks if p.get("settled")]
     won = [p for p in settled if p.get("result") == "win"]
     lost = [p for p in settled if p.get("result") == "loss"]
-
     profit = 0.0
     for p in settled:
         stake = float(p.get("stake", 1.0))
@@ -156,21 +155,55 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
             profit += float(p.get("payout", 0.0)) - stake
         elif p.get("result") == "loss":
             profit -= stake
-
     total_stake = sum(float(p.get("stake", 1.0)) for p in settled)
     yield_pct = (profit / total_stake) if total_stake > 0 else 0.0
     hit_rate = (len(won) / len(settled)) if settled else 0.0
-
     return {
-        "generated_at": _now_iso(),
-        "total_picks": len(ledger),
-        "settled_picks": len(settled),
-        "open_picks": len([p for p in ledger if not p.get("settled")]),
+        "picks": len(picks),
+        "settled": len(settled),
+        "open": len([p for p in picks if not p.get("settled")]),
         "wins": len(won),
         "losses": len(lost),
         "profit_units": round(profit, 6),
         "yield": round(yield_pct, 6),
         "hit_rate": round(hit_rate, 6),
+        "stake_sum": round(total_stake, 6),
+    }
+
+
+def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
+    global_stats = _compute_profit_and_stats(ledger)
+    pred_stats = _compute_profit_and_stats([p for p in ledger if p.get("source") == "prediction"])
+    cons_stats = _compute_profit_and_stats([p for p in ledger if p.get("source") == "consensus"])
+
+    return {
+        "generated_at": _now_iso(),
+        "total_picks": global_stats["picks"],
+        "settled_picks": global_stats["settled"],
+        "open_picks": global_stats["open"],
+        "wins": global_stats["wins"],
+        "losses": global_stats["losses"],
+        "profit_units": global_stats["profit_units"],
+        "yield": global_stats["yield"],
+        "hit_rate": global_stats["hit_rate"],
+        # Breakdown prediction
+        "picks_prediction": pred_stats["picks"],
+        "settled_prediction": pred_stats["settled"],
+        "open_prediction": pred_stats["open"],
+        "wins_prediction": pred_stats["wins"],
+        "losses_prediction": pred_stats["losses"],
+        "profit_units_prediction": pred_stats["profit_units"],
+        "yield_prediction": pred_stats["yield"],
+        "hit_rate_prediction": pred_stats["hit_rate"],
+        # Breakdown consensus
+        "picks_consensus": cons_stats["picks"],
+        "settled_consensus": cons_stats["settled"],
+        "open_consensus": cons_stats["open"],
+        "wins_consensus": cons_stats["wins"],
+        "losses_consensus": cons_stats["losses"],
+        "profit_units_consensus": cons_stats["profit_units"],
+        "yield_consensus": cons_stats["yield"],
+        "hit_rate_consensus": cons_stats["hit_rate"],
     }
 
 
@@ -243,10 +276,6 @@ def _append_timeline(base: Path, metrics: Dict[str, Any]) -> None:
 
 
 def _extract_side_prob(pred_or_cons: Dict[str, Any], side: str, source: str) -> Optional[float]:
-    """
-    - per prediction: pred["prob"][side]
-    - per consensus: entry["blended_prob"][side]
-    """
     key = "prob" if source == "prediction" else "blended_prob"
     block = pred_or_cons.get(key)
     if not isinstance(block, dict):
@@ -270,10 +299,6 @@ def _compute_kelly_stake(
     max_units: float,
     fraction_cap: float,
 ) -> Tuple[float, Optional[float], Optional[float], Optional[float], Optional[float]]:
-    """
-    Ritorna: stake, fraction_original, fraction_capped, kelly_prob, kelly_b
-    Se model_prob mancante o frazione <= 0 -> fallback base_units.
-    """
     if model_prob is None or model_prob <= 0 or model_prob >= 1:
         return base_units, None, None, model_prob, decimal_odds - 1
     b = decimal_odds - 1
@@ -282,12 +307,10 @@ def _compute_kelly_stake(
     fraction = (decimal_odds * model_prob - 1) / b
     if fraction <= 0:
         return base_units, fraction, None, model_prob, b
-    # capping
     fraction_capped = min(fraction, fraction_cap)
     stake = fraction_capped * base_units
     if stake > max_units:
         stake = max_units
-    # Evita stake troppo piccolo (ad es. < 0.01) – arrotonda a 4 decimali
     if stake < 0.0001:
         stake = 0.0001
     return round(stake, 6), round(fraction, 6), round(fraction_capped, 6), model_prob, b
@@ -346,13 +369,12 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         decimal_odds, odds_src = _find_decimal_odds(fid, side, odds_latest_index, predictions_index)
         fair_prob = round(1 / decimal_odds, 6) if decimal_odds > 0 else 0.5
 
-        # Probabilità modello o consensus
         model_prob = None
         if source == "prediction":
             pred = predictions_index.get(fid)
             if pred:
                 model_prob = _extract_side_prob(pred, side, "prediction")
-        else:  # consensus
+        else:
             cons = consensus_index.get(fid)
             if cons:
                 model_prob = _extract_side_prob(cons, side, "consensus")
@@ -376,7 +398,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
             kelly_fraction = k_f
             kelly_fraction_capped = k_fc
             if kelly_fraction is None or kelly_fraction <= 0:
-                # fallback per chiarezza audit
                 stake_strategy = "fixed"
 
         pick = {
@@ -401,7 +422,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         ledger.append(pick)
         ledger_index[key] = pick
 
-    # Settlement
     for p in ledger:
         if p.get("settled"):
             continue
