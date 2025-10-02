@@ -4,6 +4,7 @@ import csv
 import json
 import math
 import os
+import re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from statistics import mean, pstdev
@@ -820,9 +821,11 @@ def _profit_distribution(contribs: List[float]) -> Dict[str, Any]:
     if not s.enable_roi_profit_distribution or not contribs:
         return {}
     arr = sorted(contribs)
+
     def pct(p: float) -> float:
         k = int(round(p * (len(arr) - 1)))
         return arr[k]
+
     p10 = pct(0.10)
     p25 = pct(0.25)
     p50 = pct(0.50)
@@ -864,7 +867,7 @@ def _risk_of_ruin_approx(ledger: List[Dict[str, Any]]) -> Optional[float]:
     avg_win = sum(win_profits)/len(win_profits) if win_profits else 0.0
     if avg_win <= 0:
         return None
-    avg_stake = sum(float(p.get("stake",1.0)) for p in settled)/len(settled)
+    avg_stake = sum(float(p.get("stake", 1.0)) for p in settled)/len(settled)
     edge = (avg_win * win_rate) - (1 - win_rate)
     if edge <= 0:
         return 1.0
@@ -970,20 +973,53 @@ def _side_breakdown(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     return out
 
 
+def _parse_numeric_range(spec: str) -> tuple[Optional[float], Optional[float]]:
+    """
+    Parsing robusto di range numerici con estremi opzionali e segni:
+      "-0.1--0.05"  -> (-0.1, -0.05)
+      "-0.05-0"     -> (-0.05, 0.0)
+      "0-0.05"      -> (0.0, 0.05)
+      "0.05-0.1"    -> (0.05, 0.1)
+      "0.1-"        -> (0.1, None)
+      "-0.1-"       -> (-0.1, None)
+    In caso di formato non valido ritorna (None, None).
+    """
+    spec = spec.strip()
+    if not spec:
+        return (None, None)
+    m = re.match(r'^\s*([+-]?\d+(?:\.\d+)?)?\s*-\s*([+-]?\d+(?:\.\d+)?)?\s*$', spec)
+    if not m:
+        return (None, None)
+    left_s, right_s = m.group(1), m.group(2)
+    try:
+        left_v = float(left_s) if left_s is not None else None
+    except ValueError:
+        left_v = None
+    try:
+        right_v = float(right_s) if right_s is not None else None
+    except ValueError:
+        right_v = None
+    return (left_v, right_v)
+
+
 def _clv_buckets_distribution(ledger: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     s = get_settings()
     if not s.enable_roi_clv_buckets:
         return []
-    settled = [p for p in ledger if p.get("settled") and isinstance(p.get("clv_pct"), (int, float))]
+    settled = [
+        p for p in ledger
+        if p.get("settled") and isinstance(p.get("clv_pct"), (int, float))
+    ]
     if not settled:
         return []
     out: List[Dict[str, Any]] = []
     for spec in s.roi_clv_buckets:
-        if "-" not in spec:
+        spec = spec.strip()
+        if not spec or "-" not in spec:
             continue
-        left, right = spec.split("-", 1)
-        left_v = float(left) if left else None
-        right_v = float(right) if right else None
+        left_v, right_v = _parse_numeric_range(spec)
+        if left_v is None and right_v is None:
+            continue
 
         def match(v: float) -> bool:
             if left_v is not None and v < left_v:
@@ -994,7 +1030,12 @@ def _clv_buckets_distribution(ledger: List[Dict[str, Any]]) -> List[Dict[str, An
 
         picks = [p for p in settled if match(float(p["clv_pct"]))]
         if not picks:
-            out.append({"range": spec, "picks": 0, "profit_units": 0.0, "yield": 0.0})
+            out.append({
+                "range": spec,
+                "picks": 0,
+                "profit_units": 0.0,
+                "yield": 0.0
+            })
             continue
         stats = _compute_profit_and_stats(picks)
         out.append({
