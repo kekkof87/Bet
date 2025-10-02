@@ -962,3 +962,67 @@ Evoluzioni future:
 - Edge deciles rolling.
 - CLV distribution (percentili).
 - Profit per decile normalizzato per stake.
+
+# Batch 36 (CORE + PLUS)
+
+## Nuove Feature
+
+### CORE
+1. Multi Rolling Windows  
+   - Config: ROI_ROLLING_WINDOWS (default "7,30,90")  
+   - Output: metrics.rolling_multi.wX.{picks,profit_units,yield,hit_rate,peak_profit,max_drawdown}
+
+2. Source Breakdown  
+   - Config: ENABLE_ROI_SOURCE_BREAKDOWN (default true)  
+   - metrics.source_breakdown.{prediction,consensus,merged}
+
+3. Risk Metrics  
+   - Config: ENABLE_ROI_RISK_METRICS (default true)  
+   - metrics.risk.{sharpe_like,sortino_like,stddev_profit_per_pick,downside_stddev}
+
+4. Stake Strategy Breakdown  
+   - Config: ENABLE_ROI_STAKE_BREAKDOWN (default true)  
+   - metrics.stake_breakdown.{kelly,fixed}
+
+5. Ledger Pruning + Archive  
+   - Config:
+     - ROI_LEDGER_MAX_PICKS (0=illimitato)
+     - ROI_LEDGER_MAX_AGE_DAYS (0=disabilitato)
+     - ENABLE_ROI_LEDGER_ARCHIVE (default true)
+   - Picks rimosse spostate in ledger_archive.json
+
+6. CLV Performance Delta  
+   - metrics.clv.clv_positive_rate  
+   - metrics.clv.clv_realized_edge = avg_clv_pct - yield globale
+
+7. Latency Metrics  
+   - Config: ENABLE_ROI_LATENCY_METRICS (default true)  
+   - metrics.latency.avg_settlement_latency_sec
+
+### PLUS
+1. League Breakdown  
+   - Config: ENABLE_ROI_LEAGUE_BREAKDOWN (default false), ROI_LEAGUE_MAX (default 10)  
+   - metrics.league_breakdown list: {league_id,picks,settled,profit_units,yield,hit_rate}
+
+2. Time-of-Day Buckets  
+   - Config: ENABLE_ROI_TIME_BUCKETS (default false)  
+   - metrics.time_buckets.{h00_05,h06_11,h12_17,h18_23}
+
+3. Edge Buckets  
+   - Config: ROI_EDGE_BUCKETS (default "0.05-0.07,0.07-0.09,0.09-0.12,0.12-")  
+   - metrics.edge_buckets list per range.
+
+## CSV Aggiunte
+- sharpe_like, sortino_like
+- profit_per_pick, profit_per_unit_staked
+- w7_profit_units, w30_profit_units, w90_profit_units
+- avg_clv_pct, median_clv_pct, clv_positive_rate, clv_realized_edge
+- avg_settlement_latency_sec
+
+## Pruning
+- Eseguito prima di ogni run.
+- Ordine: pruning per età → pruning per quantità → archiviazione.
+
+## Backward Compatibility
+- Nessun campo esistente rimosso.
+- Se disabilitate le feature: sezioni vuote ({} o []).
