@@ -221,7 +221,6 @@ def _append_timeline(base: Path, metrics: Dict[str, Any]) -> None:
         _append_jsonl(history_path, record)
     except Exception as exc:  # pragma: no cover
         logger.error("Errore append ROI timeline: %s", exc)
-    # Aggiornamento giornaliero
     day = _utc_day()
     daily = _load_json(daily_path) or {}
     if not isinstance(daily, dict):
@@ -243,6 +242,57 @@ def _append_timeline(base: Path, metrics: Dict[str, Any]) -> None:
         logger.error("Errore salvataggio daily ROI: %s", exc)
 
 
+def _extract_side_prob(pred_or_cons: Dict[str, Any], side: str, source: str) -> Optional[float]:
+    """
+    - per prediction: pred["prob"][side]
+    - per consensus: entry["blended_prob"][side]
+    """
+    key = "prob" if source == "prediction" else "blended_prob"
+    block = pred_or_cons.get(key)
+    if not isinstance(block, dict):
+        return None
+    val = block.get(side)
+    try:
+        if isinstance(val, (int, float)):
+            if val < 0 or val > 1:
+                return None
+            return float(val)
+    except Exception:
+        return None
+    return None
+
+
+def _compute_kelly_stake(
+    *,
+    decimal_odds: float,
+    model_prob: Optional[float],
+    base_units: float,
+    max_units: float,
+    fraction_cap: float,
+) -> Tuple[float, Optional[float], Optional[float], Optional[float], Optional[float]]:
+    """
+    Ritorna: stake, fraction_original, fraction_capped, kelly_prob, kelly_b
+    Se model_prob mancante o frazione <= 0 -> fallback base_units.
+    """
+    if model_prob is None or model_prob <= 0 or model_prob >= 1:
+        return base_units, None, None, model_prob, decimal_odds - 1
+    b = decimal_odds - 1
+    if b <= 0:
+        return base_units, None, None, model_prob, b
+    fraction = (decimal_odds * model_prob - 1) / b
+    if fraction <= 0:
+        return base_units, fraction, None, model_prob, b
+    # capping
+    fraction_capped = min(fraction, fraction_cap)
+    stake = fraction_capped * base_units
+    if stake > max_units:
+        stake = max_units
+    # Evita stake troppo piccolo (ad es. < 0.01) – arrotonda a 4 decimali
+    if stake < 0.0001:
+        stake = 0.0001
+    return round(stake, 6), round(fraction, 6), round(fraction_capped, 6), model_prob, b
+
+
 def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     settings = get_settings()
     if not settings.enable_roi_tracking:
@@ -259,14 +309,14 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
 
     min_edge = settings.roi_min_edge
     include_consensus = settings.roi_include_consensus
-    stake_units = settings.roi_stake_units
+    default_stake_units = settings.roi_stake_units
 
     predictions_index = load_predictions_index()
+    consensus_index = load_consensus_index()
     odds_latest_index = load_odds_latest_index()
 
     now_ts = _now_iso()
 
-    # Crea nuove picks
     for alert in alerts:
         fid = alert.get("fixture_id")
         source = str(alert.get("source"))
@@ -292,8 +342,43 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         side = alert.get("value_side")
         if not isinstance(side, str):
             continue
+
         decimal_odds, odds_src = _find_decimal_odds(fid, side, odds_latest_index, predictions_index)
         fair_prob = round(1 / decimal_odds, 6) if decimal_odds > 0 else 0.5
+
+        # Probabilità modello o consensus
+        model_prob = None
+        if source == "prediction":
+            pred = predictions_index.get(fid)
+            if pred:
+                model_prob = _extract_side_prob(pred, side, "prediction")
+        else:  # consensus
+            cons = consensus_index.get(fid)
+            if cons:
+                model_prob = _extract_side_prob(cons, side, "consensus")
+
+        stake = default_stake_units
+        stake_strategy = "fixed"
+        kelly_fraction = None
+        kelly_fraction_capped = None
+        kelly_prob = None
+        kelly_b = None
+
+        if settings.enable_kelly_staking:
+            stake_strategy = "kelly"
+            stake, k_f, k_fc, kelly_prob, kelly_b = _compute_kelly_stake(
+                decimal_odds=decimal_odds,
+                model_prob=model_prob,
+                base_units=settings.kelly_base_units,
+                max_units=settings.kelly_max_units,
+                fraction_cap=settings.kelly_edge_cap,
+            )
+            kelly_fraction = k_f
+            kelly_fraction_capped = k_fc
+            if kelly_fraction is None or kelly_fraction <= 0:
+                # fallback per chiarezza audit
+                stake_strategy = "fixed"
+
         pick = {
             "created_at": now_ts,
             "fixture_id": fid,
@@ -301,17 +386,22 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
             "value_type": value_type,
             "side": side,
             "edge": edge,
-            "stake": stake_units,
+            "stake": stake,
+            "stake_strategy": stake_strategy,
             "decimal_odds": round(decimal_odds, 6),
             "est_odds": round(decimal_odds, 6),
             "fair_prob": fair_prob,
             "odds_source": odds_src,
+            "kelly_fraction": kelly_fraction,
+            "kelly_fraction_capped": kelly_fraction_capped,
+            "kelly_prob": kelly_prob,
+            "kelly_b": kelly_b,
             "settled": False,
         }
         ledger.append(pick)
         ledger_index[key] = pick
 
-    # Settle picks
+    # Settlement
     for p in ledger:
         if p.get("settled"):
             continue
@@ -370,9 +460,6 @@ def load_roi_ledger() -> List[Dict[str, Any]]:
     return load_ledger(base)
 
 
-# ---------------------
-# Timeline loading API
-# ---------------------
 def load_roi_timeline_raw() -> List[Dict[str, Any]]:
     settings = get_settings()
     if not settings.enable_roi_tracking or not settings.enable_roi_timeline:
@@ -391,9 +478,9 @@ def load_roi_timeline_raw() -> List[Dict[str, Any]]:
                 rec = json.loads(line)
                 if isinstance(rec, dict):
                     out.append(rec)
-            except Exception:  # pragma: no cover
+            except Exception:
                 continue
-    except Exception:  # pragma: no cover
+    except Exception:
         return []
     return out
 
