@@ -180,64 +180,50 @@ def roi_timeline(
     }
 
 
-@router.get("/analytics", summary="Dettagli analitici avanzati batch37 (rolling, risk, anomalies, plus)")
+@router.get("/analytics", summary="Dettagli analitici avanzati (Batch 37 + Batch 38)")
 def roi_analytics():
     settings = get_settings()
+    empty = {
+        "enabled": False,
+        "rolling": {},
+        "rolling_multi": {},
+        "hit_rate_multi": {},
+        "clv": {},
+        "risk": {},
+        "anomalies": {},
+        "stake_breakdown": {},
+        "source_breakdown": {},
+        "source_efficiency": {},
+        "latency": {},
+        "edge_deciles": [],
+        "edge_buckets": [],
+        "league_breakdown": [],
+        "time_buckets": {},
+        "side_breakdown": {},
+        "clv_buckets": [],
+        "aging_buckets": {},
+        "edge_clv_corr": {},
+        "stake_advisory": {},
+        "profit_distribution": {},
+        "risk_of_ruin_approx": None,
+        "profit_per_pick": 0.0,
+        "profit_per_unit_staked": 0.0,
+        # Batch 38:
+        "kelly_effectiveness": {},
+        "payout_moments": {},
+        "market_placeholder": {},
+        "archive_stats": {},
+        "montecarlo": {},
+        "profit_buckets": [],
+        "metrics_version": None,
+    }
     if not settings.enable_roi_tracking:
-        return {
-            "enabled": False,
-            "rolling": {},
-            "rolling_multi": {},
-            "hit_rate_multi": {},
-            "clv": {},
-            "risk": {},
-            "anomalies": {},
-            "stake_breakdown": {},
-            "source_breakdown": {},
-            "source_efficiency": {},
-            "latency": {},
-            "edge_deciles": [],
-            "edge_buckets": [],
-            "league_breakdown": [],
-            "time_buckets": {},
-            "side_breakdown": {},
-            "clv_buckets": [],
-            "aging_buckets": {},
-            "edge_clv_corr": {},
-            "stake_advisory": {},
-            "profit_distribution": {},
-            "risk_of_ruin_approx": None,
-            "profit_per_pick": 0.0,
-            "profit_per_unit_staked": 0.0,
-        }
+        return empty
+
     metrics = load_roi_summary()
     if not metrics:
-        return {
-            "enabled": True,
-            "rolling": {},
-            "rolling_multi": {},
-            "hit_rate_multi": {},
-            "clv": {},
-            "risk": {},
-            "anomalies": {},
-            "stake_breakdown": {},
-            "source_breakdown": {},
-            "source_efficiency": {},
-            "latency": {},
-            "edge_deciles": [],
-            "edge_buckets": [],
-            "league_breakdown": [],
-            "time_buckets": {},
-            "side_breakdown": {},
-            "clv_buckets": [],
-            "aging_buckets": {},
-            "edge_clv_corr": {},
-            "stake_advisory": {},
-            "profit_distribution": {},
-            "risk_of_ruin_approx": None,
-            "profit_per_pick": 0.0,
-            "profit_per_unit_staked": 0.0,
-        }
+        empty["enabled"] = True
+        return empty
 
     rolling_single = {
         "window_size": metrics.get("rolling_window_size"),
@@ -251,6 +237,7 @@ def roi_analytics():
     rolling_multi = metrics.get("rolling_multi") or {}
     return {
         "enabled": True,
+        "metrics_version": metrics.get("metrics_version"),
         "rolling": rolling_single,
         "rolling_multi": rolling_multi,
         "hit_rate_multi": metrics.get("hit_rate_multi") or {},
@@ -274,4 +261,11 @@ def roi_analytics():
         "risk_of_ruin_approx": metrics.get("risk_of_ruin_approx"),
         "profit_per_pick": metrics.get("profit_per_pick"),
         "profit_per_unit_staked": metrics.get("profit_per_unit_staked"),
+        # Batch 38 additions
+        "kelly_effectiveness": metrics.get("kelly_effectiveness") or {},
+        "payout_moments": metrics.get("payout_moments") or {},
+        "market_placeholder": metrics.get("market_placeholder") or {},
+        "archive_stats": metrics.get("archive_stats") or {},
+        "montecarlo": metrics.get("montecarlo") or {},
+        "profit_buckets": metrics.get("profit_buckets") or [],
     }
