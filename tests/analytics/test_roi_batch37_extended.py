@@ -1,4 +1,3 @@
-import os
 from datetime import datetime, timedelta, timezone
 
 from core.config import _reset_settings_cache_for_tests, get_settings
@@ -45,6 +44,9 @@ def _mk_pick(
 
 
 def test_batch37_extended_metrics(monkeypatch):
+    # Variabile obbligatoria per Settings.from_env
+    monkeypatch.setenv("API_FOOTBALL_KEY", "dummy-key")
+
     # Attiva tutti i flag core+plus introdotti in Batch 37
     env_flags = {
         "ENABLE_ROI_TRACKING": "1",
@@ -76,21 +78,16 @@ def test_batch37_extended_metrics(monkeypatch):
     settings = get_settings()
     assert settings.enable_roi_tracking
 
-    # Costruiamo un ledger con > 40 picks per:
-    # - risk_of_ruin (>=30)
-    # - edge_clv_corr (>=10)
-    # - aging buckets (varie differenze di giorni)
-    # - drawdown (creiamo prima una salita forte poi una discesa)
     base_time = datetime(2025, 1, 1, 10, 0, 0)
     ledger = []
 
-    # Prima fase: 15 win grandi per creare un picco
+    # Prima fase: 15 win per creare un picco
     for i in range(1, 16):
         ledger.append(
             _mk_pick(
                 idx=i,
                 created_at=base_time + timedelta(hours=i),
-                settle_after_days=1 if i % 3 else 2,  # differenze di aging
+                settle_after_days=1 if i % 3 else 2,
                 source="prediction" if i % 2 else "consensus",
                 side="home_win",
                 stake=1.0,
@@ -101,7 +98,7 @@ def test_batch37_extended_metrics(monkeypatch):
             )
         )
 
-    # Seconda fase: 10 loss per generare drawdown
+    # Seconda fase: 10 loss per creare drawdown
     for j in range(16, 26):
         ledger.append(
             _mk_pick(
@@ -118,7 +115,7 @@ def test_batch37_extended_metrics(monkeypatch):
             )
         )
 
-    # Terza fase: mix win/loss per completare >40 picks e variare edge/clv
+    # Terza fase: mix win/loss (20 picks)
     outcomes = ["win", "loss"]
     for k in range(26, 46):
         outcome = outcomes[k % 2]
@@ -137,10 +134,8 @@ def test_batch37_extended_metrics(monkeypatch):
             )
         )
 
-    # Compute metrics
     metrics = compute_metrics(ledger)
 
-    # Verifiche chiavi nuove (non controlliamo valori numerici esatti, solo presenza / tipo)
     for key in [
         "risk",
         "profit_distribution",
@@ -156,55 +151,42 @@ def test_batch37_extended_metrics(monkeypatch):
     ]:
         assert key in metrics, f"Missing key {key}"
 
-    # Alcuni controlli di struttura
     assert isinstance(metrics["risk"], dict)
     assert isinstance(metrics["profit_distribution"], dict)
     assert isinstance(metrics["source_efficiency"], dict)
     assert isinstance(metrics["side_breakdown"], dict)
     assert isinstance(metrics["anomalies"], dict)
 
-    # edge_clv_corr deve indicare n >=10
     ecc = metrics["edge_clv_corr"]
     assert "n" in ecc and ecc["n"] >= 10
 
-    # aging buckets deve contenere le bucket dichiarate
     if settings.enable_roi_aging_buckets:
         for b in settings.roi_aging_buckets:
             assert str(b) in metrics["aging_buckets"]
 
-    # stake advisory (dovrebbe attivarsi se il drawdown è significativo)
     if settings.enable_roi_stake_advisory:
         adv = metrics["stake_advisory"]
-        # Non obblighiamo che sia sempre presente, ma se presente deve avere recommended_factor
         if adv:
             assert "recommended_factor" in adv
 
-    # equity volatility (inserita in risk.equity_vol)
     eq_vol = metrics["risk"].get("equity_vol", {})
     if settings.enable_roi_equity_vol:
         assert isinstance(eq_vol, dict)
-        # almeno una finestra (es. w30)
         assert any(k.startswith("w") for k in eq_vol.keys()), "Missing equity vol windows"
 
-    # Profit distribution percentili base se attivo
     if settings.enable_roi_profit_distribution:
         for k in ("p10", "median", "p90"):
             assert k in metrics["profit_distribution"]
 
-    # CLV buckets se abilitati
     if settings.enable_roi_clv_buckets:
         assert isinstance(metrics["clv_buckets"], list)
 
-    # Source efficiency se attivo
     if settings.enable_roi_source_efficiency:
-        # almeno una fonte presente
         assert len(metrics["source_efficiency"]) >= 1
 
-    # Anomalies: tutte le chiavi booleane
     if settings.enable_roi_anomaly_flags:
         for k in ("drawdown_alert", "yield_drop_alert", "vol_spike_alert"):
             assert k in metrics["anomalies"]
 
-    # Risk of ruin se attivo (può essere None se edge negativo, ma chiave deve esserci)
     if settings.enable_roi_ror:
         assert "risk_of_ruin_approx" in metrics
