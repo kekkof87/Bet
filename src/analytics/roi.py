@@ -74,11 +74,7 @@ def load_value_alerts() -> List[Dict[str, Any]]:
     al = raw.get("alerts")
     if not isinstance(al, list):
         return []
-    clean = []
-    for a in al:
-        if isinstance(a, dict) and a.get("fixture_id") is not None and a.get("value_edge") is not None:
-            clean.append(a)
-    return clean
+    return [a for a in al if isinstance(a, dict) and a.get("fixture_id") is not None and a.get("value_edge") is not None]
 
 
 def load_predictions_index() -> Dict[int, Dict[str, Any]]:
@@ -91,11 +87,7 @@ def load_predictions_index() -> Dict[int, Dict[str, Any]]:
     preds = raw.get("predictions")
     if not isinstance(preds, list):
         return {}
-    out: Dict[int, Dict[str, Any]] = {}
-    for p in preds:
-        if isinstance(p, dict) and isinstance(p.get("fixture_id"), int):
-            out[p["fixture_id"]] = p
-    return out
+    return {p["fixture_id"]: p for p in preds if isinstance(p, dict) and isinstance(p.get("fixture_id"), int)}
 
 
 def load_consensus_index() -> Dict[int, Dict[str, Any]]:
@@ -108,11 +100,7 @@ def load_consensus_index() -> Dict[int, Dict[str, Any]]:
     entries = raw.get("entries")
     if not isinstance(entries, list):
         return {}
-    out: Dict[int, Dict[str, Any]] = {}
-    for e in entries:
-        if isinstance(e, dict) and isinstance(e.get("fixture_id"), int):
-            out[e["fixture_id"]] = e
-    return out
+    return {e["fixture_id"]: e for e in entries if isinstance(e, dict) and isinstance(e.get("fixture_id"), int)}
 
 
 def load_odds_latest_index() -> Dict[int, Dict[str, Any]]:
@@ -125,11 +113,7 @@ def load_odds_latest_index() -> Dict[int, Dict[str, Any]]:
     entries = raw.get("entries")
     if not isinstance(entries, list):
         return {}
-    out: Dict[int, Dict[str, Any]] = {}
-    for e in entries:
-        if isinstance(e, dict) and isinstance(e.get("fixture_id"), int):
-            out[e["fixture_id"]] = e
-    return out
+    return {e["fixture_id"]: e for e in entries if isinstance(e, dict) and isinstance(e.get("fixture_id"), int)}
 
 
 def load_ledger(base: Path) -> List[Dict[str, Any]]:
@@ -175,7 +159,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     global_stats = _compute_profit_and_stats(ledger)
     pred_stats = _compute_profit_and_stats([p for p in ledger if p.get("source") == "prediction"])
     cons_stats = _compute_profit_and_stats([p for p in ledger if p.get("source") == "consensus"])
-
     return {
         "generated_at": _now_iso(),
         "total_picks": global_stats["picks"],
@@ -186,7 +169,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "profit_units": global_stats["profit_units"],
         "yield": global_stats["yield"],
         "hit_rate": global_stats["hit_rate"],
-        # Breakdown prediction
         "picks_prediction": pred_stats["picks"],
         "settled_prediction": pred_stats["settled"],
         "open_prediction": pred_stats["open"],
@@ -195,7 +177,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "profit_units_prediction": pred_stats["profit_units"],
         "yield_prediction": pred_stats["yield"],
         "hit_rate_prediction": pred_stats["hit_rate"],
-        # Breakdown consensus
         "picks_consensus": cons_stats["picks"],
         "settled_consensus": cons_stats["settled"],
         "open_consensus": cons_stats["open"],
@@ -281,13 +262,8 @@ def _extract_side_prob(pred_or_cons: Dict[str, Any], side: str, source: str) -> 
     if not isinstance(block, dict):
         return None
     val = block.get(side)
-    try:
-        if isinstance(val, (int, float)):
-            if val < 0 or val > 1:
-                return None
-            return float(val)
-    except Exception:
-        return None
+    if isinstance(val, (int, float)) and 0 <= val <= 1:
+        return float(val)
     return None
 
 
@@ -309,11 +285,40 @@ def _compute_kelly_stake(
         return base_units, fraction, None, model_prob, b
     fraction_capped = min(fraction, fraction_cap)
     stake = fraction_capped * base_units
-    if stake > max_units:
-        stake = max_units
+    stake = min(stake, max_units)
     if stake < 0.0001:
         stake = 0.0001
     return round(stake, 6), round(fraction, 6), round(fraction_capped, 6), model_prob, b
+
+
+def _build_snapshot(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    settings = get_settings()
+    if not settings.enable_roi_odds_snapshot:
+        return None
+    market = entry.get("market")
+    if not isinstance(market, dict):
+        return None
+    # Estrarre solo outcome base (se presenti)
+    base_outcomes = {}
+    for k in ("home_win", "draw", "away_win"):
+        v = market.get(k)
+        if isinstance(v, (int, float)) and v > 1.01:
+            base_outcomes[k] = float(v)
+    if not base_outcomes:
+        return None
+    # implied grezzi
+    implied_raw = {k: 1.0 / v for k, v in base_outcomes.items()}
+    s = sum(implied_raw.values())
+    implied_norm = {k: round(v / s, 6) for k, v in implied_raw.items()} if s > 0 else {}
+    overround = round(s - 1.0, 6) if s > 0 else 0.0
+    provider = entry.get("source") or entry.get("provider") or settings.odds_default_source
+    return {
+        "market_snapshot": base_outcomes,
+        "snapshot_implied": implied_norm,
+        "snapshot_overround": overround,
+        "snapshot_provider": provider,
+        "snapshot_at": _now_iso(),
+    }
 
 
 def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
@@ -400,6 +405,12 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
             if kelly_fraction is None or kelly_fraction <= 0:
                 stake_strategy = "fixed"
 
+        # Odds snapshot
+        snapshot_block = None
+        entry = odds_latest_index.get(fid)
+        if entry:
+            snapshot_block = _build_snapshot(entry)
+
         pick = {
             "created_at": now_ts,
             "fixture_id": fid,
@@ -419,6 +430,9 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
             "kelly_b": kelly_b,
             "settled": False,
         }
+        if snapshot_block:
+            pick.update(snapshot_block)
+
         ledger.append(pick)
         ledger_index[key] = pick
 
@@ -444,7 +458,7 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
             p["result"] = "loss"
             p["payout"] = 0.0
         p["settled"] = True
-        p["settled_at"] = now_ts
+        p["settled_at"] = _now_iso()
 
     save_ledger(base, ledger)
     metrics = compute_metrics(ledger)
