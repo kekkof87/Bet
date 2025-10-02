@@ -956,7 +956,7 @@ def _side_breakdown(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     s = get_settings()
     if not s.enable_roi_side_breakdown:
         return {}
-    sides = {"home_win": [], "draw": [], "away_win": []}
+    sides: Dict[str, List[Dict[str, Any]]] = {"home_win": [], "draw": [], "away_win": []}
     for p in ledger:
         side = p.get("side")
         if side in sides:
@@ -1187,7 +1187,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     clv_buckets = _clv_buckets_distribution(ledger)
     hit_rate_multi = _hit_rate_multi(rolling_multi)
 
-    # Preliminary metrics dict (needed for stake advisory & anomalies)
     metrics = {
         "generated_at": _now_iso(),
         "total_picks": global_stats["picks"],
@@ -1259,7 +1258,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "profit_per_pick": profit_norm["profit_per_pick"],
         "profit_per_unit_staked": profit_norm["profit_per_unit_staked"],
 
-        # Flatten CLV
         "avg_clv_pct": clv_block.get("avg_clv_pct"),
         "median_clv_pct": clv_block.get("median_clv_pct"),
         "clv_positive_rate": clv_block.get("clv_positive_rate"),
@@ -1268,7 +1266,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "realized_clv_loss_avg": clv_block.get("realized_clv_loss_avg"),
     }
 
-    # Batch 37 sections
     metrics["profit_distribution"] = profit_distribution
     metrics["risk_of_ruin_approx"] = risk_of_ruin
     metrics["source_efficiency"] = source_eff
@@ -1278,7 +1275,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     metrics["clv_buckets"] = clv_buckets
     metrics["hit_rate_multi"] = hit_rate_multi
 
-    # Stake advisory (needs metrics context)
     stake_adv = _stake_advisory(metrics)
     metrics["stake_advisory"] = stake_adv
 
@@ -1735,7 +1731,7 @@ def load_roi_timeline_raw() -> List[Dict[str, Any]]:
     return out
 
 
-def load_roi_daily() -> Dict[str, Any]:
+def load_roi_daily() -> Dict[str, Any]]:
     s = get_settings()
     if not s.enable_roi_tracking or not s.enable_roi_timeline:
         return {}
