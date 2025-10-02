@@ -122,8 +122,10 @@ def roi_timeline(
 
     if include_full:
         raw = load_roi_timeline_raw()
+
         def _ts(r: dict) -> str:
             return str(r.get("ts") or "")
+
         raw.sort(key=_ts)
         filtered: List[dict] = []
         for r in raw:
@@ -178,27 +180,47 @@ def roi_timeline(
     }
 
 
-@router.get("/analytics", summary="Dettagli analitici (rolling, CLV, edge deciles)")
+@router.get("/analytics", summary="Dettagli analitici avanzati (rolling multi, breakdown, risk, clv, latency)")
 def roi_analytics():
     settings = get_settings()
     if not settings.enable_roi_tracking:
         return {
             "enabled": False,
             "rolling": {},
+            "rolling_multi": {},
             "clv": {},
+            "risk": {},
+            "stake_breakdown": {},
+            "source_breakdown": {},
+            "latency": {},
             "edge_deciles": [],
-            "window_size": settings.roi_rolling_window,
+            "edge_buckets": [],
+            "league_breakdown": [],
+            "time_buckets": {},
+            "profit_per_pick": 0.0,
+            "profit_per_unit_staked": 0.0,
         }
     metrics = load_roi_summary()
     if not metrics:
         return {
             "enabled": True,
             "rolling": {},
+            "rolling_multi": {},
             "clv": {},
+            "risk": {},
+            "stake_breakdown": {},
+            "source_breakdown": {},
+            "latency": {},
             "edge_deciles": [],
-            "window_size": settings.roi_rolling_window,
+            "edge_buckets": [],
+            "league_breakdown": [],
+            "time_buckets": {},
+            "profit_per_pick": 0.0,
+            "profit_per_unit_staked": 0.0,
         }
-    rolling = {
+
+    # Legacy single rolling alias (test legacy expectations)
+    rolling_single = {
         "window_size": metrics.get("rolling_window_size"),
         "picks": metrics.get("picks_rolling"),
         "profit_units": metrics.get("profit_units_rolling"),
@@ -207,17 +229,36 @@ def roi_analytics():
         "peak_profit": metrics.get("peak_profit_rolling"),
         "max_drawdown": metrics.get("max_drawdown_rolling"),
     }
-    clv = {
-        "avg_clv_pct": metrics.get("avg_clv_pct"),
-        "median_clv_pct": metrics.get("median_clv_pct"),
-        "realized_clv_win_avg": metrics.get("realized_clv_win_avg"),
-        "realized_clv_loss_avg": metrics.get("realized_clv_loss_avg"),
-    }
-    edge_deciles = metrics.get("edge_deciles") or []
+
+    # Multi window
+    rolling_multi = metrics.get("rolling_multi") or {}
+
+    clv_block = metrics.get("clv") or {}
+    # Ensure flattened fields are also exposed inside clv block
+    for k in (
+        "avg_clv_pct",
+        "median_clv_pct",
+        "clv_positive_rate",
+        "clv_realized_edge",
+        "realized_clv_win_avg",
+        "realized_clv_loss_avg",
+    ):
+        if k not in clv_block:
+            clv_block[k] = metrics.get(k)
+
     return {
         "enabled": True,
-        "rolling": rolling,
-        "clv": clv,
-        "edge_deciles": edge_deciles,
-        "window_size": metrics.get("rolling_window_size"),
+        "rolling": rolling_single,
+        "rolling_multi": rolling_multi,
+        "clv": clv_block,
+        "risk": metrics.get("risk") or {},
+        "stake_breakdown": metrics.get("stake_breakdown") or {},
+        "source_breakdown": metrics.get("source_breakdown") or {},
+        "latency": metrics.get("latency") or {},
+        "edge_deciles": metrics.get("edge_deciles") or [],
+        "edge_buckets": metrics.get("edge_buckets") or [],
+        "league_breakdown": metrics.get("league_breakdown") or [],
+        "time_buckets": metrics.get("time_buckets") or {},
+        "profit_per_pick": metrics.get("profit_per_pick"),
+        "profit_per_unit_staked": metrics.get("profit_per_unit_staked"),
     }
