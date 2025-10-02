@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-10-02T17:32:40.415922+00:00",
+  "generated_at": "2025-10-02T17:37:10.411481+00:00",
   "total_picks": 0,
   "settled_picks": 0,
   "open_picks": 0,
@@ -88,7 +88,8 @@
     "sharpe_like": null,
     "sortino_like": null,
     "stddev_profit_per_pick": null,
-    "downside_stddev": null
+    "downside_stddev": null,
+    "equity_vol": {}
   },
   "stake_breakdown": {},
   "source_breakdown": {},
@@ -106,5 +107,45 @@
   "clv_positive_rate": null,
   "clv_realized_edge": null,
   "realized_clv_win_avg": null,
-  "realized_clv_loss_avg": null
+  "realized_clv_loss_avg": null,
+  "profit_distribution": {},
+  "risk_of_ruin_approx": null,
+  "source_efficiency": {},
+  "edge_clv_corr": {},
+  "aging_buckets": {},
+  "side_breakdown": {
+    "home_win": {
+      "picks": 0,
+      "settled": 0,
+      "profit_units": 0.0,
+      "yield": 0.0,
+      "hit_rate": 0.0
+    },
+    "draw": {
+      "picks": 0,
+      "settled": 0,
+      "profit_units": 0.0,
+      "yield": 0.0,
+      "hit_rate": 0.0
+    },
+    "away_win": {
+      "picks": 0,
+      "settled": 0,
+      "profit_units": 0.0,
+      "yield": 0.0,
+      "hit_rate": 0.0
+    }
+  },
+  "clv_buckets": [],
+  "hit_rate_multi": {
+    "w7": 0.0,
+    "w30": 0.0,
+    "w90": 0.0
+  },
+  "stake_advisory": {},
+  "anomalies": {
+    "drawdown_alert": false,
+    "yield_drop_alert": false,
+    "vol_spike_alert": false
+  }
 }
