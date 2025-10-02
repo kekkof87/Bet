@@ -471,8 +471,7 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     return metrics
 
 
-def save_metrics(base: Path, metrics: Dict[str, Any]]) -> None:  # noqa: E701
-    # NOTE: previous code had a syntax error; ensure bracket alignment
+def save_metrics(base: Path, metrics: Dict[str, Any]) -> None:
     _save_json_atomic(base / "roi_metrics.json", metrics)
 
 
