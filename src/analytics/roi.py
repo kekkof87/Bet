@@ -490,6 +490,7 @@ def _risk_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
             "sortino_like": None,
             "stddev_profit_per_pick": None,
             "downside_stddev": None,
+            "equity_vol": {},
         }
     contribs = [_profit_contribution(p) for p in settled]
     mean_profit = mean(contribs)
@@ -506,6 +507,7 @@ def _risk_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "sortino_like": round(sortino, 6) if sortino is not None else None,
         "stddev_profit_per_pick": round(variance, 6) if variance else 0.0,
         "downside_stddev": round(downside_std, 6),
+        "equity_vol": {},
     }
 
 
@@ -645,7 +647,7 @@ def _profit_normalizations(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
-# -------------------- Odds / Kelly helpers (RE-ADDED) --------------------
+# -------------------- Odds / Kelly helpers --------------------
 def _extract_side_prob(pred_or_cons: Dict[str, Any], side: str, source: str) -> Optional[float]:
     key = "prob" if source == "prediction" else "blended_prob"
     block = pred_or_cons.get(key)
@@ -783,6 +785,315 @@ def _append_timeline(base: Path, metrics: Dict[str, Any]) -> None:
         logger.error("Errore salvataggio daily ROI: %s", exc)
 
 
+# -------------------- Batch 37 NEW analytics helpers --------------------
+def _equity_curve_settled(ledger: List[Dict[str, Any]]) -> List[float]:
+    eq = []
+    running = 0.0
+    settled = [p for p in ledger if p.get("settled")]
+    settled.sort(key=lambda x: x.get("created_at") or "")
+    for p in settled:
+        running += _profit_contribution(p)
+        eq.append(running)
+    return eq
+
+
+def _equity_volatility(equity: List[float], windows: List[int]) -> Dict[str, float]:
+    out: Dict[str, float] = {}
+    if not equity:
+        return out
+    increments = [equity[i] - equity[i - 1] for i in range(1, len(equity))]
+    if not increments:
+        return out
+    for w in windows:
+        slice_inc = increments[-w:] if len(increments) > w else increments
+        if len(slice_inc) > 1:
+            m = sum(slice_inc) / len(slice_inc)
+            var = sum((x - m) ** 2 for x in slice_inc) / len(slice_inc)
+            out[f"w{w}"] = round(math.sqrt(var), 6)
+        else:
+            out[f"w{w}"] = 0.0
+    return out
+
+
+def _profit_distribution(contribs: List[float]) -> Dict[str, Any]:
+    s = get_settings()
+    if not s.enable_roi_profit_distribution or not contribs:
+        return {}
+    arr = sorted(contribs)
+    def pct(p: float) -> float:
+        k = int(round(p * (len(arr) - 1)))
+        return arr[k]
+    p10 = pct(0.10)
+    p25 = pct(0.25)
+    p50 = pct(0.50)
+    p75 = pct(0.75)
+    p90 = pct(0.90)
+    if len(arr) > 1:
+        m = sum(arr)/len(arr)
+        var = sum((x-m)**2 for x in arr)/len(arr)
+        std = math.sqrt(var) if var > 0 else 0.0
+        skew_proxy = (m - p50)/std if std > 0 else 0.0
+    else:
+        skew_proxy = 0.0
+    return {
+        "p10": round(p10, 6),
+        "p25": round(p25, 6),
+        "median": round(p50, 6),
+        "p75": round(p75, 6),
+        "p90": round(p90, 6),
+        "skew_proxy": round(skew_proxy, 6),
+    }
+
+
+def _risk_of_ruin_approx(ledger: List[Dict[str, Any]]) -> Optional[float]:
+    s = get_settings()
+    if not s.enable_roi_ror:
+        return None
+    settled = [p for p in ledger if p.get("settled")]
+    if len(settled) < 30:
+        return None
+    wins = [p for p in settled if p.get("result") == "win"]
+    win_rate = len(wins)/len(settled) if settled else 0.0
+    if win_rate <= 0 or win_rate >= 1:
+        return None
+    win_profits = []
+    for p in wins:
+        stake = float(p.get("stake", 1.0))
+        payout = float(p.get("payout", 0.0))
+        win_profits.append(payout - stake)
+    avg_win = sum(win_profits)/len(win_profits) if win_profits else 0.0
+    if avg_win <= 0:
+        return None
+    avg_stake = sum(float(p.get("stake",1.0)) for p in settled)/len(settled)
+    edge = (avg_win * win_rate) - (1 - win_rate)
+    if edge <= 0:
+        return 1.0
+    capital_units = 50.0
+    ratio = edge / avg_win if avg_win > 0 else 0.0
+    base = max(0.01, 1 - ratio)
+    approx = base ** (capital_units / max(0.1, avg_stake))
+    return round(min(max(approx, 0.0), 1.0), 6)
+
+
+def _compute_source_efficiency(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
+    s = get_settings()
+    if not s.enable_roi_source_efficiency:
+        return {}
+    out: Dict[str, Any] = {}
+    for src in ("prediction", "consensus", "merged"):
+        picks = [p for p in ledger if p.get("source") == src and p.get("settled")]
+        if not picks:
+            continue
+        contribs = [_profit_contribution(p) for p in picks]
+        if not contribs:
+            continue
+        avg = sum(contribs)/len(contribs)
+        if len(contribs) > 1:
+            m = avg
+            var = sum((x-m)**2 for x in contribs)/len(contribs)
+            std = math.sqrt(var) if var > 0 else 0.0
+        else:
+            std = 0.0
+        eff = avg/std if std > 0 else None
+        out[src] = {
+            "eff_index": round(eff, 6) if eff is not None else None,
+            "avg_profit_per_pick": round(avg, 6),
+            "stddev_profit_per_pick": round(std, 6),
+            "settled": len(picks),
+        }
+    return out
+
+
+def _edge_clv_corr(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
+    s = get_settings()
+    if not s.enable_roi_edge_clv_corr:
+        return {}
+    pairs = [
+        (float(p.get("edge")), float(p.get("clv_pct")))
+        for p in ledger
+        if p.get("settled") and isinstance(p.get("edge"), (int, float)) and isinstance(p.get("clv_pct"), (int, float))
+    ]
+    if len(pairs) < 10:
+        return {"pearson_r": None, "n": len(pairs)}
+    xs = [a for a, _ in pairs]
+    ys = [b for _, b in pairs]
+    mx = sum(xs)/len(xs)
+    my = sum(ys)/len(ys)
+    num = sum((x-mx)*(y-my) for x, y in zip(xs, ys))
+    denx = math.sqrt(sum((x-mx)**2 for x in xs))
+    deny = math.sqrt(sum((y-my)**2 for y in ys))
+    if denx <= 0 or deny <= 0:
+        r = None
+    else:
+        r = num/(denx*deny)
+    return {"pearson_r": round(r, 6) if r is not None else None, "n": len(pairs)}
+
+
+def _aging_buckets_stats(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
+    s = get_settings()
+    if not s.enable_roi_aging_buckets:
+        return {}
+    settled = [p for p in ledger if p.get("settled")]
+    if not settled:
+        return {}
+    data: Dict[int, int] = {}
+    for p in settled:
+        c = _parse_dt(p.get("created_at"))
+        se = _parse_dt(p.get("settled_at"))
+        if not c or not se:
+            continue
+        delta_days = int((se - c).total_seconds() // 86400)
+        data[delta_days] = data.get(delta_days, 0) + 1
+    total = sum(data.values())
+    out: Dict[str, Any] = {}
+    for bucket in s.roi_aging_buckets:
+        cum = sum(v for d, v in data.items() if d <= bucket)
+        out[str(bucket)] = {"picks": cum, "pct": round(cum/total, 6) if total>0 else 0.0}
+    return out
+
+
+def _side_breakdown(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
+    s = get_settings()
+    if not s.enable_roi_side_breakdown:
+        return {}
+    sides = {"home_win": [], "draw": [], "away_win": []}
+    for p in ledger:
+        side = p.get("side")
+        if side in sides:
+            sides[side].append(p)
+    out: Dict[str, Any] = {}
+    for side, arr in sides.items():
+        if arr:
+            out[side] = _compute_profit_and_stats(arr)
+        else:
+            out[side] = {"picks": 0, "settled": 0, "profit_units": 0.0, "yield": 0.0, "hit_rate": 0.0}
+    return out
+
+
+def _clv_buckets_distribution(ledger: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    s = get_settings()
+    if not s.enable_roi_clv_buckets:
+        return []
+    settled = [p for p in ledger if p.get("settled") and isinstance(p.get("clv_pct"), (int, float))]
+    if not settled:
+        return []
+    out: List[Dict[str, Any]] = []
+    for spec in s.roi_clv_buckets:
+        if "-" not in spec:
+            continue
+        left, right = spec.split("-", 1)
+        left_v = float(left) if left else None
+        right_v = float(right) if right else None
+
+        def match(v: float) -> bool:
+            if left_v is not None and v < left_v:
+                return False
+            if right_v is not None and v >= right_v:
+                return False
+            return True
+
+        picks = [p for p in settled if match(float(p["clv_pct"]))]
+        if not picks:
+            out.append({"range": spec, "picks": 0, "profit_units": 0.0, "yield": 0.0})
+            continue
+        stats = _compute_profit_and_stats(picks)
+        out.append({
+            "range": spec,
+            "picks": stats["picks"],
+            "profit_units": stats["profit_units"],
+            "yield": stats["yield"],
+        })
+    return out
+
+
+def _stake_advisory(metrics: Dict[str, Any]) -> Dict[str, Any]:
+    s = get_settings()
+    if not s.enable_roi_stake_advisory:
+        return {}
+    peak = metrics.get("peak_profit") or 0.0
+    curr_dd = metrics.get("current_drawdown") or 0.0
+    dd_pct = (curr_dd/peak) if peak>0 else 0.0
+    if dd_pct >= s.roi_stake_advisory_dd_pct:
+        return {
+            "recommended_factor": 0.7,
+            "reason": "deep_drawdown",
+            "dd_pct": round(dd_pct, 4),
+        }
+    return {}
+
+
+def _enhance_deciles(deciles: List[Dict[str, Any]], ledger: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if not deciles:
+        return deciles
+    settled = [p for p in ledger if p.get("settled") and isinstance(p.get("edge"), (int, float))]
+    for d in deciles:
+        emin = d.get("edge_min")
+        emax = d.get("edge_max")
+        bucket_picks = [
+            p for p in settled
+            if emin is not None and emax is not None and emin <= p["edge"] <= emax
+        ]
+        stats = _compute_profit_and_stats(bucket_picks) if bucket_picks else None
+        d["hit_rate"] = stats["hit_rate"] if stats else 0.0
+        d["yield"] = stats["yield"] if stats else 0.0
+    return deciles
+
+
+def _hit_rate_multi(rolling_multi: Dict[str, Any]) -> Dict[str, Any]:
+    out = {}
+    for k, v in rolling_multi.items():
+        if isinstance(v, dict) and "hit_rate" in v:
+            out[k] = v["hit_rate"]
+    return out
+
+
+def _anomaly_flags(metrics: Dict[str, Any]) -> Dict[str, bool]:
+    s = get_settings()
+    if not s.enable_roi_anomaly_flags:
+        return {}
+    dd_alert = False
+    yd_alert = False
+    vol_alert = False
+    peak = metrics.get("peak_profit") or 0.0
+    curr_dd = metrics.get("current_drawdown") or 0.0
+    if peak > 0 and curr_dd / peak >= s.roi_anomaly_dd_threshold:
+        dd_alert = True
+    y_total = metrics.get("yield") or 0.0
+    y_rolling = metrics.get("yield_rolling") or 0.0
+    if y_total > 0 and (y_total - y_rolling) / y_total >= s.roi_anomaly_yield_drop:
+        yd_alert = True
+    equity_vol = metrics.get("risk", {}).get("equity_vol", {})
+    if equity_vol:
+        vals = list(equity_vol.values())
+        if vals:
+            sorted_v = sorted(vals)
+            mid = sorted_v[len(sorted_v)//2]
+            last_key = max(equity_vol.keys(), key=lambda k: int(k[1:]) if k.startswith("w") else 0)
+            last_val = equity_vol.get(last_key) or 0.0
+            if mid > 0 and last_val / mid >= s.roi_anomaly_vol_mult:
+                vol_alert = True
+    return {
+        "drawdown_alert": dd_alert,
+        "yield_drop_alert": yd_alert,
+        "vol_spike_alert": vol_alert,
+    }
+
+
+def _export_schema_if_enabled(base: Path, metrics: Dict[str, Any]) -> None:
+    s = get_settings()
+    if not s.enable_roi_schema_export:
+        return
+    schema = {
+        "schema_version": "1.0",
+        "description": "ROI metrics schema (core+plus batch37)",
+        "top_level_keys": sorted(list(metrics.keys())),
+    }
+    try:
+        _save_json_atomic(base / "roi_metrics.schema.json", schema)
+    except Exception as exc:
+        logger.error("schema_export_failed %s", exc)
+
+
 # -------------------- Pruning / Archive --------------------
 def _prune_ledger(base: Path, ledger: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     s = get_settings()
@@ -828,10 +1139,8 @@ def _prune_ledger(base: Path, ledger: List[Dict[str, Any]]) -> List[Dict[str, An
 
 # -------------------- Metrics assembly --------------------
 def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
-    # Global
     global_stats = _compute_profit_and_stats(ledger)
 
-    # Per source
     pred_picks = [p for p in ledger if p.get("source") == "prediction"]
     cons_picks = [p for p in ledger if p.get("source") == "consensus"]
     merged_picks = [p for p in ledger if p.get("source") == "merged"]
@@ -840,37 +1149,45 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     cons_stats = _compute_profit_and_stats(cons_picks)
     merged_stats = _compute_profit_and_stats(merged_picks)
 
-    # Legacy single rolling window
     legacy_roll = _legacy_single_rolling(ledger)
-    # Multi rolling
     rolling_multi = _rolling_window_stats_multi(ledger)
-    # Equity & streaks
     eq = _equity_stats(ledger)
     streaks = _streak_stats(ledger)
-    # CLV
     clv_base = _clv_aggregate(ledger)
     clv_block = _finalize_clv_block(clv_base, global_stats["yield"]) if clv_base else {}
-    # Risk / breakdowns
     risk = _risk_metrics(ledger)
     stake_bd = _stake_breakdown(ledger)
     source_bd = _source_breakdown(ledger)
     latency = _latency_metrics(ledger)
     deciles = _edge_deciles(ledger)
+    deciles = _enhance_deciles(deciles, ledger)
     league_bd = _league_breakdown(ledger)
     time_bd = _time_buckets(ledger)
     edge_buckets = _edge_buckets(ledger)
     profit_norm = _profit_normalizations(ledger)
 
-    # Flatten CLV key fields for backward-compat tests
-    flat_clv = {
-        "avg_clv_pct": clv_block.get("avg_clv_pct"),
-        "median_clv_pct": clv_block.get("median_clv_pct"),
-        "clv_positive_rate": clv_block.get("clv_positive_rate"),
-        "clv_realized_edge": clv_block.get("clv_realized_edge"),
-        "realized_clv_win_avg": clv_block.get("realized_clv_win_avg"),
-        "realized_clv_loss_avg": clv_block.get("realized_clv_loss_avg"),
-    }
+    # Batch 37 additions
+    equity_curve = _equity_curve_settled(ledger)
+    s = get_settings()
+    equity_vol = {}
+    if s.enable_roi_equity_vol:
+        equity_vol = _equity_volatility(equity_curve, s.roi_equity_vol_windows)
+    if "equity_vol" in risk and isinstance(risk["equity_vol"], dict):
+        risk["equity_vol"].update(equity_vol)
+    else:
+        risk["equity_vol"] = equity_vol
 
+    contribs_all = [_profit_contribution(p) for p in ledger if p.get("settled")]
+    profit_distribution = _profit_distribution(contribs_all)
+    risk_of_ruin = _risk_of_ruin_approx(ledger)
+    source_eff = _compute_source_efficiency(ledger)
+    edge_clv_corr = _edge_clv_corr(ledger)
+    aging_b = _aging_buckets_stats(ledger)
+    side_bd = _side_breakdown(ledger)
+    clv_buckets = _clv_buckets_distribution(ledger)
+    hit_rate_multi = _hit_rate_multi(rolling_multi)
+
+    # Preliminary metrics dict (needed for stake advisory & anomalies)
     metrics = {
         "generated_at": _now_iso(),
         "total_picks": global_stats["picks"],
@@ -882,7 +1199,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "yield": global_stats["yield"],
         "hit_rate": global_stats["hit_rate"],
 
-        # Prediction
         "picks_prediction": pred_stats["picks"],
         "settled_prediction": pred_stats["settled"],
         "open_prediction": pred_stats["open"],
@@ -892,7 +1208,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "yield_prediction": pred_stats["yield"],
         "hit_rate_prediction": pred_stats["hit_rate"],
 
-        # Consensus
         "picks_consensus": cons_stats["picks"],
         "settled_consensus": cons_stats["settled"],
         "open_consensus": cons_stats["open"],
@@ -902,7 +1217,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "yield_consensus": cons_stats["yield"],
         "hit_rate_consensus": cons_stats["hit_rate"],
 
-        # Merged
         "picks_merged": merged_stats["picks"],
         "settled_merged": merged_stats["settled"],
         "open_merged": merged_stats["open"],
@@ -912,7 +1226,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "yield_merged": merged_stats["yield"],
         "hit_rate_merged": merged_stats["hit_rate"],
 
-        # Equity & Streaks
         "peak_profit": eq["peak_profit"],
         "max_drawdown": eq["max_drawdown"],
         "max_drawdown_pct": eq["max_drawdown_pct"],
@@ -924,7 +1237,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "longest_win_streak": streaks["longest_win_streak"],
         "longest_loss_streak": streaks["longest_loss_streak"],
 
-        # Legacy rolling fields
         "rolling_window_size": legacy_roll["rolling_window_size"],
         "picks_rolling": legacy_roll["picks_rolling"],
         "settled_rolling": legacy_roll["settled_rolling"],
@@ -934,10 +1246,7 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "peak_profit_rolling": legacy_roll["peak_profit_rolling"],
         "max_drawdown_rolling": legacy_roll["max_drawdown_rolling"],
 
-        # Multi rolling
         "rolling_multi": rolling_multi,
-
-        # Blocks
         "clv": clv_block,
         "risk": risk,
         "stake_breakdown": stake_bd,
@@ -947,14 +1256,35 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "league_breakdown": league_bd,
         "time_buckets": time_bd,
         "edge_buckets": edge_buckets,
-
-        # Normalizations
         "profit_per_pick": profit_norm["profit_per_pick"],
         "profit_per_unit_staked": profit_norm["profit_per_unit_staked"],
+
+        # Flatten CLV
+        "avg_clv_pct": clv_block.get("avg_clv_pct"),
+        "median_clv_pct": clv_block.get("median_clv_pct"),
+        "clv_positive_rate": clv_block.get("clv_positive_rate"),
+        "clv_realized_edge": clv_block.get("clv_realized_edge"),
+        "realized_clv_win_avg": clv_block.get("realized_clv_win_avg"),
+        "realized_clv_loss_avg": clv_block.get("realized_clv_loss_avg"),
     }
 
-    # Flatten CLV fields
-    metrics.update(flat_clv)
+    # Batch 37 sections
+    metrics["profit_distribution"] = profit_distribution
+    metrics["risk_of_ruin_approx"] = risk_of_ruin
+    metrics["source_efficiency"] = source_eff
+    metrics["edge_clv_corr"] = edge_clv_corr
+    metrics["aging_buckets"] = aging_b
+    metrics["side_breakdown"] = side_bd
+    metrics["clv_buckets"] = clv_buckets
+    metrics["hit_rate_multi"] = hit_rate_multi
+
+    # Stake advisory (needs metrics context)
+    stake_adv = _stake_advisory(metrics)
+    metrics["stake_advisory"] = stake_adv
+
+    anomalies = _anomaly_flags(metrics)
+    metrics["anomalies"] = anomalies
+
     return metrics
 
 
@@ -994,13 +1324,18 @@ def _write_roi_csv_export(ledger: List[Dict[str, Any]], metrics: Dict[str, Any])
 
     effective_threshold = _read_effective_threshold()
 
-    w7 = metrics.get("rolling_multi", {}).get("w7", {})
-    w30 = metrics.get("rolling_multi", {}).get("w30", {})
-    w90 = metrics.get("rolling_multi", {}).get("w90", {})
+    rolling_multi = metrics.get("rolling_multi", {})
+    w7 = rolling_multi.get("w7", {})
+    w30 = rolling_multi.get("w30", {})
+    w90 = rolling_multi.get("w90", {})
 
     clv_block = metrics.get("clv", {}) or {}
     risk_block = metrics.get("risk", {}) or {}
     latency_block = metrics.get("latency", {}) or {}
+    anomalies = metrics.get("anomalies", {}) or {}
+    src_eff = metrics.get("source_efficiency", {}) or {}
+    stake_adv = metrics.get("stake_advisory", {}) or {}
+    equity_vol_block = risk_block.get("equity_vol", {}) if isinstance(risk_block.get("equity_vol"), dict) else {}
 
     header = [
         "fixture_id",
@@ -1041,6 +1376,16 @@ def _write_roi_csv_export(ledger: List[Dict[str, Any]], metrics: Dict[str, Any])
         "w30_profit_units",
         "w90_profit_units",
         "avg_settlement_latency_sec",
+        "equity_vol_w30",
+        "equity_vol_w100",
+        "risk_of_ruin_approx",
+        "drawdown_alert",
+        "yield_drop_alert",
+        "vol_spike_alert",
+        "eff_index_prediction",
+        "eff_index_consensus",
+        "eff_index_merged",
+        "stake_adv_factor",
     ]
 
     tmp = target.with_suffix(".tmp")
@@ -1101,6 +1446,16 @@ def _write_roi_csv_export(ledger: List[Dict[str, Any]], metrics: Dict[str, Any])
                     w30.get("profit_units"),
                     w90.get("profit_units"),
                     latency_block.get("avg_settlement_latency_sec"),
+                    equity_vol_block.get("w30"),
+                    equity_vol_block.get("w100"),
+                    metrics.get("risk_of_ruin_approx"),
+                    anomalies.get("drawdown_alert"),
+                    anomalies.get("yield_drop_alert"),
+                    anomalies.get("vol_spike_alert"),
+                    (src_eff.get("prediction") or {}).get("eff_index"),
+                    (src_eff.get("consensus") or {}).get("eff_index"),
+                    (src_eff.get("merged") or {}).get("eff_index"),
+                    stake_adv.get("recommended_factor"),
                 ]
             )
     os.replace(tmp, target)
@@ -1283,7 +1638,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         ledger_index[key] = pick
         existing_today += 1
 
-    # Settlement + CLV
     enable_clv = s.enable_clv_capture
     for p in ledger:
         if p.get("settled"):
@@ -1328,6 +1682,7 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     save_metrics(base, metrics)
     _append_timeline(base, metrics)
     _write_roi_csv_export(ledger, metrics)
+    _export_schema_if_enabled(base, metrics)
 
     logger.info(
         "roi_updated",
