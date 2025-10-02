@@ -106,11 +106,13 @@ class Settings:
     roi_timeline_file: str
     roi_daily_file: str
 
-    # Kelly staking
     enable_kelly_staking: bool
     kelly_base_units: float
     kelly_max_units: float
-    kelly_edge_cap: float  # cap della frazione Kelly (0..1)
+    kelly_edge_cap: float
+
+    # Odds snapshot per ROI picks
+    enable_roi_odds_snapshot: bool
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -246,6 +248,8 @@ class Settings:
         if kelly_edge_cap > 1:
             kelly_edge_cap = 1.0
 
+        enable_roi_odds_snapshot = _parse_bool(os.getenv("ENABLE_ROI_ODDS_SNAPSHOT"), True)
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -315,6 +319,7 @@ class Settings:
             kelly_base_units=kelly_base_units,
             kelly_max_units=kelly_max_units,
             kelly_edge_cap=kelly_edge_cap,
+            enable_roi_odds_snapshot=enable_roi_odds_snapshot,
         )
 
 
