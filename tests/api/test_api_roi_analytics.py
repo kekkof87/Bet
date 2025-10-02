@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
@@ -29,7 +28,6 @@ def test_analytics_endpoint(client, tmp_path: Path):
     settings = get_settings()
     roi_dir = Path(settings.bet_data_dir) / settings.roi_dir
     roi_dir.mkdir(parents=True, exist_ok=True)
-    # ledger minimal
     ledger = [
         {
             "created_at": "2025-10-01T10:00:00Z",
@@ -47,7 +45,7 @@ def test_analytics_endpoint(client, tmp_path: Path):
         }
     ]
     save_ledger(roi_dir, ledger)
-    compute_metrics(ledger)  # genera metrics file tramite build esterna nella pipeline reale
+    compute_metrics(ledger)  # produce metrics file
 
     r = client.get("/roi/analytics")
     assert r.status_code == 200
