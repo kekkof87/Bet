@@ -91,7 +91,7 @@ class Settings:
     enable_value_history: bool
     value_history_dir: str
     value_history_max_files: int
-    value_history_mode: str  # daily | rolling
+    value_history_mode: str
 
     enable_model_adjust: bool
     model_adjust_weight: float
@@ -111,8 +111,12 @@ class Settings:
     kelly_max_units: float
     kelly_edge_cap: float
 
-    # Odds snapshot per ROI picks
     enable_roi_odds_snapshot: bool
+
+    # Merged value alerts
+    enable_merged_value_alerts: bool
+    merged_value_edge_policy: str  # max|min|avg
+    roi_include_merged: bool
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -250,6 +254,12 @@ class Settings:
 
         enable_roi_odds_snapshot = _parse_bool(os.getenv("ENABLE_ROI_ODDS_SNAPSHOT"), True)
 
+        enable_merged_value_alerts = _parse_bool(os.getenv("ENABLE_MERGED_VALUE_ALERTS"), False)
+        merged_value_edge_policy = os.getenv("MERGED_VALUE_EDGE_POLICY", "max").lower()
+        if merged_value_edge_policy not in {"max", "min", "avg"}:
+            merged_value_edge_policy = "max"
+        roi_include_merged = _parse_bool(os.getenv("ROI_INCLUDE_MERGED"), True)
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -320,6 +330,9 @@ class Settings:
             kelly_max_units=kelly_max_units,
             kelly_edge_cap=kelly_edge_cap,
             enable_roi_odds_snapshot=enable_roi_odds_snapshot,
+            enable_merged_value_alerts=enable_merged_value_alerts,
+            merged_value_edge_policy=merged_value_edge_policy,
+            roi_include_merged=roi_include_merged,
         )
 
 
