@@ -1,4 +1,3 @@
-# (VERSIONE CON CSV EXPORT AGGIUNTO)
 from __future__ import annotations
 
 import csv
@@ -14,6 +13,9 @@ from core.logging import get_logger
 logger = get_logger("analytics.roi")
 
 
+# --------------------
+# Time helpers & I/O
+# --------------------
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -44,6 +46,9 @@ def _append_jsonl(path: Path, record: Dict[str, Any]) -> None:
         f.write(line + "\n")
 
 
+# --------------------
+# Domain helpers
+# --------------------
 def _outcome_from_scores(home_score: Any, away_score: Any) -> Optional[str]:
     try:
         hs = int(home_score)
@@ -148,6 +153,9 @@ def save_ledger(base: Path, ledger: List[Dict[str, Any]]) -> None:
     _save_json_atomic(base / "ledger.json", ledger)
 
 
+# --------------------
+# Stats & Metrics
+# --------------------
 def _compute_profit_and_stats(picks: List[Dict[str, Any]]) -> Dict[str, Any]:
     settled = [p for p in picks if p.get("settled")]
     won = [p for p in settled if p.get("result") == "win"]
@@ -205,9 +213,7 @@ def _equity_stats(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         equity.append(running)
     peak_profit = round(max_peak, 6)
     max_drawdown = round(max_dd, 6)
-    max_drawdown_pct = (
-        round(max_drawdown / peak_profit, 6) if peak_profit > 0 else 0.0
-    )
+    max_drawdown_pct = round(max_drawdown / peak_profit, 6) if peak_profit > 0 else 0.0
     current_drawdown = round(max_peak - equity[-1], 6)
     current_drawdown_pct = (
         round(current_drawdown / peak_profit, 6) if peak_profit > 0 else 0.0
@@ -222,6 +228,46 @@ def _equity_stats(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def _streak_stats(ledger: List[Dict[str, Any]]) -> Dict[str, int]:
+    settled = [p for p in ledger if p.get("settled")]
+    if not settled:
+        return {
+            "current_win_streak": 0,
+            "current_loss_streak": 0,
+            "longest_win_streak": 0,
+            "longest_loss_streak": 0,
+        }
+    settled.sort(key=lambda x: x.get("created_at") or "")
+    current_win = current_loss = 0
+    longest_win = longest_loss = 0
+    for p in settled:
+        res = p.get("result")
+        if res == "win":
+            current_win += 1
+            current_loss = 0
+            if current_win > longest_win:
+                longest_win = current_win
+        elif res == "loss":
+            current_loss += 1
+            current_win = 0
+            if current_loss > longest_loss:
+                longest_loss = current_loss
+        else:
+            # Non conta per streak
+            current_win = 0
+            current_loss = 0
+    # Determina lo streak corrente
+    last = settled[-1].get("result")
+    current_win_streak = current_win if last == "win" else 0
+    current_loss_streak = current_loss if last == "loss" else 0
+    return {
+        "current_win_streak": current_win_streak,
+        "current_loss_streak": current_loss_streak,
+        "longest_win_streak": longest_win,
+        "longest_loss_streak": longest_loss,
+    }
+
+
 def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     global_stats = _compute_profit_and_stats(ledger)
     pred_stats = _compute_profit_and_stats(
@@ -231,6 +277,7 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         [p for p in ledger if p.get("source") == "consensus"]
     )
     eq = _equity_stats(ledger)
+    streaks = _streak_stats(ledger)
     return {
         "generated_at": _now_iso(),
         "total_picks": global_stats["picks"],
@@ -263,6 +310,10 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "current_drawdown": eq["current_drawdown"],
         "current_drawdown_pct": eq["current_drawdown_pct"],
         "equity_points": eq["equity_points"],
+        "current_win_streak": streaks["current_win_streak"],
+        "current_loss_streak": streaks["current_loss_streak"],
+        "longest_win_streak": streaks["longest_win_streak"],
+        "longest_loss_streak": streaks["longest_loss_streak"],
     }
 
 
@@ -270,6 +321,9 @@ def save_metrics(base: Path, metrics: Dict[str, Any]) -> None:
     _save_json_atomic(base / "roi_metrics.json", metrics)
 
 
+# --------------------
+# Odds / Kelly helpers
+# --------------------
 def _find_decimal_odds(
     fid: int,
     side: str,
@@ -409,7 +463,20 @@ def _build_snapshot(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     }
 
 
-def _write_roi_csv_export(ledger: List[Dict[str, Any]]) -> None:
+# --------------------
+# CSV export helpers
+# --------------------
+def _read_effective_threshold() -> Optional[float]:
+    settings = get_settings()
+    base = Path(settings.bet_data_dir or "data")
+    path = base / settings.value_alerts_dir / "value_alerts.json"
+    raw = _load_json(path)
+    if not raw:
+        return None
+    return raw.get("effective_threshold")
+
+
+def _write_roi_csv_export(ledger: List[Dict[str, Any]], metrics: Dict[str, Any]) -> None:
     settings = get_settings()
     if not settings.enable_roi_csv_export:
         return
@@ -427,6 +494,7 @@ def _write_roi_csv_export(ledger: List[Dict[str, Any]]) -> None:
     if settings.roi_csv_limit and settings.roi_csv_limit > 0:
         rows = rows[-settings.roi_csv_limit :]
 
+    effective_threshold = _read_effective_threshold()
     header = [
         "fixture_id",
         "source",
@@ -448,6 +516,14 @@ def _write_roi_csv_export(ledger: List[Dict[str, Any]]) -> None:
         "profit_contribution",
         "market_snapshot",
         "snapshot_overround",
+        "closing_decimal_odds",
+        "clv_pct",
+        "current_win_streak",
+        "current_loss_streak",
+        "longest_win_streak",
+        "longest_loss_streak",
+        "dynamic_threshold",
+        "rate_limit_cap",
     ]
 
     tmp = target.with_suffix(".tmp")
@@ -468,14 +544,11 @@ def _write_roi_csv_export(ledger: List[Dict[str, Any]]) -> None:
                     profit_contribution = 0.0
             else:
                 profit_contribution = 0.0
-
             ms = p.get("market_snapshot")
             if isinstance(ms, dict):
-                # JSON compatto
                 ms_str = json.dumps(ms, separators=(",", ":"), ensure_ascii=False)
             else:
                 ms_str = ""
-
             writer.writerow(
                 [
                     p.get("fixture_id"),
@@ -498,6 +571,14 @@ def _write_roi_csv_export(ledger: List[Dict[str, Any]]) -> None:
                     profit_contribution,
                     ms_str,
                     p.get("snapshot_overround"),
+                    p.get("closing_decimal_odds"),
+                    p.get("clv_pct"),
+                    metrics.get("current_win_streak"),
+                    metrics.get("current_loss_streak"),
+                    metrics.get("longest_win_streak"),
+                    metrics.get("longest_loss_streak"),
+                    effective_threshold,
+                    settings.roi_max_new_picks_per_day,
                 ]
             )
     os.replace(tmp, target)
@@ -507,6 +588,9 @@ def _write_roi_csv_export(ledger: List[Dict[str, Any]]) -> None:
     )
 
 
+# --------------------
+# Core build/update
+# --------------------
 def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     settings = get_settings()
     if not settings.enable_roi_tracking:
@@ -525,6 +609,23 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     fixtures_map = load_fixtures_map(fixtures)
     alerts = load_value_alerts()
 
+    # Dedup merged if requested (remove prediction/consensus duplicates)
+    if settings.merged_dedup_enable:
+        merged_pairs = {
+            (a.get("fixture_id"), a.get("value_side"))
+            for a in alerts
+            if a.get("source") == "merged"
+        }
+        if merged_pairs:
+            alerts = [
+                a
+                for a in alerts
+                if not (
+                    a.get("source") in {"prediction", "consensus"}
+                    and (a.get("fixture_id"), a.get("value_side")) in merged_pairs
+                )
+            ]
+
     min_edge = settings.roi_min_edge
     include_consensus = settings.roi_include_consensus
     include_merged = settings.roi_include_merged
@@ -535,6 +636,16 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     odds_latest_index = load_odds_latest_index()
 
     now_ts = _now_iso()
+    today = now_ts[:10]
+    daily_limit = settings.roi_max_new_picks_per_day
+    rate_limit_strict = settings.roi_rate_limit_strict
+
+    # Count existing picks created today
+    existing_today = sum(
+        1
+        for p in ledger
+        if isinstance(p.get("created_at"), str) and p["created_at"][:10] == today
+    )
 
     accepted_sources = {"prediction"}
     if include_consensus:
@@ -562,6 +673,26 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         key = (fid, source)
         if key in ledger_index:
             continue
+
+        # Rate limit
+        if daily_limit > 0 and existing_today >= daily_limit:
+            if rate_limit_strict:
+                logger.info(
+                    "rate_limit_skip_pick",
+                    extra={
+                        "fixture_id": fid,
+                        "source": source,
+                        "today_count": existing_today,
+                        "limit": daily_limit,
+                    },
+                )
+                continue
+            else:
+                logger.info(
+                    "rate_limit_exceeded_but_not_strict",
+                    extra={"today_count": existing_today, "limit": daily_limit},
+                )
+
         side = alert.get("value_side")
         if not isinstance(side, str):
             continue
@@ -614,10 +745,10 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
             )
             kelly_fraction = k_f
             kelly_fraction_capped = k_fc
-            if kelly_fraction is None or kelly_fraction <= 0:
-                stake_strategy = "fixed"
-            else:
+            if kelly_fraction is not None and kelly_fraction > 0:
                 stake_strategy = "kelly"
+            else:
+                stake_strategy = "fixed"
 
         snapshot_block = None
         entry = odds_latest_index.get(fid)
@@ -648,7 +779,10 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
 
         ledger.append(pick)
         ledger_index[key] = pick
+        existing_today += 1  # incrementa solo se effettivamente creata
 
+    # Settlement + CLV
+    enable_clv = settings.enable_clv_capture
     for p in ledger:
         if p.get("settled"):
             continue
@@ -675,11 +809,28 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         p["settled"] = True
         p["settled_at"] = _now_iso()
 
+        if enable_clv:
+            # Ricarica (o riusa) odds_latest_index (già caricato, potenzialmente aggiornato)
+            closing_entry = odds_latest_index.get(fid)
+            if closing_entry:
+                market = closing_entry.get("market")
+                if isinstance(market, dict):
+                    closing_odds = market.get(side)
+                    if isinstance(closing_odds, (int, float)) and closing_odds > 1.01:
+                        p["closing_decimal_odds"] = round(float(closing_odds), 6)
+                        try:
+                            clv_pct = (
+                                (float(closing_odds) - decimal_odds) / decimal_odds
+                            )
+                        except ZeroDivisionError:
+                            clv_pct = 0.0
+                        p["clv_pct"] = round(clv_pct, 6)
+
     save_ledger(base, ledger)
     metrics = compute_metrics(ledger)
     save_metrics(base, metrics)
     _append_timeline(base, metrics)
-    _write_roi_csv_export(ledger)
+    _write_roi_csv_export(ledger, metrics)
 
     logger.info(
         "roi_updated",
@@ -691,6 +842,9 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     )
 
 
+# --------------------
+# Public load helpers
+# --------------------
 def load_roi_summary() -> Optional[Dict[str, Any]]:
     settings = get_settings()
     if not settings.enable_roi_tracking:
