@@ -95,12 +95,16 @@ class Settings:
     enable_model_adjust: bool
     model_adjust_weight: float
 
-    # ROI tracking
     enable_roi_tracking: bool
     roi_dir: str
     roi_min_edge: float
     roi_include_consensus: bool
     roi_stake_units: float
+
+    # ROI Timeline
+    enable_roi_timeline: bool
+    roi_timeline_file: str
+    roi_daily_file: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -222,6 +226,10 @@ class Settings:
         roi_include_consensus = _parse_bool(os.getenv("ROI_INCLUDE_CONSENSUS"), True)
         roi_stake_units = _float("ROI_STAKE_UNITS", 1.0)
 
+        enable_roi_timeline = _parse_bool(os.getenv("ENABLE_ROI_TIMELINE"), True)
+        roi_timeline_file = os.getenv("ROI_TIMELINE_FILE", "roi_history.jsonl")
+        roi_daily_file = os.getenv("ROI_DAILY_FILE", "roi_daily.json")
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -283,6 +291,9 @@ class Settings:
             roi_min_edge=roi_min_edge,
             roi_include_consensus=roi_include_consensus,
             roi_stake_units=roi_stake_units,
+            enable_roi_timeline=enable_roi_timeline,
+            roi_timeline_file=roi_timeline_file,
+            roi_daily_file=roi_daily_file,
         )
 
 
