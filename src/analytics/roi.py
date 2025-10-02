@@ -1,4 +1,3 @@
-# Batch 36 (CORE + PLUS) full version
 from __future__ import annotations
 
 import csv
@@ -71,12 +70,11 @@ def _outcome_from_scores(home_score: Any, away_score: Any) -> Optional[str]:
 
 
 def load_fixtures_map(fixtures: List[Dict[str, Any]]) -> Dict[int, Dict[str, Any]]:
-    out: Dict[int, Dict[str, Any]] = {}
-    for fx in fixtures:
-        fid = fx.get("fixture_id")
-        if isinstance(fid, int):
-            out[fid] = fx
-    return out
+    return {
+        fx["fixture_id"]: fx
+        for fx in fixtures
+        if isinstance(fx, dict) and isinstance(fx.get("fixture_id"), int)
+    }
 
 
 def load_value_alerts() -> List[Dict[str, Any]]:
@@ -212,7 +210,7 @@ def _profit_contribution(p: Dict[str, Any]) -> float:
     return 0.0
 
 
-# -------------------- Equity & drawdown --------------------
+# -------------------- Equity & Drawdown --------------------
 def _equity_stats(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     settled = [p for p in ledger if p.get("settled")]
     if not settled:
@@ -292,6 +290,40 @@ def _streak_stats(ledger: List[Dict[str, Any]]) -> Dict[str, int]:
     }
 
 
+# -------------------- Rolling (legacy single) --------------------
+def _legacy_single_rolling(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
+    s = get_settings()
+    window = s.roi_rolling_window
+    settled = [p for p in ledger if p.get("settled")]
+    settled.sort(key=lambda x: x.get("created_at") or "")
+    slice_set = settled[-window:] if settled else []
+    profit = sum(_profit_contribution(p) for p in slice_set)
+    total_stake = sum(float(p.get("stake", 1.0)) for p in slice_set)
+    wins = sum(1 for p in slice_set if p.get("result") == "win")
+    yield_pct = (profit / total_stake) if total_stake > 0 else 0.0
+    hit_rate = wins / len(slice_set) if slice_set else 0.0
+    running = 0.0
+    peak = 0.0
+    max_dd = 0.0
+    for p in slice_set:
+        running += _profit_contribution(p)
+        if running > peak:
+            peak = running
+        dd = peak - running
+        if dd > max_dd:
+            max_dd = dd
+    return {
+        "rolling_window_size": window,
+        "picks_rolling": len(slice_set),
+        "settled_rolling": len(slice_set),
+        "profit_units_rolling": round(profit, 6),
+        "yield_rolling": round(yield_pct, 6),
+        "hit_rate_rolling": round(hit_rate, 6),
+        "peak_profit_rolling": round(peak, 6),
+        "max_drawdown_rolling": round(max_dd, 6),
+    }
+
+
 # -------------------- Rolling multi-window --------------------
 def _rolling_window_stats_multi(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     s = get_settings()
@@ -305,7 +337,6 @@ def _rolling_window_stats_multi(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         wins = sum(1 for p in slice_set if p.get("result") == "win")
         yield_pct = (profit / total_stake) if total_stake > 0 else 0.0
         hit_rate = wins / len(slice_set) if slice_set else 0.0
-        # peak & dd in slice
         running = 0.0
         peak = 0.0
         max_dd = 0.0
@@ -316,8 +347,7 @@ def _rolling_window_stats_multi(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
             dd = peak - running
             if dd > max_dd:
                 max_dd = dd
-        label = f"w{w}"
-        result[label] = {
+        result[f"w{w}"] = {
             "picks": len(slice_set),
             "profit_units": round(profit, 6),
             "yield": round(yield_pct, 6),
@@ -349,15 +379,11 @@ def _clv_aggregate(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     clvs = sorted(float(p["clv_pct"]) for p in settled)
     avg = sum(clvs) / len(clvs)
     m = len(clvs)
-    if m % 2 == 1:
-        median = clvs[m // 2]
-    else:
-        median = (clvs[m // 2 - 1] + clvs[m // 2]) / 2
+    median = clvs[m // 2] if m % 2 == 1 else (clvs[m // 2 - 1] + clvs[m // 2]) / 2
     wins = [float(p["clv_pct"]) for p in settled if p.get("result") == "win"]
     losses = [float(p["clv_pct"]) for p in settled if p.get("result") == "loss"]
     positive = sum(1 for v in clvs if v > 0)
     clv_positive_rate = positive / len(clvs) if clvs else 0.0
-    # realized edge rispetto alla yield globale (impostata dopo, passata come param? calcoliamo qui come placeholder -> patchable in compute)
     return {
         "avg_clv_pct": round(avg, 6),
         "median_clv_pct": round(median, 6),
@@ -367,7 +393,15 @@ def _clv_aggregate(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
-# -------------------- Edge deciles (già batch 35) --------------------
+def _finalize_clv_block(clv_block: Dict[str, Any], global_yield: float) -> Dict[str, Any]:
+    if clv_block.get("avg_clv_pct") is not None:
+        clv_block["clv_realized_edge"] = round(clv_block["avg_clv_pct"] - global_yield, 6)
+    else:
+        clv_block["clv_realized_edge"] = None
+    return clv_block
+
+
+# -------------------- Edge deciles --------------------
 def _edge_deciles(ledger: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     s = get_settings()
     if not s.enable_roi_edge_deciles:
@@ -444,7 +478,7 @@ def _stake_breakdown(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     return out
 
 
-# -------------------- Risk metrics (Sharpe-like, Sortino-like) --------------------
+# -------------------- Risk metrics --------------------
 def _risk_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     s = get_settings()
     if not s.enable_roi_risk_metrics:
@@ -497,7 +531,6 @@ def _league_breakdown(ledger: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     s = get_settings()
     if not s.enable_roi_league_breakdown:
         return []
-    # league_id opzionale: se non presente salta
     by_league: Dict[Any, List[Dict[str, Any]]] = {}
     for p in ledger:
         lg = p.get("league_id")
@@ -524,7 +557,7 @@ def _time_buckets(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     s = get_settings()
     if not s.enable_roi_time_buckets:
         return {}
-    buckets = {
+    buckets: Dict[str, List[Dict[str, Any]]] = {
         "h00_05": [],
         "h06_11": [],
         "h12_17": [],
@@ -552,32 +585,30 @@ def _time_buckets(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     return out
 
 
-# -------------------- Edge buckets PLUS --------------------
+# -------------------- Edge buckets --------------------
 def _edge_buckets(ledger: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     s = get_settings()
-    # Always compute if config has ranges (PLUS feature always optional; if disabled pass empty list)
     if not s.roi_edge_buckets:
         return []
     settled = [p for p in ledger if p.get("settled") and isinstance(p.get("edge"), (int, float))]
     if not settled:
         return []
-    buckets_cfg = s.roi_edge_buckets
     results: List[Dict[str, Any]] = []
-    for spec in buckets_cfg:
+    for spec in s.roi_edge_buckets:
         spec = spec.strip()
-        if not spec:
-            continue
-        if "-" not in spec:
+        if not spec or "-" not in spec:
             continue
         left, right = spec.split("-", 1)
         left_v = float(left) if left else None
         right_v = float(right) if right else None
+
         def match(edge: float) -> bool:
             if left_v is not None and edge < left_v:
                 return False
             if right_v is not None and edge >= right_v:
                 return False
             return True
+
         picks = [p for p in settled if match(float(p["edge"]))]
         if not picks:
             results.append({
@@ -740,26 +771,11 @@ def _append_timeline(base: Path, metrics: Dict[str, Any]) -> None:
         logger.error("Errore salvataggio daily ROI: %s", exc)
 
 
-# -------------------- Latency / CLV finalize adjustments --------------------
-def _finalize_clv_block(clv_block: Dict[str, Any], global_yield: float) -> Dict[str, Any]:
-    # clv_realized_edge = media clv - yield globale
-    if clv_block.get("avg_clv_pct") is not None:
-        clv_block["clv_realized_edge"] = round(
-            clv_block["avg_clv_pct"] - global_yield, 6
-        )
-    else:
-        clv_block["clv_realized_edge"] = None
-    return clv_block
-
-
-# -------------------- Risk & performance normalizations --------------------
+# -------------------- Profit normalizations --------------------
 def _profit_normalizations(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     settled = [p for p in ledger if p.get("settled")]
     if not settled:
-        return {
-            "profit_per_pick": 0.0,
-            "profit_per_unit_staked": 0.0,
-        }
+        return {"profit_per_pick": 0.0, "profit_per_unit_staked": 0.0}
     total_profit = sum(_profit_contribution(p) for p in settled)
     total_stake = sum(float(p.get("stake", 1.0)) for p in settled)
     return {
@@ -775,7 +791,6 @@ def _prune_ledger(base: Path, ledger: List[Dict[str, Any]]) -> List[Dict[str, An
         return ledger
     archive_enabled = s.enable_roi_ledger_archive
     archive = load_ledger_archive(base) if archive_enabled else []
-    # Sort ledger by created_at ascending
     ledger.sort(key=lambda p: p.get("created_at") or "")
     original_len = len(ledger)
 
@@ -802,32 +817,41 @@ def _prune_ledger(base: Path, ledger: List[Dict[str, Any]]) -> List[Dict[str, An
         if archive_enabled and removed:
             archive.extend(removed)
 
-    if archive_enabled:
-        if archive:
-            save_ledger_archive(base, archive)
+    if archive_enabled and archive:
+        save_ledger_archive(base, archive)
     if len(ledger) != original_len:
         logger.info(
             "ledger_pruned",
-            extra={
-                "before": original_len,
-                "after": len(ledger),
-                "archived": len(archive) if archive_enabled else 0,
-            },
+            extra={"before": original_len, "after": len(ledger), "archived": len(archive) if archive_enabled else 0},
         )
     return ledger
 
 
 # -------------------- Metrics assembly --------------------
 def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
+    # Global
     global_stats = _compute_profit_and_stats(ledger)
-    pred_stats = _compute_profit_and_stats([p for p in ledger if p.get("source") == "prediction"])
-    cons_stats = _compute_profit_and_stats([p for p in ledger if p.get("source") == "consensus"])
-    merged_stats = _compute_profit_and_stats([p for p in ledger if p.get("source") == "merged"])
 
+    # Per source
+    pred_picks = [p for p in ledger if p.get("source") == "prediction"]
+    cons_picks = [p for p in ledger if p.get("source") == "consensus"]
+    merged_picks = [p for p in ledger if p.get("source") == "merged"]
+
+    pred_stats = _compute_profit_and_stats(pred_picks)
+    cons_stats = _compute_profit_and_stats(cons_picks)
+    merged_stats = _compute_profit_and_stats(merged_picks)
+
+    # Legacy single rolling window
+    legacy_roll = _legacy_single_rolling(ledger)
+    # Multi rolling
+    rolling_multi = _rolling_window_stats_multi(ledger)
+    # Equity & streaks
     eq = _equity_stats(ledger)
     streaks = _streak_stats(ledger)
-    rolling_multi = _rolling_window_stats_multi(ledger)
+    # CLV
     clv_base = _clv_aggregate(ledger)
+    clv_block = _finalize_clv_block(clv_base, global_stats["yield"]) if clv_base else {}
+    # Risk / breakdowns
     risk = _risk_metrics(ledger)
     stake_bd = _stake_breakdown(ledger)
     source_bd = _source_breakdown(ledger)
@@ -837,9 +861,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     time_bd = _time_buckets(ledger)
     edge_buckets = _edge_buckets(ledger)
     profit_norm = _profit_normalizations(ledger)
-
-    # finalize CLV block with yield delta
-    clv_block = _finalize_clv_block(clv_base, global_stats["yield"]) if clv_base else {}
 
     metrics = {
         "generated_at": _now_iso(),
@@ -852,31 +873,62 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "yield": global_stats["yield"],
         "hit_rate": global_stats["hit_rate"],
 
+        # Prediction
         "picks_prediction": pred_stats["picks"],
+        "settled_prediction": pred_stats["settled"],
+        "open_prediction": pred_stats["open"],
+        "wins_prediction": pred_stats["wins"],
+        "losses_prediction": pred_stats["losses"],
         "profit_units_prediction": pred_stats["profit_units"],
         "yield_prediction": pred_stats["yield"],
+        "hit_rate_prediction": pred_stats["hit_rate"],
 
+        # Consensus
         "picks_consensus": cons_stats["picks"],
+        "settled_consensus": cons_stats["settled"],
+        "open_consensus": cons_stats["open"],
+        "wins_consensus": cons_stats["wins"],
+        "losses_consensus": cons_stats["losses"],
         "profit_units_consensus": cons_stats["profit_units"],
         "yield_consensus": cons_stats["yield"],
+        "hit_rate_consensus": cons_stats["hit_rate"],
 
+        # Merged
         "picks_merged": merged_stats["picks"],
+        "settled_merged": merged_stats["settled"],
+        "open_merged": merged_stats["open"],
+        "wins_merged": merged_stats["wins"],
+        "losses_merged": merged_stats["losses"],
         "profit_units_merged": merged_stats["profit_units"],
         "yield_merged": merged_stats["yield"],
+        "hit_rate_merged": merged_stats["hit_rate"],
 
+        # Equity & Streaks
         "peak_profit": eq["peak_profit"],
         "max_drawdown": eq["max_drawdown"],
         "max_drawdown_pct": eq["max_drawdown_pct"],
         "current_drawdown": eq["current_drawdown"],
         "current_drawdown_pct": eq["current_drawdown_pct"],
         "equity_points": eq["equity_points"],
-
         "current_win_streak": streaks["current_win_streak"],
         "current_loss_streak": streaks["current_loss_streak"],
         "longest_win_streak": streaks["longest_win_streak"],
         "longest_loss_streak": streaks["longest_loss_streak"],
 
+        # Legacy rolling fields
+        "rolling_window_size": legacy_roll["rolling_window_size"],
+        "picks_rolling": legacy_roll["picks_rolling"],
+        "settled_rolling": legacy_roll["settled_rolling"],
+        "profit_units_rolling": legacy_roll["profit_units_rolling"],
+        "yield_rolling": legacy_roll["yield_rolling"],
+        "hit_rate_rolling": legacy_roll["hit_rate_rolling"],
+        "peak_profit_rolling": legacy_roll["peak_profit_rolling"],
+        "max_drawdown_rolling": legacy_roll["max_drawdown_rolling"],
+
+        # Multi rolling
         "rolling_multi": rolling_multi,
+
+        # Blocks
         "clv": clv_block,
         "risk": risk,
         "stake_breakdown": stake_bd,
@@ -886,6 +938,8 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "league_breakdown": league_bd,
         "time_buckets": time_bd,
         "edge_buckets": edge_buckets,
+
+        # Normalizations
         "profit_per_pick": profit_norm["profit_per_pick"],
         "profit_per_unit_staked": profit_norm["profit_per_unit_staked"],
     }
@@ -928,7 +982,6 @@ def _write_roi_csv_export(ledger: List[Dict[str, Any]], metrics: Dict[str, Any])
 
     effective_threshold = _read_effective_threshold()
 
-    # Include some multi-rolling summary fields (profit only to limit width)
     w7 = metrics.get("rolling_multi", {}).get("w7", {})
     w30 = metrics.get("rolling_multi", {}).get("w30", {})
     w90 = metrics.get("rolling_multi", {}).get("w90", {})
@@ -1052,7 +1105,7 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     base.mkdir(parents=True, exist_ok=True)
 
     ledger = load_ledger(base)
-    ledger = _prune_ledger(base, ledger)  # pruning before processing
+    ledger = _prune_ledger(base, ledger)
     ledger_index = {
         (p.get("fixture_id"), p.get("source")): p
         for p in ledger
@@ -1062,7 +1115,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     fixtures_map = load_fixtures_map(fixtures)
     alerts = load_value_alerts()
 
-    # Dedup merged if requested (done upstream in previous batch logic)
     if s.merged_dedup_enable:
         merged_pairs = {
             (a.get("fixture_id"), a.get("value_side"))
@@ -1208,7 +1260,7 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
             "kelly_b": kelly_b,
             "settled": False,
         }
-        # (PLUS) possibilità di memorizzare league_id se fixtures lo include
+
         if fx and fx.get("league_id") is not None:
             pick["league_id"] = fx.get("league_id")
 
