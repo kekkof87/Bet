@@ -29,8 +29,8 @@ def roi_summary(
     open_only: bool = Query(False, description="Mostra solo picks aperte (se detail=true)"),
     limit: Optional[int] = Query(None, ge=1, le=1000, description="Limite picks in elenco"),
 ):
-    settings = get_settings()
-    if not settings.enable_roi_tracking:
+    s = get_settings()
+    if not s.enable_roi_tracking:
         return {
             "enabled": False,
             "detail": False,
@@ -54,7 +54,7 @@ def roi_summary(
 
     items = []
     detail_included = False
-    chosen_sources = [s.lower() for s in source] if source else None
+    chosen_sources = [s_.lower() for s_ in source] if source else None
 
     if detail:
         ledger = load_roi_ledger()
@@ -90,8 +90,8 @@ def roi_timeline(
     end_date: Optional[str] = Query(None, description="Filtro ISO date (YYYY-MM-DD) ts <= end_date"),
     mode: str = Query("both", pattern="^(full|daily|both)$", description="full=solo timeline, daily=solo daily, both=entrambi"),
 ):
-    settings = get_settings()
-    if not settings.enable_roi_tracking or not settings.enable_roi_timeline:
+    s = get_settings()
+    if not s.enable_roi_tracking or not s.enable_roi_timeline:
         return {
             "enabled": False,
             "mode": mode,
@@ -122,9 +122,7 @@ def roi_timeline(
 
     if include_full:
         raw = load_roi_timeline_raw()
-        def _ts(r: dict) -> str:
-            return str(r.get("ts") or "")
-        raw.sort(key=_ts)
+        raw.sort(key=lambda r: str(r.get("ts") or ""))
         filtered: List[dict] = []
         for r in raw:
             ts = r.get("ts")
@@ -178,46 +176,50 @@ def roi_timeline(
     }
 
 
-@router.get("/analytics", summary="Dettagli analitici (rolling, CLV, edge deciles)")
+@router.get("/analytics", summary="Dettagli analitici avanzati (rolling multi, risk, breakdown)")
 def roi_analytics():
-    settings = get_settings()
-    if not settings.enable_roi_tracking:
+    s = get_settings()
+    if not s.enable_roi_tracking:
         return {
             "enabled": False,
-            "rolling": {},
+            "rolling_multi": {},
             "clv": {},
+            "risk": {},
+            "stake_breakdown": {},
+            "source_breakdown": {},
+            "latency": {},
             "edge_deciles": [],
-            "window_size": settings.roi_rolling_window,
+            "edge_buckets": [],
+            "league_breakdown": [],
+            "time_buckets": {},
         }
     metrics = load_roi_summary()
     if not metrics:
         return {
             "enabled": True,
-            "rolling": {},
+            "rolling_multi": {},
             "clv": {},
+            "risk": {},
+            "stake_breakdown": {},
+            "source_breakdown": {},
+            "latency": {},
             "edge_deciles": [],
-            "window_size": settings.roi_rolling_window,
+            "edge_buckets": [],
+            "league_breakdown": [],
+            "time_buckets": {},
         }
-    rolling = {
-        "window_size": metrics.get("rolling_window_size"),
-        "picks": metrics.get("picks_rolling"),
-        "profit_units": metrics.get("profit_units_rolling"),
-        "yield": metrics.get("yield_rolling"),
-        "hit_rate": metrics.get("hit_rate_rolling"),
-        "peak_profit": metrics.get("peak_profit_rolling"),
-        "max_drawdown": metrics.get("max_drawdown_rolling"),
-    }
-    clv = {
-        "avg_clv_pct": metrics.get("avg_clv_pct"),
-        "median_clv_pct": metrics.get("median_clv_pct"),
-        "realized_clv_win_avg": metrics.get("realized_clv_win_avg"),
-        "realized_clv_loss_avg": metrics.get("realized_clv_loss_avg"),
-    }
-    edge_deciles = metrics.get("edge_deciles") or []
     return {
         "enabled": True,
-        "rolling": rolling,
-        "clv": clv,
-        "edge_deciles": edge_deciles,
-        "window_size": metrics.get("rolling_window_size"),
+        "rolling_multi": metrics.get("rolling_multi") or {},
+        "clv": metrics.get("clv") or {},
+        "risk": metrics.get("risk") or {},
+        "stake_breakdown": metrics.get("stake_breakdown") or {},
+        "source_breakdown": metrics.get("source_breakdown") or {},
+        "latency": metrics.get("latency") or {},
+        "edge_deciles": metrics.get("edge_deciles") or [],
+        "edge_buckets": metrics.get("edge_buckets") or [],
+        "league_breakdown": metrics.get("league_breakdown") or [],
+        "time_buckets": metrics.get("time_buckets") or {},
+        "profit_per_pick": metrics.get("profit_per_pick"),
+        "profit_per_unit_staked": metrics.get("profit_per_unit_staked"),
     }
