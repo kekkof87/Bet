@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-10-02T12:46:02.109813+00:00",
+  "generated_at": "2025-10-02T13:23:46.077332+00:00",
   "total_picks": 0,
   "settled_picks": 0,
   "open_picks": 0,
@@ -33,5 +33,18 @@
   "current_win_streak": 0,
   "current_loss_streak": 0,
   "longest_win_streak": 0,
-  "longest_loss_streak": 0
+  "longest_loss_streak": 0,
+  "rolling_window_size": 30,
+  "picks_rolling": 0,
+  "settled_rolling": 0,
+  "profit_units_rolling": 0.0,
+  "yield_rolling": 0.0,
+  "hit_rate_rolling": 0.0,
+  "peak_profit_rolling": 0.0,
+  "max_drawdown_rolling": 0.0,
+  "avg_clv_pct": null,
+  "median_clv_pct": null,
+  "realized_clv_win_avg": null,
+  "realized_clv_loss_avg": null,
+  "edge_deciles": []
 }
