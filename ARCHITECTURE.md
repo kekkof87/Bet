@@ -922,3 +922,43 @@ Evoluzioni future:
 - Filtri per source (prediction, consensus, merged) via config.
 - CSV incrementale (append) invece di rigenerazione completa.
 - Export secondario in parquet.
+
+### Batch 35 Enhancements
+
+Funzionalità aggiunte:
+1. Rolling Window Metrics
+   - Config: ROI_ROLLING_WINDOW (default 30)
+   - Campi: rolling_window_size, picks_rolling, profit_units_rolling, yield_rolling, hit_rate_rolling, peak_profit_rolling, max_drawdown_rolling.
+   - Usa ultimi N pick settled (ordinati per created_at).
+
+2. CLV Aggregate
+   - Config: ENABLE_ROI_CLV_AGGREGATE (default true)
+   - Campi: avg_clv_pct, median_clv_pct, realized_clv_win_avg, realized_clv_loss_avg
+   - Calcolati su pick settled con clv_pct.
+
+3. Edge Deciles
+   - Config: ENABLE_ROI_EDGE_DECILES (default true)
+   - Campo: edge_deciles (lista di bucket decilici; se <5 picks => singolo bucket aggregato).
+   - Ogni bucket: decile, edge_min, edge_max, picks, profit_units.
+
+4. Endpoint /roi/analytics
+   - Ritorna sezioni modulari: rolling, clv, edge_deciles separate dal summary principale.
+
+5. CSV Export Esteso
+   - Nuove colonne: avg_clv_pct_overall, median_clv_pct_overall, rolling_window_size
+   - Duplicati su ogni riga per coerenza snapshot.
+
+Config add:
+- ROI_ROLLING_WINDOW
+- ENABLE_ROI_EDGE_DECILES
+- ENABLE_ROI_CLV_AGGREGATE
+
+Backward compatibility:
+- Nessun campo rimosso.
+- Se disabilitato: campi corrispondenti vuoti/nulle.
+
+Evoluzioni future:
+- Rolling dinamico multiplo (7 / 30 / 90).
+- Edge deciles rolling.
+- CLV distribution (percentili).
+- Profit per decile normalizzato per stake.
