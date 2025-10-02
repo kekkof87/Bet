@@ -645,6 +645,144 @@ def _profit_normalizations(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+# -------------------- Odds / Kelly helpers (RE-ADDED) --------------------
+def _extract_side_prob(pred_or_cons: Dict[str, Any], side: str, source: str) -> Optional[float]:
+    key = "prob" if source == "prediction" else "blended_prob"
+    block = pred_or_cons.get(key)
+    if not isinstance(block, dict):
+        return None
+    val = block.get(side)
+    if isinstance(val, (int, float)) and 0 <= val <= 1:
+        return float(val)
+    return None
+
+
+def _compute_kelly_stake(
+    *,
+    decimal_odds: float,
+    model_prob: Optional[float],
+    base_units: float,
+    max_units: float,
+    fraction_cap: float,
+) -> Tuple[float, Optional[float], Optional[float], Optional[float], Optional[float]]:
+    if model_prob is None or model_prob <= 0 or model_prob >= 1:
+        return base_units, None, None, model_prob, decimal_odds - 1
+    b = decimal_odds - 1
+    if b <= 0:
+        return base_units, None, None, model_prob, b
+    fraction = (decimal_odds * model_prob - 1) / b
+    if fraction <= 0:
+        return base_units, fraction, None, model_prob, b
+    fraction_capped = min(fraction, fraction_cap)
+    stake = fraction_capped * base_units
+    stake = min(stake, max_units)
+    if stake < 0.0001:
+        stake = 0.0001
+    return (
+        round(stake, 6),
+        round(fraction, 6),
+        round(fraction_capped, 6),
+        model_prob,
+        b,
+    )
+
+
+def _find_decimal_odds(
+    fid: int,
+    side: str,
+    odds_latest_index: Dict[int, Dict[str, Any]],
+    predictions_index: Dict[int, Dict[str, Any]],
+) -> Tuple[float, str]:
+    entry = odds_latest_index.get(fid)
+    if entry:
+        market = entry.get("market")
+        if isinstance(market, dict):
+            val = market.get(side)
+            if isinstance(val, (int, float)) and val > 1.01:
+                return float(val), "odds_latest"
+    pred = predictions_index.get(fid)
+    if pred:
+        odds_block = pred.get("odds")
+        if isinstance(odds_block, dict):
+            orig = odds_block.get("odds_original")
+            if isinstance(orig, dict):
+                val = orig.get(side)
+                if isinstance(val, (int, float)) and val > 1.01:
+                    return float(val), "predictions_odds"
+    return 2.0, "fallback"
+
+
+def _build_snapshot(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    s = get_settings()
+    if not s.enable_roi_odds_snapshot:
+        return None
+    market = entry.get("market")
+    if not isinstance(market, dict):
+        return None
+    base_outcomes: Dict[str, float] = {}
+    for k in ("home_win", "draw", "away_win"):
+        v = market.get(k)
+        if isinstance(v, (int, float)) and v > 1.01:
+            base_outcomes[k] = float(v)
+    if not base_outcomes:
+        return None
+    implied_raw = {k: 1.0 / v for k, v in base_outcomes.items()}
+    s_sum = sum(implied_raw.values())
+    implied_norm = {k: round(v / s_sum, 6) for k, v in implied_raw.items()} if s_sum > 0 else {}
+    overround = round(s_sum - 1.0, 6) if s_sum > 0 else 0.0
+    provider = (
+        entry.get("source")
+        or entry.get("provider")
+        or s.odds_default_source
+    )
+    return {
+        "market_snapshot": base_outcomes,
+        "snapshot_implied": implied_norm,
+        "snapshot_overround": overround,
+        "snapshot_provider": provider,
+        "snapshot_at": _now_iso(),
+    }
+
+
+def _append_timeline(base: Path, metrics: Dict[str, Any]) -> None:
+    s = get_settings()
+    if not s.enable_roi_timeline:
+        return
+    history_path = base / s.roi_timeline_file
+    daily_path = base / s.roi_daily_file
+    record = {
+        "ts": metrics.get("generated_at"),
+        "total_picks": metrics.get("total_picks"),
+        "settled_picks": metrics.get("settled_picks"),
+        "profit_units": metrics.get("profit_units"),
+        "yield": metrics.get("yield"),
+        "hit_rate": metrics.get("hit_rate"),
+    }
+    try:
+        _append_jsonl(history_path, record)
+    except Exception as exc:
+        logger.error("Errore append ROI timeline: %s", exc)
+    day = _utc_day()
+    daily = _load_json(daily_path) or {}
+    if not isinstance(daily, dict):
+        daily = {}
+    d_entry = daily.get(day, {})
+    runs = int(d_entry.get("runs", 0)) + 1
+    daily[day] = {
+        "last_ts": record["ts"],
+        "runs": runs,
+        "total_picks": record["total_picks"],
+        "settled_picks": record["settled_picks"],
+        "profit_units": record["profit_units"],
+        "yield": record["yield"],
+        "hit_rate": record["hit_rate"],
+    }
+    try:
+        _save_json_atomic(daily_path, daily)
+    except Exception as exc:
+        logger.error("Errore salvataggio daily ROI: %s", exc)
+
+
 # -------------------- Pruning / Archive --------------------
 def _prune_ledger(base: Path, ledger: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     s = get_settings()
