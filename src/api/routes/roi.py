@@ -180,7 +180,7 @@ def roi_timeline(
     }
 
 
-@router.get("/analytics", summary="Dettagli analitici avanzati (rolling multi, breakdown, risk, clv, latency)")
+@router.get("/analytics", summary="Dettagli analitici avanzati batch37 (rolling, risk, anomalies, plus)")
 def roi_analytics():
     settings = get_settings()
     if not settings.enable_roi_tracking:
@@ -188,15 +188,25 @@ def roi_analytics():
             "enabled": False,
             "rolling": {},
             "rolling_multi": {},
+            "hit_rate_multi": {},
             "clv": {},
             "risk": {},
+            "anomalies": {},
             "stake_breakdown": {},
             "source_breakdown": {},
+            "source_efficiency": {},
             "latency": {},
             "edge_deciles": [],
             "edge_buckets": [],
             "league_breakdown": [],
             "time_buckets": {},
+            "side_breakdown": {},
+            "clv_buckets": [],
+            "aging_buckets": {},
+            "edge_clv_corr": {},
+            "stake_advisory": {},
+            "profit_distribution": {},
+            "risk_of_ruin_approx": None,
             "profit_per_pick": 0.0,
             "profit_per_unit_staked": 0.0,
         }
@@ -206,20 +216,29 @@ def roi_analytics():
             "enabled": True,
             "rolling": {},
             "rolling_multi": {},
+            "hit_rate_multi": {},
             "clv": {},
             "risk": {},
+            "anomalies": {},
             "stake_breakdown": {},
             "source_breakdown": {},
+            "source_efficiency": {},
             "latency": {},
             "edge_deciles": [],
             "edge_buckets": [],
             "league_breakdown": [],
             "time_buckets": {},
+            "side_breakdown": {},
+            "clv_buckets": [],
+            "aging_buckets": {},
+            "edge_clv_corr": {},
+            "stake_advisory": {},
+            "profit_distribution": {},
+            "risk_of_ruin_approx": None,
             "profit_per_pick": 0.0,
             "profit_per_unit_staked": 0.0,
         }
 
-    # Legacy single rolling alias (test legacy expectations)
     rolling_single = {
         "window_size": metrics.get("rolling_window_size"),
         "picks": metrics.get("picks_rolling"),
@@ -229,36 +248,30 @@ def roi_analytics():
         "peak_profit": metrics.get("peak_profit_rolling"),
         "max_drawdown": metrics.get("max_drawdown_rolling"),
     }
-
-    # Multi window
     rolling_multi = metrics.get("rolling_multi") or {}
-
-    clv_block = metrics.get("clv") or {}
-    # Ensure flattened fields are also exposed inside clv block
-    for k in (
-        "avg_clv_pct",
-        "median_clv_pct",
-        "clv_positive_rate",
-        "clv_realized_edge",
-        "realized_clv_win_avg",
-        "realized_clv_loss_avg",
-    ):
-        if k not in clv_block:
-            clv_block[k] = metrics.get(k)
-
     return {
         "enabled": True,
         "rolling": rolling_single,
         "rolling_multi": rolling_multi,
-        "clv": clv_block,
+        "hit_rate_multi": metrics.get("hit_rate_multi") or {},
+        "clv": metrics.get("clv") or {},
         "risk": metrics.get("risk") or {},
+        "anomalies": metrics.get("anomalies") or {},
         "stake_breakdown": metrics.get("stake_breakdown") or {},
         "source_breakdown": metrics.get("source_breakdown") or {},
+        "source_efficiency": metrics.get("source_efficiency") or {},
         "latency": metrics.get("latency") or {},
         "edge_deciles": metrics.get("edge_deciles") or [],
         "edge_buckets": metrics.get("edge_buckets") or [],
         "league_breakdown": metrics.get("league_breakdown") or [],
         "time_buckets": metrics.get("time_buckets") or {},
+        "side_breakdown": metrics.get("side_breakdown") or {},
+        "clv_buckets": metrics.get("clv_buckets") or [],
+        "aging_buckets": metrics.get("aging_buckets") or {},
+        "edge_clv_corr": metrics.get("edge_clv_corr") or {},
+        "stake_advisory": metrics.get("stake_advisory") or {},
+        "profit_distribution": metrics.get("profit_distribution") or {},
+        "risk_of_ruin_approx": metrics.get("risk_of_ruin_approx"),
         "profit_per_pick": metrics.get("profit_per_pick"),
         "profit_per_unit_staked": metrics.get("profit_per_unit_staked"),
     }
