@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-10-02T13:34:16.934999+00:00",
+  "generated_at": "2025-10-02T14:31:35.719659+00:00",
   "total_picks": 0,
   "settled_picks": 0,
   "open_picks": 0,
@@ -24,6 +24,14 @@
   "profit_units_consensus": 0.0,
   "yield_consensus": 0.0,
   "hit_rate_consensus": 0.0,
+  "picks_merged": 0,
+  "settled_merged": 0,
+  "open_merged": 0,
+  "wins_merged": 0,
+  "losses_merged": 0,
+  "profit_units_merged": 0.0,
+  "yield_merged": 0.0,
+  "hit_rate_merged": 0.0,
   "peak_profit": 0.0,
   "max_drawdown": 0.0,
   "max_drawdown_pct": 0.0,
@@ -37,14 +45,66 @@
   "rolling_window_size": 30,
   "picks_rolling": 0,
   "settled_rolling": 0,
-  "profit_units_rolling": 0.0,
+  "profit_units_rolling": 0,
   "yield_rolling": 0.0,
   "hit_rate_rolling": 0.0,
   "peak_profit_rolling": 0.0,
   "max_drawdown_rolling": 0.0,
+  "rolling_multi": {
+    "w7": {
+      "picks": 0,
+      "profit_units": 0,
+      "yield": 0.0,
+      "hit_rate": 0.0,
+      "peak_profit": 0.0,
+      "max_drawdown": 0.0
+    },
+    "w30": {
+      "picks": 0,
+      "profit_units": 0,
+      "yield": 0.0,
+      "hit_rate": 0.0,
+      "peak_profit": 0.0,
+      "max_drawdown": 0.0
+    },
+    "w90": {
+      "picks": 0,
+      "profit_units": 0,
+      "yield": 0.0,
+      "hit_rate": 0.0,
+      "peak_profit": 0.0,
+      "max_drawdown": 0.0
+    }
+  },
+  "clv": {
+    "avg_clv_pct": null,
+    "median_clv_pct": null,
+    "realized_clv_win_avg": null,
+    "realized_clv_loss_avg": null,
+    "clv_positive_rate": null,
+    "clv_realized_edge": null
+  },
+  "risk": {
+    "sharpe_like": null,
+    "sortino_like": null,
+    "stddev_profit_per_pick": null,
+    "downside_stddev": null
+  },
+  "stake_breakdown": {},
+  "source_breakdown": {},
+  "latency": {
+    "avg_settlement_latency_sec": null
+  },
+  "edge_deciles": [],
+  "league_breakdown": [],
+  "time_buckets": {},
+  "edge_buckets": [],
+  "profit_per_pick": 0.0,
+  "profit_per_unit_staked": 0.0,
   "avg_clv_pct": null,
   "median_clv_pct": null,
+  "clv_positive_rate": null,
+  "clv_realized_edge": null,
   "realized_clv_win_avg": null,
-  "realized_clv_loss_avg": null,
-  "edge_deciles": []
+  "realized_clv_loss_avg": null
 }
