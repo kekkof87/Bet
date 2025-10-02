@@ -656,3 +656,33 @@ Evoluzioni future:
 - Rolling window (7d, 30d) calcolata automaticamente
 - Endpoint /roi/timeline con slicing temporale
 - CSV export per BI
+
+
+### Value Alerts Dedicated Threshold (Iterazione 26)
+
+Motivazione:
+Separare la soglia di attivazione della rilevazione value (VALUE_MIN_EDGE) dalla soglia di pubblicazione degli alert (VALUE_ALERT_MIN_EDGE).  
+Consente di:
+- Mantenere detection “larga” per analisi interne.
+- Ridurre rumore negli alerts e nelle pipeline che li consumano (ROI, dispatch).
+
+Variabili:
+- VALUE_MIN_EDGE (già esistente): soglia minima perché un “value” sia marcato active all’interno di predictions/consensus.
+- VALUE_ALERT_MIN_EDGE (nuova): soglia minima per includere l’elemento in value_alerts.json (default = VALUE_MIN_EDGE se non definita).
+
+Implementazione:
+1. Aggiunto campo `value_alert_min_edge` in Settings, parse da env `VALUE_ALERT_MIN_EDGE` (fallback: value_min_edge).
+2. In `predictions/value_alerts.py` filtraggio: edge < value_alert_min_edge → skip.
+3. Aggiunto campo `threshold_edge` nel file `value_alerts.json` per audit.
+
+Effetti su pipeline:
+- ROI tracking legge value_alerts.json → numero picks ridotto se la soglia è maggiore.
+- Nessuna modifica a value detection interna (prob + implied).
+
+Test:
+- test_value_alert_threshold.py verifica esclusione/inclusione rispetto alla soglia.
+
+Evoluzioni possibili:
+- Soglie separate per prediction vs consensus (es: VALUE_ALERT_MIN_EDGE_PRED, VALUE_ALERT_MIN_EDGE_CONS).
+- Finestra dinamica: aumentare la soglia se count giornaliero supera X.
+- Logging breakdown (#excluded, #included).
