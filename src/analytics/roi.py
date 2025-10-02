@@ -1,5 +1,7 @@
+# (VERSIONE CON CSV EXPORT AGGIUNTO)
 from __future__ import annotations
 
+import csv
 import json
 import os
 from datetime import datetime, timezone
@@ -407,6 +409,104 @@ def _build_snapshot(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     }
 
 
+def _write_roi_csv_export(ledger: List[Dict[str, Any]]) -> None:
+    settings = get_settings()
+    if not settings.enable_roi_csv_export:
+        return
+    base = Path(settings.bet_data_dir or "data") / settings.roi_dir
+    base.mkdir(parents=True, exist_ok=True)
+    target = base / settings.roi_csv_file
+
+    rows = ledger
+    if not settings.roi_csv_include_open:
+        rows = [r for r in rows if r.get("settled")]
+
+    sort_key = settings.roi_csv_sort
+    rows.sort(key=lambda r: (r.get(sort_key) or ""))
+
+    if settings.roi_csv_limit and settings.roi_csv_limit > 0:
+        rows = rows[-settings.roi_csv_limit :]
+
+    header = [
+        "fixture_id",
+        "source",
+        "value_type",
+        "side",
+        "edge",
+        "stake",
+        "stake_strategy",
+        "decimal_odds",
+        "kelly_fraction",
+        "kelly_fraction_capped",
+        "kelly_prob",
+        "kelly_b",
+        "settled",
+        "result",
+        "payout",
+        "created_at",
+        "settled_at",
+        "profit_contribution",
+        "market_snapshot",
+        "snapshot_overround",
+    ]
+
+    tmp = target.with_suffix(".tmp")
+    with tmp.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        for p in rows:
+            settled = p.get("settled") is True
+            result = p.get("result")
+            stake = float(p.get("stake", 0.0))
+            payout = float(p.get("payout", 0.0)) if settled else 0.0
+            if settled:
+                if result == "win":
+                    profit_contribution = round(payout - stake, 6)
+                elif result == "loss":
+                    profit_contribution = round(-stake, 6)
+                else:
+                    profit_contribution = 0.0
+            else:
+                profit_contribution = 0.0
+
+            ms = p.get("market_snapshot")
+            if isinstance(ms, dict):
+                # JSON compatto
+                ms_str = json.dumps(ms, separators=(",", ":"), ensure_ascii=False)
+            else:
+                ms_str = ""
+
+            writer.writerow(
+                [
+                    p.get("fixture_id"),
+                    p.get("source"),
+                    p.get("value_type"),
+                    p.get("side"),
+                    p.get("edge"),
+                    p.get("stake"),
+                    p.get("stake_strategy"),
+                    p.get("decimal_odds"),
+                    p.get("kelly_fraction"),
+                    p.get("kelly_fraction_capped"),
+                    p.get("kelly_prob"),
+                    p.get("kelly_b"),
+                    p.get("settled"),
+                    p.get("result"),
+                    p.get("payout"),
+                    p.get("created_at"),
+                    p.get("settled_at"),
+                    profit_contribution,
+                    ms_str,
+                    p.get("snapshot_overround"),
+                ]
+            )
+    os.replace(tmp, target)
+    logger.info(
+        "roi_csv_export_written",
+        extra={"rows": len(rows), "file": str(target)},
+    )
+
+
 def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     settings = get_settings()
     if not settings.enable_roi_tracking:
@@ -499,7 +599,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         kelly_b = None
 
         if settings.enable_kelly_staking:
-            stake_strategy = "kelly"
             (
                 stake,
                 k_f,
@@ -517,6 +616,8 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
             kelly_fraction_capped = k_fc
             if kelly_fraction is None or kelly_fraction <= 0:
                 stake_strategy = "fixed"
+            else:
+                stake_strategy = "kelly"
 
         snapshot_block = None
         entry = odds_latest_index.get(fid)
@@ -578,6 +679,7 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     metrics = compute_metrics(ledger)
     save_metrics(base, metrics)
     _append_timeline(base, metrics)
+    _write_roi_csv_export(ledger)
 
     logger.info(
         "roi_updated",
