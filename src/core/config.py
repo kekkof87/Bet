@@ -84,9 +84,7 @@ class Settings:
     value_min_edge: float
     value_include_adjusted: bool
 
-    # Nuova soglia per *pubblicazione* alert (filtra subset di quelli rilevati)
     value_alert_min_edge: float
-
     enable_value_alerts: bool
     value_alerts_dir: str
 
@@ -107,6 +105,12 @@ class Settings:
     enable_roi_timeline: bool
     roi_timeline_file: str
     roi_daily_file: str
+
+    # Kelly staking
+    enable_kelly_staking: bool
+    kelly_base_units: float
+    kelly_max_units: float
+    kelly_edge_cap: float  # cap della frazione Kelly (0..1)
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -205,9 +209,7 @@ class Settings:
         value_min_edge = _float("VALUE_MIN_EDGE", 0.05)
         value_include_adjusted = _parse_bool(os.getenv("VALUE_INCLUDE_ADJUSTED"), True)
 
-        # Soglia specifica per pubblicazione alerts (fallback alla detection)
         value_alert_min_edge = _float("VALUE_ALERT_MIN_EDGE", value_min_edge)
-
         enable_value_alerts = _parse_bool(os.getenv("ENABLE_VALUE_ALERTS"), False)
         value_alerts_dir = os.getenv("VALUE_ALERTS_DIR", "value_alerts")
 
@@ -234,6 +236,15 @@ class Settings:
         enable_roi_timeline = _parse_bool(os.getenv("ENABLE_ROI_TIMELINE"), True)
         roi_timeline_file = os.getenv("ROI_TIMELINE_FILE", "roi_history.jsonl")
         roi_daily_file = os.getenv("ROI_DAILY_FILE", "roi_daily.json")
+
+        enable_kelly_staking = _parse_bool(os.getenv("ENABLE_KELLY_STAKING"), False)
+        kelly_base_units = _float("KELLY_BASE_UNITS", 1.0)
+        kelly_max_units = _float("KELLY_MAX_UNITS", 3.0)
+        kelly_edge_cap = _float("KELLY_EDGE_CAP", 0.5)
+        if kelly_edge_cap < 0:
+            kelly_edge_cap = 0.0
+        if kelly_edge_cap > 1:
+            kelly_edge_cap = 1.0
 
         return cls(
             api_football_key=key,
@@ -300,6 +311,10 @@ class Settings:
             enable_roi_timeline=enable_roi_timeline,
             roi_timeline_file=roi_timeline_file,
             roi_daily_file=roi_daily_file,
+            enable_kelly_staking=enable_kelly_staking,
+            kelly_base_units=kelly_base_units,
+            kelly_max_units=kelly_max_units,
+            kelly_edge_cap=kelly_edge_cap,
         )
 
 
