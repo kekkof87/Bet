@@ -847,3 +847,42 @@ Evoluzioni possibili:
 - Aggiunta metrica longest_win_streak / longest_loss_streak
 - Rolling max_drawdown (ultimi N pick)
 - Drawdown timeline endpoint
+
+### Merged Value Alerts (Iterazione 32)
+
+Scopo:
+Creare un alert addizionale (“merged”) quando prediction e consensus hanno entrambi un value attivo sullo stesso fixture e sullo stesso side, superando la soglia VALUE_ALERT_MIN_EDGE, per evidenziare convergenza.
+
+Config nuove:
+- ENABLE_MERGED_VALUE_ALERTS (default 0) abilita la generazione dell’alert merged.
+- MERGED_VALUE_EDGE_POLICY (default max) determina come combinare gli edge: max | min | avg.
+- ROI_INCLUDE_MERGED (default 1) abilita l’uso di alert merged come sorgente pick ROI.
+
+Formato alert merged:
+{
+  "source": "merged",
+  "value_type": "merged_value",
+  "fixture_id": ...,
+  "value_side": "...",
+  "value_edge": <edge combinato>,
+  "components": {
+     "prediction_edge": ...,
+     "consensus_edge": ...,
+     "policy": "max|min|avg"
+  }
+}
+
+Note:
+- Gli alert originali (prediction, consensus) non vengono rimossi.
+- ROI attualmente calcola breakdown solo per prediction e consensus; merged confluisce solo nel totale.
+- Facile futura estensione: breakdown merged, filtri endpoint /roi per source=merged.
+
+Vantaggi:
+- Segnale potenzialmente più robusto.
+- Audit trasparente (componenti + policy).
+- Nessun impatto sulle metriche esistenti se la feature rimane disabilitata.
+
+Evoluzioni possibili:
+- Esclusione automatica di prediction/consensus quando esiste merged (dedup).
+- Policy ponderata (es: media pesata dal consensus weight).
+- Inclusione edge differenziale (delta = min(edge_pred, edge_cons)) per maggiore prudenza.
