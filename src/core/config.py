@@ -124,6 +124,24 @@ class Settings:
     roi_csv_sort: str
     roi_csv_limit: int
 
+    # Rate limit picks
+    roi_max_new_picks_per_day: int
+    roi_rate_limit_strict: bool
+
+    # Dynamic threshold
+    value_alert_dynamic_enable: bool
+    value_alert_dynamic_target_count: int
+    value_alert_dynamic_min_factor: float
+    value_alert_dynamic_max_factor: float
+    value_alert_dynamic_adjust_step: float
+
+    # CLV capture
+    enable_clv_capture: bool
+    clv_odds_source: str
+
+    # Dedup merged
+    merged_dedup_enable: bool
+
     @classmethod
     def from_env(cls) -> "Settings":
         key = os.getenv("API_FOOTBALL_KEY")
@@ -274,6 +292,23 @@ class Settings:
             roi_csv_sort = "created_at"
         roi_csv_limit = _int("ROI_CSV_LIMIT", 0)
 
+        # Rate limit picks
+        roi_max_new_picks_per_day = _int("ROI_MAX_NEW_PICKS_PER_DAY", 0)
+        roi_rate_limit_strict = _parse_bool(os.getenv("ROI_RATE_LIMIT_STRICT"), True)
+
+        # Dynamic threshold
+        value_alert_dynamic_enable = _parse_bool(os.getenv("VALUE_ALERT_DYNAMIC_ENABLE"), False)
+        value_alert_dynamic_target_count = _int("VALUE_ALERT_DYNAMIC_TARGET_COUNT", 50)
+        value_alert_dynamic_min_factor = _float("VALUE_ALERT_DYNAMIC_MIN_FACTOR", 1.0)
+        value_alert_dynamic_max_factor = _float("VALUE_ALERT_DYNAMIC_MAX_FACTOR", 2.0)
+        value_alert_dynamic_adjust_step = _float("VALUE_ALERT_DYNAMIC_ADJUST_STEP", 0.05)
+
+        # CLV capture
+        enable_clv_capture = _parse_bool(os.getenv("ENABLE_CLV_CAPTURE"), True)
+        clv_odds_source = os.getenv("CLV_ODDS_SOURCE", "odds_latest").lower()
+
+        merged_dedup_enable = _parse_bool(os.getenv("MERGED_DEDUP_ENABLE"), False)
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -352,6 +387,16 @@ class Settings:
             roi_csv_include_open=roi_csv_include_open,
             roi_csv_sort=roi_csv_sort,
             roi_csv_limit=roi_csv_limit,
+            roi_max_new_picks_per_day=roi_max_new_picks_per_day,
+            roi_rate_limit_strict=roi_rate_limit_strict,
+            value_alert_dynamic_enable=value_alert_dynamic_enable,
+            value_alert_dynamic_target_count=value_alert_dynamic_target_count,
+            value_alert_dynamic_min_factor=value_alert_dynamic_min_factor,
+            value_alert_dynamic_max_factor=value_alert_dynamic_max_factor,
+            value_alert_dynamic_adjust_step=value_alert_dynamic_adjust_step,
+            enable_clv_capture=enable_clv_capture,
+            clv_odds_source=clv_odds_source,
+            merged_dedup_enable=merged_dedup_enable,
         )
 
 
