@@ -622,3 +622,37 @@ Aggiornamenti:
 Questa iterazione sblocca:
 - Profit tracking più realistico.
 - Esposizione rapida via API per dashboard o grafici esterni.
+
+### ROI Timeline (Iterazione 25)
+Obiettivo: tracciare evoluzione temporale delle metriche ROI per analisi storica e grafici.
+
+Flag:
+- ENABLE_ROI_TIMELINE (default true)
+- ROI_TIMELINE_FILE (default roi_history.jsonl)
+- ROI_DAILY_FILE (default roi_daily.json)
+
+File:
+- roi_history.jsonl: append-only, un record per run
+  Esempio linea:
+  {"ts":"2025-10-01T12:00:00.000000+00:00","total_picks":12,"settled_picks":9,"profit_units":2.3,"yield":0.085,"hit_rate":0.5556}
+
+- roi_daily.json: aggregazione per giorno UTC
+  {
+    "2025-10-01": {
+       "last_ts":"2025-10-01T12:05:00Z",
+       "runs":5,
+       "total_picks":12,
+       "settled_picks":9,
+       "profit_units":2.3,
+       "yield":0.085,
+       "hit_rate":0.5556
+    }
+  }
+
+Aggancio:
+- build_or_update_roi() dopo salvataggio metrics → _append_timeline()
+
+Evoluzioni future:
+- Rolling window (7d, 30d) calcolata automaticamente
+- Endpoint /roi/timeline con slicing temporale
+- CSV export per BI
