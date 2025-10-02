@@ -253,10 +253,8 @@ def _streak_stats(ledger: List[Dict[str, Any]]) -> Dict[str, int]:
             if current_loss > longest_loss:
                 longest_loss = current_loss
         else:
-            # Non conta per streak
             current_win = 0
             current_loss = 0
-    # Determina lo streak corrente
     last = settled[-1].get("result")
     current_win_streak = current_win if last == "win" else 0
     current_loss_streak = current_loss if last == "loss" else 0
@@ -268,17 +266,159 @@ def _streak_stats(ledger: List[Dict[str, Any]]) -> Dict[str, int]:
     }
 
 
+def _profit_contribution(p: Dict[str, Any]) -> float:
+    if not p.get("settled"):
+        return 0.0
+    stake = float(p.get("stake", 0.0))
+    if p.get("result") == "win":
+        return round(float(p.get("payout", 0.0)) - stake, 6)
+    if p.get("result") == "loss":
+        return round(-stake, 6)
+    return 0.0
+
+
+def _rolling_window_stats(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
+    settings = get_settings()
+    window = settings.roi_rolling_window
+    settled = [p for p in ledger if p.get("settled")]
+    settled.sort(key=lambda x: x.get("created_at") or "")
+    if not settled:
+        return {
+            "rolling_window_size": window,
+            "picks_rolling": 0,
+            "settled_rolling": 0,
+            "profit_units_rolling": 0.0,
+            "yield_rolling": 0.0,
+            "hit_rate_rolling": 0.0,
+            "peak_profit_rolling": 0.0,
+            "max_drawdown_rolling": 0.0,
+        }
+    slice_settled = settled[-window:]
+    profit = 0.0
+    wins = 0
+    running = 0.0
+    peak = 0.0
+    max_dd = 0.0
+    stake_total = 0.0
+    for p in slice_settled:
+        contrib = _profit_contribution(p)
+        profit += contrib
+        if p.get("result") == "win":
+            wins += 1
+        running += contrib
+        if running > peak:
+            peak = running
+        dd = peak - running
+        if dd > max_dd:
+            max_dd = dd
+        stake_total += float(p.get("stake", 1.0))
+    yield_pct = (profit / stake_total) if stake_total > 0 else 0.0
+    hit_rate = wins / len(slice_settled) if slice_settled else 0.0
+    return {
+        "rolling_window_size": window,
+        "picks_rolling": len(slice_settled),
+        "settled_rolling": len(slice_settled),
+        "profit_units_rolling": round(profit, 6),
+        "yield_rolling": round(yield_pct, 6),
+        "hit_rate_rolling": round(hit_rate, 6),
+        "peak_profit_rolling": round(peak, 6),
+        "max_drawdown_rolling": round(max_dd, 6),
+    }
+
+
+def _clv_aggregate(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
+    settings = get_settings()
+    if not settings.enable_roi_clv_aggregate:
+        return {}
+    settled = [p for p in ledger if p.get("settled") and isinstance(p.get("clv_pct"), (int, float))]
+    if not settled:
+        return {
+            "avg_clv_pct": None,
+            "median_clv_pct": None,
+            "realized_clv_win_avg": None,
+            "realized_clv_loss_avg": None,
+        }
+    clvs = sorted(float(p["clv_pct"]) for p in settled)
+    avg = sum(clvs) / len(clvs)
+    m = len(clvs)
+    if m % 2 == 1:
+        median = clvs[m // 2]
+    else:
+        median = (clvs[m // 2 - 1] + clvs[m // 2]) / 2
+    wins = [float(p["clv_pct"]) for p in settled if p.get("result") == "win"]
+    losses = [float(p["clv_pct"]) for p in settled if p.get("result") == "loss"]
+    return {
+        "avg_clv_pct": round(avg, 6),
+        "median_clv_pct": round(median, 6),
+        "realized_clv_win_avg": round(sum(wins) / len(wins), 6) if wins else None,
+        "realized_clv_loss_avg": round(sum(losses) / len(losses), 6) if losses else None,
+    }
+
+
+def _edge_deciles(ledger: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    settings = get_settings()
+    if not settings.enable_roi_edge_deciles:
+        return []
+    settled = [p for p in ledger if p.get("settled") and isinstance(p.get("edge"), (int, float))]
+    if len(settled) < 5:
+        profit = sum(_profit_contribution(p) for p in settled)
+        if not settled:
+            return []
+        return [{
+            "decile": 1,
+            "edge_min": min(p["edge"] for p in settled),
+            "edge_max": max(p["edge"] for p in settled),
+            "picks": len(settled),
+            "profit_units": round(profit, 6),
+        }]
+    edges = sorted(p["edge"] for p in settled)
+    n = len(edges)
+    decile_bounds = []
+    for d in range(1, 11):
+        idx = min(n - 1, int(d * n / 10) - 1)
+        decile_bounds.append(edges[idx])
+
+    def _decile_index(val: float) -> int:
+        for i, bound in enumerate(decile_bounds):
+            if val <= bound:
+                return i
+        return 9
+
+    per_bucket: Dict[int, Dict[str, Any]] = {}
+    for p in settled:
+        di = _decile_index(p["edge"])
+        b = per_bucket.setdefault(di, {
+            "decile": di + 1,
+            "edge_min": p["edge"],
+            "edge_max": p["edge"],
+            "picks": 0,
+            "profit_units": 0.0,
+        })
+        b["picks"] += 1
+        if p["edge"] < b["edge_min"]:
+            b["edge_min"] = p["edge"]
+        if p["edge"] > b["edge_max"]:
+            b["edge_max"] = p["edge"]
+        b["profit_units"] = round(b["profit_units"] + _profit_contribution(p), 6)
+
+    buckets: List[Dict[str, Any]] = []
+    for i in range(10):
+        if i in per_bucket:
+            buckets.append(per_bucket[i])
+    return buckets
+
+
 def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     global_stats = _compute_profit_and_stats(ledger)
-    pred_stats = _compute_profit_and_stats(
-        [p for p in ledger if p.get("source") == "prediction"]
-    )
-    cons_stats = _compute_profit_and_stats(
-        [p for p in ledger if p.get("source") == "consensus"]
-    )
+    pred_stats = _compute_profit_and_stats([p for p in ledger if p.get("source") == "prediction"])
+    cons_stats = _compute_profit_and_stats([p for p in ledger if p.get("source") == "consensus"])
     eq = _equity_stats(ledger)
     streaks = _streak_stats(ledger)
-    return {
+    rolling = _rolling_window_stats(ledger)
+    clv_aggr = _clv_aggregate(ledger)
+    deciles = _edge_deciles(ledger)
+
+    metrics = {
         "generated_at": _now_iso(),
         "total_picks": global_stats["picks"],
         "settled_picks": global_stats["settled"],
@@ -314,7 +454,21 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "current_loss_streak": streaks["current_loss_streak"],
         "longest_win_streak": streaks["longest_win_streak"],
         "longest_loss_streak": streaks["longest_loss_streak"],
+        "rolling_window_size": rolling["rolling_window_size"],
+        "picks_rolling": rolling["picks_rolling"],
+        "settled_rolling": rolling["settled_rolling"],
+        "profit_units_rolling": rolling["profit_units_rolling"],
+        "yield_rolling": rolling["yield_rolling"],
+        "hit_rate_rolling": rolling["hit_rate_rolling"],
+        "peak_profit_rolling": rolling["peak_profit_rolling"],
+        "max_drawdown_rolling": rolling["max_drawdown_rolling"],
+        "avg_clv_pct": clv_aggr.get("avg_clv_pct"),
+        "median_clv_pct": clv_aggr.get("median_clv_pct"),
+        "realized_clv_win_avg": clv_aggr.get("realized_clv_win_avg"),
+        "realized_clv_loss_avg": clv_aggr.get("realized_clv_loss_avg"),
+        "edge_deciles": deciles,
     }
+    return metrics
 
 
 def save_metrics(base: Path, metrics: Dict[str, Any]) -> None:
@@ -524,6 +678,9 @@ def _write_roi_csv_export(ledger: List[Dict[str, Any]], metrics: Dict[str, Any])
         "longest_loss_streak",
         "dynamic_threshold",
         "rate_limit_cap",
+        "avg_clv_pct_overall",
+        "median_clv_pct_overall",
+        "rolling_window_size",
     ]
 
     tmp = target.with_suffix(".tmp")
@@ -579,6 +736,9 @@ def _write_roi_csv_export(ledger: List[Dict[str, Any]], metrics: Dict[str, Any])
                     metrics.get("longest_loss_streak"),
                     effective_threshold,
                     settings.roi_max_new_picks_per_day,
+                    metrics.get("avg_clv_pct"),
+                    metrics.get("median_clv_pct"),
+                    metrics.get("rolling_window_size"),
                 ]
             )
     os.replace(tmp, target)
@@ -609,7 +769,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     fixtures_map = load_fixtures_map(fixtures)
     alerts = load_value_alerts()
 
-    # Dedup merged if requested (remove prediction/consensus duplicates)
     if settings.merged_dedup_enable:
         merged_pairs = {
             (a.get("fixture_id"), a.get("value_side"))
@@ -640,7 +799,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     daily_limit = settings.roi_max_new_picks_per_day
     rate_limit_strict = settings.roi_rate_limit_strict
 
-    # Count existing picks created today
     existing_today = sum(
         1
         for p in ledger
@@ -674,7 +832,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         if key in ledger_index:
             continue
 
-        # Rate limit
         if daily_limit > 0 and existing_today >= daily_limit:
             if rate_limit_strict:
                 logger.info(
@@ -779,9 +936,8 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
 
         ledger.append(pick)
         ledger_index[key] = pick
-        existing_today += 1  # incrementa solo se effettivamente creata
+        existing_today += 1
 
-    # Settlement + CLV
     enable_clv = settings.enable_clv_capture
     for p in ledger:
         if p.get("settled"):
@@ -810,7 +966,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         p["settled_at"] = _now_iso()
 
         if enable_clv:
-            # Ricarica (o riusa) odds_latest_index (già caricato, potenzialmente aggiornato)
             closing_entry = odds_latest_index.get(fid)
             if closing_entry:
                 market = closing_entry.get("market")

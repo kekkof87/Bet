@@ -24,7 +24,7 @@ def roi_summary(
     detail: bool = Query(False, description="Se true include elenco picks (limit filtrato)"),
     source: Optional[List[str]] = Query(
         default=None,
-        description="Filtra picks per source (prediction, consensus) - parametro ripetibile",
+        description="Filtra picks per source (prediction, consensus, merged) - parametro ripetibile",
     ),
     open_only: bool = Query(False, description="Mostra solo picks aperte (se detail=true)"),
     limit: Optional[int] = Query(None, ge=1, le=1000, description="Limite picks in elenco"),
@@ -101,7 +101,6 @@ def roi_timeline(
             "filters": {},
         }
 
-    # Parse filtri date
     def _parse_date(d: Optional[str]) -> Optional[datetime]:
         if not d:
             return None
@@ -123,18 +122,14 @@ def roi_timeline(
 
     if include_full:
         raw = load_roi_timeline_raw()
-        # Ordina per ts ascendente, poi invertiamo per prendere i più recenti
         def _ts(r: dict) -> str:
             return str(r.get("ts") or "")
-
         raw.sort(key=_ts)
-        # Filtra per date
         filtered: List[dict] = []
         for r in raw:
             ts = r.get("ts")
             if not ts:
                 continue
-            # Estrarre giorno da ts (primi 10 char YYYY-MM-DD)
             day_str = ts[:10]
             try:
                 d_obj = datetime.strptime(day_str, "%Y-%m-%d")
@@ -145,14 +140,12 @@ def roi_timeline(
             if ed and d_obj > ed:
                 continue
             filtered.append(r)
-        # Tenere gli ultimi 'limit'
         if len(filtered) > limit:
             filtered = filtered[-limit:]
         items = filtered
 
     if include_daily:
         daily = load_roi_daily()
-        # eventuale filtro date
         if (sd or ed) and daily:
             d_filtered = {}
             for day_key, val in daily.items():
@@ -182,4 +175,49 @@ def roi_timeline(
             "timeline": include_full,
             "daily": include_daily,
         },
+    }
+
+
+@router.get("/analytics", summary="Dettagli analitici (rolling, CLV, edge deciles)")
+def roi_analytics():
+    settings = get_settings()
+    if not settings.enable_roi_tracking:
+        return {
+            "enabled": False,
+            "rolling": {},
+            "clv": {},
+            "edge_deciles": [],
+            "window_size": settings.roi_rolling_window,
+        }
+    metrics = load_roi_summary()
+    if not metrics:
+        return {
+            "enabled": True,
+            "rolling": {},
+            "clv": {},
+            "edge_deciles": [],
+            "window_size": settings.roi_rolling_window,
+        }
+    rolling = {
+        "window_size": metrics.get("rolling_window_size"),
+        "picks": metrics.get("picks_rolling"),
+        "profit_units": metrics.get("profit_units_rolling"),
+        "yield": metrics.get("yield_rolling"),
+        "hit_rate": metrics.get("hit_rate_rolling"),
+        "peak_profit": metrics.get("peak_profit_rolling"),
+        "max_drawdown": metrics.get("max_drawdown_rolling"),
+    }
+    clv = {
+        "avg_clv_pct": metrics.get("avg_clv_pct"),
+        "median_clv_pct": metrics.get("median_clv_pct"),
+        "realized_clv_win_avg": metrics.get("realized_clv_win_avg"),
+        "realized_clv_loss_avg": metrics.get("realized_clv_loss_avg"),
+    }
+    edge_deciles = metrics.get("edge_deciles") or []
+    return {
+        "enabled": True,
+        "rolling": rolling,
+        "clv": clv,
+        "edge_deciles": edge_deciles,
+        "window_size": metrics.get("rolling_window_size"),
     }
