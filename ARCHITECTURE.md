@@ -886,3 +886,39 @@ Evoluzioni possibili:
 - Esclusione automatica di prediction/consensus quando esiste merged (dedup).
 - Policy ponderata (es: media pesata dal consensus weight).
 - Inclusione edge differenziale (delta = min(edge_pred, edge_cons)) per maggiore prudenza.
+
+### ROI CSV Export (Iterazione 33)
+
+Scopo:
+Fornire un export tabellare delle picks ROI per analisi esterne (foglio di calcolo, BI, pivot).
+
+Config:
+- ENABLE_ROI_CSV_EXPORT (default true)
+- ROI_CSV_FILE (default roi_export.csv)
+- ROI_CSV_INCLUDE_OPEN (default true) include anche picks aperte
+- ROI_CSV_SORT (default created_at) campo ordinamento (created_at|settled_at)
+- ROI_CSV_LIMIT (default 0 = nessun limite) se >0 mantiene solo le ultime N righe post-ordinamento
+
+File: data/roi/roi_export.csv
+
+Colonne:
+fixture_id, source, value_type, side, edge, stake, stake_strategy, decimal_odds,
+kelly_fraction, kelly_fraction_capped, kelly_prob, kelly_b,
+settled, result, payout, created_at, settled_at,
+profit_contribution, market_snapshot, snapshot_overround
+
+Logica profit_contribution:
+- win: payout - stake
+- loss: -stake
+- open: 0
+(valori arrotondati a 6 decimali come già in ledger)
+
+Note:
+- market_snapshot serializzato come JSON compatto (solo mercati base).
+- Se snapshot non presente campo vuoto.
+- Non altera roi_metrics né timeline.
+
+Evoluzioni future:
+- Filtri per source (prediction, consensus, merged) via config.
+- CSV incrementale (append) invece di rigenerazione completa.
+- Export secondario in parquet.
