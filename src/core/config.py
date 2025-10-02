@@ -137,14 +137,10 @@ class Settings:
 
     merged_dedup_enable: bool
 
-    # Rolling (legacy single kept only if needed)
     roi_rolling_window: int
-
-    # Batch 35
     enable_roi_edge_deciles: bool
     enable_roi_clv_aggregate: bool
 
-    # Batch 36 CORE
     roi_rolling_windows: List[int]
     enable_roi_source_breakdown: bool
     enable_roi_risk_metrics: bool
@@ -153,13 +149,36 @@ class Settings:
     roi_ledger_max_age_days: int
     enable_roi_ledger_archive: bool
     enable_roi_latency_metrics: bool
-
-    # Batch 36 PLUS
     enable_roi_league_breakdown: bool
     roi_league_max: int
     enable_roi_time_buckets: bool
-    roi_edge_buckets_raw: Optional[str]  # original string
-    roi_edge_buckets: List[str]          # parsed tokens
+    roi_edge_buckets_raw: Optional[str]
+    roi_edge_buckets: List[str]
+
+    # Batch 37 CORE NEW
+    enable_roi_equity_vol: bool
+    roi_equity_vol_windows: List[int]
+
+    enable_roi_anomaly_flags: bool
+    roi_anomaly_dd_threshold: float
+    roi_anomaly_yield_drop: float
+    roi_anomaly_vol_mult: float
+
+    enable_roi_schema_export: bool
+    enable_roi_profit_distribution: bool
+    enable_roi_ror: bool
+    enable_roi_source_efficiency: bool
+
+    # Batch 37 PLUS NEW
+    enable_roi_edge_clv_corr: bool
+    enable_roi_stake_advisory: bool
+    roi_stake_advisory_dd_pct: float
+    enable_roi_aging_buckets: bool
+    roi_aging_buckets: List[int]
+    enable_roi_side_breakdown: bool
+    enable_roi_clv_buckets: bool
+    roi_clv_buckets_raw: Optional[str]
+    roi_clv_buckets: List[str]
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -231,10 +250,7 @@ class Settings:
         enable_consensus = _parse_bool(os.getenv("ENABLE_CONSENSUS"), False)
         consensus_dir = os.getenv("CONSENSUS_DIR", "consensus")
         consensus_baseline_weight = _float("CONSENSUS_BASELINE_WEIGHT", 0.6)
-        if consensus_baseline_weight < 0:
-            consensus_baseline_weight = 0.0
-        if consensus_baseline_weight > 1:
-            consensus_baseline_weight = 1.0
+        consensus_baseline_weight = max(0.0, min(consensus_baseline_weight, 1.0))
 
         enable_telegram_parser = _parse_bool(os.getenv("ENABLE_TELEGRAM_PARSER"), False)
         telegram_raw_dir = os.getenv("TELEGRAM_RAW_DIR", "telegram/raw")
@@ -271,10 +287,7 @@ class Settings:
 
         enable_model_adjust = _parse_bool(os.getenv("ENABLE_MODEL_ADJUST"), False)
         model_adjust_weight = _float("MODEL_ADJUST_WEIGHT", 0.7)
-        if model_adjust_weight < 0:
-            model_adjust_weight = 0.0
-        if model_adjust_weight > 1:
-            model_adjust_weight = 1.0
+        model_adjust_weight = max(0.0, min(model_adjust_weight, 1.0))
 
         enable_roi_tracking = _parse_bool(os.getenv("ENABLE_ROI_TRACKING"), False)
         roi_dir = os.getenv("ROI_DIR", "roi")
@@ -290,10 +303,7 @@ class Settings:
         kelly_base_units = _float("KELLY_BASE_UNITS", 1.0)
         kelly_max_units = _float("KELLY_MAX_UNITS", 3.0)
         kelly_edge_cap = _float("KELLY_EDGE_CAP", 0.5)
-        if kelly_edge_cap < 0:
-            kelly_edge_cap = 0.0
-        if kelly_edge_cap > 1:
-            kelly_edge_cap = 1.0
+        kelly_edge_cap = max(0.0, min(kelly_edge_cap, 1.0))
 
         enable_roi_odds_snapshot = _parse_bool(os.getenv("ENABLE_ROI_ODDS_SNAPSHOT"), True)
 
@@ -332,7 +342,6 @@ class Settings:
         enable_roi_edge_deciles = _parse_bool(os.getenv("ENABLE_ROI_EDGE_DECILES"), True)
         enable_roi_clv_aggregate = _parse_bool(os.getenv("ENABLE_ROI_CLV_AGGREGATE"), True)
 
-        # Batch 36 CORE
         rolling_windows_raw = os.getenv("ROI_ROLLING_WINDOWS", "7,30,90")
         rw_list: List[int] = []
         for token in rolling_windows_raw.split(","):
@@ -351,20 +360,67 @@ class Settings:
         enable_roi_source_breakdown = _parse_bool(os.getenv("ENABLE_ROI_SOURCE_BREAKDOWN"), True)
         enable_roi_risk_metrics = _parse_bool(os.getenv("ENABLE_ROI_RISK_METRICS"), True)
         enable_roi_stake_breakdown = _parse_bool(os.getenv("ENABLE_ROI_STAKE_BREAKDOWN"), True)
-
         roi_ledger_max_picks = _int("ROI_LEDGER_MAX_PICKS", 0)
         roi_ledger_max_age_days = _int("ROI_LEDGER_MAX_AGE_DAYS", 0)
         enable_roi_ledger_archive = _parse_bool(os.getenv("ENABLE_ROI_LEDGER_ARCHIVE"), True)
         enable_roi_latency_metrics = _parse_bool(os.getenv("ENABLE_ROI_LATENCY_METRICS"), True)
-
-        # Batch 36 PLUS
         enable_roi_league_breakdown = _parse_bool(os.getenv("ENABLE_ROI_LEAGUE_BREAKDOWN"), False)
         roi_league_max = _int("ROI_LEAGUE_MAX", 10)
         enable_roi_time_buckets = _parse_bool(os.getenv("ENABLE_ROI_TIME_BUCKETS"), False)
         roi_edge_buckets_raw = os.getenv("ROI_EDGE_BUCKETS", "0.05-0.07,0.07-0.09,0.09-0.12,0.12-")
-        roi_edge_buckets = [
-            r.strip() for r in roi_edge_buckets_raw.split(",") if r.strip()
-        ]
+        roi_edge_buckets = [r.strip() for r in roi_edge_buckets_raw.split(",") if r.strip()]
+
+        # Batch 37 core new flags
+        enable_roi_equity_vol = _parse_bool(os.getenv("ENABLE_ROI_EQUITY_VOL"), True)
+        eq_vol_raw = os.getenv("ROI_EQUITY_VOL_WINDOWS", "30,100")
+        roi_equity_vol_windows: List[int] = []
+        for t in eq_vol_raw.split(","):
+            t = t.strip()
+            if not t:
+                continue
+            try:
+                iv = int(t)
+                if iv > 1:
+                    roi_equity_vol_windows.append(iv)
+            except ValueError:
+                continue
+        if not roi_equity_vol_windows:
+            roi_equity_vol_windows = [30, 100]
+
+        enable_roi_anomaly_flags = _parse_bool(os.getenv("ENABLE_ROI_ANOMALY_FLAGS"), True)
+        roi_anomaly_dd_threshold = _float("ROI_ANOMALY_DD_THRESHOLD", 0.30)
+        roi_anomaly_yield_drop = _float("ROI_ANOMALY_YIELD_DROP", 0.50)
+        roi_anomaly_vol_mult = _float("ROI_ANOMALY_VOL_MULT", 2.0)
+
+        enable_roi_schema_export = _parse_bool(os.getenv("ENABLE_ROI_SCHEMA_EXPORT"), False)
+        enable_roi_profit_distribution = _parse_bool(os.getenv("ENABLE_ROI_PROFIT_DISTRIBUTION"), True)
+        enable_roi_ror = _parse_bool(os.getenv("ENABLE_ROI_ROR"), False)
+        enable_roi_source_efficiency = _parse_bool(os.getenv("ENABLE_ROI_SOURCE_EFFICIENCY"), True)
+
+        # Batch 37 plus new
+        enable_roi_edge_clv_corr = _parse_bool(os.getenv("ENABLE_ROI_EDGE_CLV_CORR"), False)
+        enable_roi_stake_advisory = _parse_bool(os.getenv("ENABLE_ROI_STAKE_ADVISORY"), False)
+        roi_stake_advisory_dd_pct = _float("ROI_STAKE_ADVISORY_DD_PCT", 0.25)
+
+        enable_roi_aging_buckets = _parse_bool(os.getenv("ENABLE_ROI_AGING_BUCKETS"), False)
+        aging_raw = os.getenv("ROI_AGING_BUCKETS", "1,2,3,5,7")
+        roi_aging_buckets: List[int] = []
+        for t in aging_raw.split(","):
+            t = t.strip()
+            if not t:
+                continue
+            try:
+                iv = int(t)
+                if iv > 0:
+                    roi_aging_buckets.append(iv)
+            except ValueError:
+                continue
+        roi_aging_buckets = sorted(set(roi_aging_buckets))
+
+        enable_roi_side_breakdown = _parse_bool(os.getenv("ENABLE_ROI_SIDE_BREAKDOWN"), True)
+        enable_roi_clv_buckets = _parse_bool(os.getenv("ENABLE_ROI_CLV_BUCKETS"), False)
+        roi_clv_buckets_raw = os.getenv("ROI_CLV_BUCKETS", "-0.1--0.05,-0.05-0,0-0.05,0.05-0.1,0.1-")
+        roi_clv_buckets = [r.strip() for r in roi_clv_buckets_raw.split(",") if r.strip()]
 
         return cls(
             api_football_key=key,
@@ -470,6 +526,25 @@ class Settings:
             enable_roi_time_buckets=enable_roi_time_buckets,
             roi_edge_buckets_raw=roi_edge_buckets_raw,
             roi_edge_buckets=roi_edge_buckets,
+            enable_roi_equity_vol=enable_roi_equity_vol,
+            roi_equity_vol_windows=roi_equity_vol_windows,
+            enable_roi_anomaly_flags=enable_roi_anomaly_flags,
+            roi_anomaly_dd_threshold=roi_anomaly_dd_threshold,
+            roi_anomaly_yield_drop=roi_anomaly_yield_drop,
+            roi_anomaly_vol_mult=roi_anomaly_vol_mult,
+            enable_roi_schema_export=enable_roi_schema_export,
+            enable_roi_profit_distribution=enable_roi_profit_distribution,
+            enable_roi_ror=enable_roi_ror,
+            enable_roi_source_efficiency=enable_roi_source_efficiency,
+            enable_roi_edge_clv_corr=enable_roi_edge_clv_corr,
+            enable_roi_stake_advisory=enable_roi_stake_advisory,
+            roi_stake_advisory_dd_pct=roi_stake_advisory_dd_pct,
+            enable_roi_aging_buckets=enable_roi_aging_buckets,
+            roi_aging_buckets=roi_aging_buckets,
+            enable_roi_side_breakdown=enable_roi_side_breakdown,
+            enable_roi_clv_buckets=enable_roi_clv_buckets,
+            roi_clv_buckets_raw=roi_clv_buckets_raw,
+            roi_clv_buckets=roi_clv_buckets,
         )
 
 
@@ -482,8 +557,4 @@ def _reset_settings_cache_for_tests() -> None:
     get_settings.cache_clear()
 
 
-__all__ = [
-    "Settings",
-    "get_settings",
-    "_reset_settings_cache_for_tests",
-]
+__all__ = ["Settings", "get_settings", "_reset_settings_cache_for_tests"]
