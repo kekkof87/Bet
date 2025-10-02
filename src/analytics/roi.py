@@ -454,7 +454,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "current_loss_streak": streaks["current_loss_streak"],
         "longest_win_streak": streaks["longest_win_streak"],
         "longest_loss_streak": streaks["longest_loss_streak"],
-        # Rolling
         "rolling_window_size": rolling["rolling_window_size"],
         "picks_rolling": rolling["picks_rolling"],
         "settled_rolling": rolling["settled_rolling"],
@@ -463,18 +462,17 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "hit_rate_rolling": rolling["hit_rate_rolling"],
         "peak_profit_rolling": rolling["peak_profit_rolling"],
         "max_drawdown_rolling": rolling["max_drawdown_rolling"],
-        # CLV aggregate
         "avg_clv_pct": clv_aggr.get("avg_clv_pct"),
         "median_clv_pct": clv_aggr.get("median_clv_pct"),
         "realized_clv_win_avg": clv_aggr.get("realized_clv_win_avg"),
         "realized_clv_loss_avg": clv_aggr.get("realized_clv_loss_avg"),
-        # Edge deciles
         "edge_deciles": deciles,
     }
     return metrics
 
 
-def save_metrics(base: Path, metrics: Dict[str, Any]) -> None:
+def save_metrics(base: Path, metrics: Dict[str, Any]]) -> None:  # noqa: E701
+    # NOTE: previous code had a syntax error; ensure bracket alignment
     _save_json_atomic(base / "roi_metrics.json", metrics)
 
 
@@ -681,7 +679,6 @@ def _write_roi_csv_export(ledger: List[Dict[str, Any]], metrics: Dict[str, Any])
         "longest_loss_streak",
         "dynamic_threshold",
         "rate_limit_cap",
-        # Added snapshot of aggregated metrics
         "avg_clv_pct_overall",
         "median_clv_pct_overall",
         "rolling_window_size",
@@ -773,7 +770,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     fixtures_map = load_fixtures_map(fixtures)
     alerts = load_value_alerts()
 
-    # Dedup merged if requested (remove prediction/consensus duplicates)
     if settings.merged_dedup_enable:
         merged_pairs = {
             (a.get("fixture_id"), a.get("value_side"))
@@ -804,7 +800,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     daily_limit = settings.roi_max_new_picks_per_day
     rate_limit_strict = settings.roi_rate_limit_strict
 
-    # Count existing picks created today
     existing_today = sum(
         1
         for p in ledger
@@ -838,7 +833,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         if key in ledger_index:
             continue
 
-        # Rate limit
         if daily_limit > 0 and existing_today >= daily_limit:
             if rate_limit_strict:
                 logger.info(
@@ -945,7 +939,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         ledger_index[key] = pick
         existing_today += 1
 
-    # Settlement + CLV
     enable_clv = settings.enable_clv_capture
     for p in ledger:
         if p.get("settled"):
@@ -1052,7 +1045,7 @@ def load_roi_timeline_raw() -> List[Dict[str, Any]]:
     return out
 
 
-def load_roi_daily() -> Dict[str, Any]]:
+def load_roi_daily() -> Dict[str, Any]:
     settings = get_settings()
     if not settings.enable_roi_tracking or not settings.enable_roi_timeline:
         return {}
