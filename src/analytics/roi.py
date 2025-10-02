@@ -155,10 +155,61 @@ def _compute_profit_and_stats(picks: List[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def _equity_stats(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Calcola drawdown e picchi su sequenza dei profitti cumulativi dei pick SETTLED in ordine cronologico (created_at).
+    Profit step: aggiornato dopo ogni pick settled (win: +payout - stake, loss: -stake).
+    """
+    settled = [p for p in ledger if p.get("settled")]
+    if not settled:
+        return {
+            "peak_profit": 0.0,
+            "max_drawdown": 0.0,
+            "max_drawdown_pct": 0.0,
+            "current_drawdown": 0.0,
+            "current_drawdown_pct": 0.0,
+            "equity_points": 0,
+        }
+    # Ordina per created_at per coerenza temporale
+    settled.sort(key=lambda x: x.get("created_at") or "")
+    equity = []
+    running = 0.0
+    max_peak = 0.0
+    max_dd = 0.0
+    for p in settled:
+        stake = float(p.get("stake", 1.0))
+        if p.get("result") == "win":
+            running += float(p.get("payout", 0.0)) - stake
+        elif p.get("result") == "loss":
+            running -= stake
+        # aggiorna peak / drawdown
+        if running > max_peak:
+            max_peak = running
+        drawdown = max_peak - running
+        if drawdown > max_dd:
+            max_dd = drawdown
+        equity.append(running)
+    peak_profit = round(max_peak, 6)
+    max_drawdown = round(max_dd, 6)
+    max_drawdown_pct = round(max_drawdown / peak_profit, 6) if peak_profit > 0 else 0.0
+    current_drawdown = round(max_peak - equity[-1], 6)
+    current_drawdown_pct = round(current_drawdown / peak_profit, 6) if peak_profit > 0 else 0.0
+    return {
+        "peak_profit": peak_profit,
+        "max_drawdown": max_drawdown,
+        "max_drawdown_pct": max_drawdown_pct,
+        "current_drawdown": current_drawdown,
+        "current_drawdown_pct": current_drawdown_pct,
+        "equity_points": len(equity),
+    }
+
+
 def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     global_stats = _compute_profit_and_stats(ledger)
     pred_stats = _compute_profit_and_stats([p for p in ledger if p.get("source") == "prediction"])
     cons_stats = _compute_profit_and_stats([p for p in ledger if p.get("source") == "consensus"])
+    eq = _equity_stats(ledger)
+
     return {
         "generated_at": _now_iso(),
         "total_picks": global_stats["picks"],
@@ -169,6 +220,7 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "profit_units": global_stats["profit_units"],
         "yield": global_stats["yield"],
         "hit_rate": global_stats["hit_rate"],
+        # source breakdown
         "picks_prediction": pred_stats["picks"],
         "settled_prediction": pred_stats["settled"],
         "open_prediction": pred_stats["open"],
@@ -185,6 +237,13 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "profit_units_consensus": cons_stats["profit_units"],
         "yield_consensus": cons_stats["yield"],
         "hit_rate_consensus": cons_stats["hit_rate"],
+        # equity / drawdown
+        "peak_profit": eq["peak_profit"],
+        "max_drawdown": eq["max_drawdown"],
+        "max_drawdown_pct": eq["max_drawdown_pct"],
+        "current_drawdown": eq["current_drawdown"],
+        "current_drawdown_pct": eq["current_drawdown_pct"],
+        "equity_points": eq["equity_points"],
     }
 
 
@@ -298,7 +357,6 @@ def _build_snapshot(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     market = entry.get("market")
     if not isinstance(market, dict):
         return None
-    # Estrarre solo outcome base (se presenti)
     base_outcomes = {}
     for k in ("home_win", "draw", "away_win"):
         v = market.get(k)
@@ -306,7 +364,6 @@ def _build_snapshot(entry: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             base_outcomes[k] = float(v)
     if not base_outcomes:
         return None
-    # implied grezzi
     implied_raw = {k: 1.0 / v for k, v in base_outcomes.items()}
     s = sum(implied_raw.values())
     implied_norm = {k: round(v / s, 6) for k, v in implied_raw.items()} if s > 0 else {}
@@ -405,7 +462,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
             if kelly_fraction is None or kelly_fraction <= 0:
                 stake_strategy = "fixed"
 
-        # Odds snapshot
         snapshot_block = None
         entry = odds_latest_index.get(fid)
         if entry:

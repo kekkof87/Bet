@@ -817,3 +817,33 @@ Evoluzioni possibili:
 - Calcolo CLV (closing line value) confrontando odds snapshot vs odds a fine pre-match.
 - Memorizzare multiple fasi (es. pre-match e live primo tempo).
 - Analisi regressione performance vs overround.
+
+### ROI Drawdown & Equity Metrics (Iterazione 31)
+
+Aggiunti campi in roi_metrics.json per misurare rischio e resilienza della strategia:
+
+Campi:
+- peak_profit: massimo profit cumulativo raggiunto (>=0)
+- max_drawdown: perdita massima dal precedente picco (in unità)
+- max_drawdown_pct: max_drawdown / peak_profit (0 se peak_profit=0)
+- current_drawdown: differenza tra peak_profit e profit corrente
+- current_drawdown_pct: current_drawdown / peak_profit
+- equity_points: numero di step (picks settled) considerati nella curva
+
+Algoritmo:
+1. Ordina le picks settled per created_at (stessa equity se arrivate già fuori ordine).
+2. Calcola profit cumulativo incrementale:
+   - win: +(payout - stake)
+   - loss: -stake
+3. Aggiorna:
+   peak = max(peak, equity)
+   drawdown = peak - equity
+   max_drawdown = max(max_drawdown, drawdown)
+4. Percentuali calcolate solo se peak_profit > 0.
+
+Non modifica calcolo profit/yield esistente. Nessun side effect su endpoint /roi o timeline.
+
+Evoluzioni possibili:
+- Aggiunta metrica longest_win_streak / longest_loss_streak
+- Rolling max_drawdown (ultimi N pick)
+- Drawdown timeline endpoint
