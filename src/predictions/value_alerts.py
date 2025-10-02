@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from core.config import get_settings
 from core.logging import get_logger
@@ -39,20 +39,30 @@ def _load_consensus(base: Path, consensus_dir: str) -> List[Dict[str, Any]]:
     return [e for e in entries if isinstance(e, dict)]
 
 
+def _policy_edge(pred_edge: float, cons_edge: float, policy: str) -> float:
+    if policy == "min":
+        return min(pred_edge, cons_edge)
+    if policy == "avg":
+        return (pred_edge + cons_edge) / 2.0
+    return max(pred_edge, cons_edge)  # default max
+
+
 def build_value_alerts() -> List[Dict[str, Any]]:
     """
-    Crea lista unificata di alert 'value':
-    - source: prediction | consensus
-    - value_type: prediction_value | consensus_value
-    - edge, side, fixture_id
-    Applica filtro edge >= settings.value_alert_min_edge
+    Costruisce lista alert:
+      - prediction_value
+      - consensus_value
+      - (opzionale) merged_value (se entrambi attivi stesso fixture+side)
+    Applica threshold settings.value_alert_min_edge a ciascun edge.
     """
     settings = get_settings()
     base = Path(settings.bet_data_dir or "data")
     alerts: List[Dict[str, Any]] = []
     threshold = settings.value_alert_min_edge
 
+    # Prediction alerts
     preds = _load_predictions(base, settings.predictions_dir)
+    pred_index: Dict[Tuple[int, str], Dict[str, Any]] = {}
     for p in preds:
         vb = p.get("value")
         if not isinstance(vb, dict):
@@ -65,19 +75,25 @@ def build_value_alerts() -> List[Dict[str, Any]]:
                 continue
             if edge_f < threshold:
                 continue
+            side = vb.get("value_side")
+            fid = p.get("fixture_id")
             alerts.append(
                 {
                     "source": "prediction",
                     "value_type": "prediction_value",
-                    "fixture_id": p.get("fixture_id"),
-                    "value_side": vb.get("value_side"),
+                    "fixture_id": fid,
+                    "value_side": side,
                     "value_edge": edge_f,
                     "deltas": vb.get("deltas"),
                     "model_version": p.get("model_version"),
                 }
             )
+            if isinstance(fid, int) and isinstance(side, str):
+                pred_index[(fid, side)] = {"edge": edge_f}
 
+    # Consensus alerts
     consensus_entries = _load_consensus(base, settings.consensus_dir)
+    cons_index: Dict[Tuple[int, str], Dict[str, Any]] = {}
     for c in consensus_entries:
         cv = c.get("consensus_value")
         if not isinstance(cv, dict):
@@ -90,16 +106,46 @@ def build_value_alerts() -> List[Dict[str, Any]]:
                 continue
             if edge_f < threshold:
                 continue
+            side = cv.get("value_side")
+            fid = c.get("fixture_id")
             alerts.append(
                 {
                     "source": "consensus",
                     "value_type": "consensus_value",
-                    "fixture_id": c.get("fixture_id"),
-                    "value_side": cv.get("value_side"),
+                    "fixture_id": fid,
+                    "value_side": side,
                     "value_edge": edge_f,
                     "deltas": cv.get("deltas"),
                 }
             )
+            if isinstance(fid, int) and isinstance(side, str):
+                cons_index[(fid, side)] = {"edge": edge_f}
+
+    # Merged (optional)
+    if settings.enable_merged_value_alerts:
+        policy = settings.merged_value_edge_policy
+        for key, p_info in pred_index.items():
+            if key in cons_index:
+                fid, side = key
+                edge_pred = p_info["edge"]
+                edge_cons = cons_index[key]["edge"]
+                merged_edge = _policy_edge(edge_pred, edge_cons, policy)
+                # soglia già superata da entrambi, quindi merged_edge sarà >= threshold se policy=max/avg/min coerente
+                alerts.append(
+                    {
+                        "source": "merged",
+                        "value_type": "merged_value",
+                        "fixture_id": fid,
+                        "value_side": side,
+                        "value_edge": round(merged_edge, 6),
+                        "components": {
+                            "prediction_edge": edge_pred,
+                            "consensus_edge": edge_cons,
+                            "policy": policy,
+                        },
+                    }
+                )
+
     return alerts
 
 
@@ -116,12 +162,20 @@ def write_value_alerts(alerts: List[Dict[str, Any]]) -> Optional[Path]:
     payload = {
         "count": len(alerts),
         "threshold_edge": settings.value_alert_min_edge,
+        "merged_enabled": settings.enable_merged_value_alerts,
+        "merged_policy": settings.merged_value_edge_policy if settings.enable_merged_value_alerts else None,
         "alerts": alerts,
     }
     tmp = target.with_suffix(".tmp")
     with tmp.open("w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     os.replace(tmp, target)
-    logger.info("value_alerts_written", extra={"count": len(alerts), "threshold": settings.value_alert_min_edge})
-
+    logger.info(
+        "value_alerts_written",
+        extra={
+            "count": len(alerts),
+            "threshold": settings.value_alert_min_edge,
+            "merged": settings.enable_merged_value_alerts,
+        },
+    )
     return target
