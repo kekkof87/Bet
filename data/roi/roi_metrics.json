@@ -1,5 +1,5 @@
 {
-  "generated_at": "2025-10-02T11:26:16.454407+00:00",
+  "generated_at": "2025-10-02T12:46:02.109813+00:00",
   "total_picks": 0,
   "settled_picks": 0,
   "open_picks": 0,
@@ -29,5 +29,9 @@
   "max_drawdown_pct": 0.0,
   "current_drawdown": 0.0,
   "current_drawdown_pct": 0.0,
-  "equity_points": 0
+  "equity_points": 0,
+  "current_win_streak": 0,
+  "current_loss_streak": 0,
+  "longest_win_streak": 0,
+  "longest_loss_streak": 0
 }
