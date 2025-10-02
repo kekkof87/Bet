@@ -686,3 +686,44 @@ Evoluzioni possibili:
 - Soglie separate per prediction vs consensus (es: VALUE_ALERT_MIN_EDGE_PRED, VALUE_ALERT_MIN_EDGE_CONS).
 - Finestra dinamica: aumentare la soglia se count giornaliero supera X.
 - Logging breakdown (#excluded, #included).
+
+
+### ROI Timeline API (Iterazione 27)
+
+Endpoint: GET /roi/timeline  
+Parametri:
+- limit (int, default 200, max 2000) → record timeline (ordinati per ts, restituiti gli ultimi).
+- start_date / end_date (YYYY-MM-DD) → filtro inclusivo su data (derivata da ts).
+- mode = full | daily | both → controlla cosa includere in risposta.
+  * full  → solo timeline
+  * daily → solo aggregazione giornaliera
+  * both  → entrambi (default)
+
+Risposta:
+{
+  "enabled": true,
+  "mode": "both",
+  "count": <num timeline items>,
+  "items": [ {ts, total_picks, settled_picks, profit_units, yield, hit_rate}, ... ],
+  "daily": {
+     "2025-10-01": { last_ts, runs, total_picks, settled_picks, profit_units, yield, hit_rate },
+     ...
+  },
+  "filters": {...},
+  "included": {"timeline": true/false, "daily": true/false}
+}
+
+Origine dati:
+- roi_history.jsonl (append ad ogni run) → timeline
+- roi_daily.json (aggiornato ad ogni run) → aggregato giornaliero
+
+Note implementative:
+- Nessuna nuova variabile env.
+- Se tracking o timeline disabilitati: enabled=false, output vuoto coerente.
+- Filtro date applicato sia a timeline che daily.
+- limit applicato dopo filtraggio.
+
+Evoluzioni possibili:
+- Paginazione (cursor o offset).
+- Rolling metrics (7d/30d) lato API.
+- Endpoint /roi/timeline/metrics con derivazioni (max drawdown, profit curve).

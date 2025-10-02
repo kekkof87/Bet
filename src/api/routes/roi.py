@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 from typing import Optional, List
+from datetime import datetime
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 
 from core.config import get_settings
 from core.logging import get_logger
-from analytics.roi import load_roi_summary, load_roi_ledger
+from analytics.roi import (
+    load_roi_summary,
+    load_roi_ledger,
+    load_roi_timeline_raw,
+    load_roi_daily,
+)
 
 logger = get_logger("api.routes.roi")
 
@@ -57,7 +63,6 @@ def roi_summary(
             filtered = [p for p in filtered if str(p.get("source")).lower() in chosen_sources]
         if open_only:
             filtered = [p for p in filtered if p.get("settled") is False]
-        # Ordina per created_at
         filtered.sort(key=lambda p: p.get("created_at") or "")
         if limit is not None:
             filtered = filtered[:limit]
@@ -75,4 +80,106 @@ def roi_summary(
             "limit": limit,
         },
         "detail_included": detail_included,
+    }
+
+
+@router.get("/timeline", summary="Timeline ROI e/o daily aggregate")
+def roi_timeline(
+    limit: int = Query(200, ge=1, le=2000, description="Numero massimo di record timeline (più recenti)"),
+    start_date: Optional[str] = Query(None, description="Filtro ISO date (YYYY-MM-DD) ts >= start_date"),
+    end_date: Optional[str] = Query(None, description="Filtro ISO date (YYYY-MM-DD) ts <= end_date"),
+    mode: str = Query("both", pattern="^(full|daily|both)$", description="full=solo timeline, daily=solo daily, both=entrambi"),
+):
+    settings = get_settings()
+    if not settings.enable_roi_tracking or not settings.enable_roi_timeline:
+        return {
+            "enabled": False,
+            "mode": mode,
+            "items": [],
+            "count": 0,
+            "daily": {},
+            "filters": {},
+        }
+
+    # Parse filtri date
+    def _parse_date(d: Optional[str]) -> Optional[datetime]:
+        if not d:
+            return None
+        try:
+            return datetime.strptime(d, "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid date format: {d}. Expected YYYY-MM-DD")
+
+    sd = _parse_date(start_date)
+    ed = _parse_date(end_date)
+    if sd and ed and sd > ed:
+        raise HTTPException(status_code=400, detail="start_date > end_date")
+
+    items = []
+    daily = {}
+
+    include_full = mode in {"full", "both"}
+    include_daily = mode in {"daily", "both"}
+
+    if include_full:
+        raw = load_roi_timeline_raw()
+        # Ordina per ts ascendente, poi invertiamo per prendere i più recenti
+        def _ts(r: dict) -> str:
+            return str(r.get("ts") or "")
+
+        raw.sort(key=_ts)
+        # Filtra per date
+        filtered: List[dict] = []
+        for r in raw:
+            ts = r.get("ts")
+            if not ts:
+                continue
+            # Estrarre giorno da ts (primi 10 char YYYY-MM-DD)
+            day_str = ts[:10]
+            try:
+                d_obj = datetime.strptime(day_str, "%Y-%m-%d")
+            except Exception:
+                continue
+            if sd and d_obj < sd:
+                continue
+            if ed and d_obj > ed:
+                continue
+            filtered.append(r)
+        # Tenere gli ultimi 'limit'
+        if len(filtered) > limit:
+            filtered = filtered[-limit:]
+        items = filtered
+
+    if include_daily:
+        daily = load_roi_daily()
+        # eventuale filtro date
+        if (sd or ed) and daily:
+            d_filtered = {}
+            for day_key, val in daily.items():
+                try:
+                    d_obj = datetime.strptime(day_key, "%Y-%m-%d")
+                except Exception:
+                    continue
+                if sd and d_obj < sd:
+                    continue
+                if ed and d_obj > ed:
+                    continue
+                d_filtered[day_key] = val
+            daily = d_filtered
+
+    return {
+        "enabled": True,
+        "mode": mode,
+        "count": len(items),
+        "items": items,
+        "daily": daily,
+        "filters": {
+            "limit": limit,
+            "start_date": start_date,
+            "end_date": end_date,
+        },
+        "included": {
+            "timeline": include_full,
+            "daily": include_daily,
+        },
     }

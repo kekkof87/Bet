@@ -339,7 +339,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     save_ledger(base, ledger)
     metrics = compute_metrics(ledger)
     save_metrics(base, metrics)
-    # Timeline append
     _append_timeline(base, metrics)
 
     logger.info(
@@ -369,3 +368,43 @@ def load_roi_ledger() -> List[Dict[str, Any]]:
         return []
     base = Path(settings.bet_data_dir or "data") / settings.roi_dir
     return load_ledger(base)
+
+
+# ---------------------
+# Timeline loading API
+# ---------------------
+def load_roi_timeline_raw() -> List[Dict[str, Any]]:
+    settings = get_settings()
+    if not settings.enable_roi_tracking or not settings.enable_roi_timeline:
+        return []
+    base = Path(settings.bet_data_dir or "data") / settings.roi_dir
+    path = base / settings.roi_timeline_file
+    if not path.exists():
+        return []
+    out: List[Dict[str, Any]] = []
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+                if isinstance(rec, dict):
+                    out.append(rec)
+            except Exception:  # pragma: no cover
+                continue
+    except Exception:  # pragma: no cover
+        return []
+    return out
+
+
+def load_roi_daily() -> Dict[str, Any]:
+    settings = get_settings()
+    if not settings.enable_roi_tracking or not settings.enable_roi_timeline:
+        return {}
+    base = Path(settings.bet_data_dir or "data") / settings.roi_dir
+    path = base / settings.roi_daily_file
+    data = _load_json(path)
+    if isinstance(data, dict):
+        return data
+    return {}
