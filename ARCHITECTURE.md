@@ -727,3 +727,39 @@ Evoluzioni possibili:
 - Paginazione (cursor o offset).
 - Rolling metrics (7d/30d) lato API.
 - Endpoint /roi/timeline/metrics con derivazioni (max drawdown, profit curve).
+
+### Kelly Staking (Iterazione 28)
+
+Scopo:
+Adattare lo stake di ogni pick ROI alla probabilità stimata (modello o consensus) e alle quote, usando una versione semplificata del Kelly Criterion.
+
+Formula (bet singolo):
+fraction = (decimal_odds * p - 1) / (decimal_odds - 1)
+dove p è la probabilità modello (prediction) o blended (consensus).  
+Se fraction <= 0 → fallback a stake fisso (roi_stake_units).  
+Se fraction > 0:
+  fraction_capped = min(fraction, KELLY_EDGE_CAP)
+  stake = min(fraction_capped * KELLY_BASE_UNITS, KELLY_MAX_UNITS)
+
+Config:
+- ENABLE_KELLY_STAKING (default false)
+- KELLY_BASE_UNITS (default 1.0)
+- KELLY_MAX_UNITS (default 3.0)
+- KELLY_EDGE_CAP (default 0.5)
+
+Ledger campi aggiunti:
+- stake_strategy: "kelly" | "fixed"
+- kelly_fraction: frazione teorica (non cap) o null
+- kelly_fraction_capped: frazione dopo cap
+- kelly_prob: probabilità usata (p) o null
+- kelly_b: (decimal_odds - 1)
+
+Note:
+- Per consensus picks si usa consensus.blended_prob[side].
+- Se prob mancante o invalida (fuori 0..1): fallback fisso.
+- ROI metrics rimangono coerenti; profit e yield già calcolati su stake effettivo.
+
+Evoluzioni future:
+- Kelly frazionata con scaling tempo (dopo n picks).
+- Multi outcome book adjustment (ridurre p in presenza di overround elevato).
+- Esclusione pick negative (skip invece di fallback).
