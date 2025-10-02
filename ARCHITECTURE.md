@@ -792,3 +792,28 @@ Evoluzioni possibili:
 - Breakdown anche per value_type (prediction_value vs consensus_value).
 - Breakdown per mese (rolling counters).
 - Aggiunta variabili per escludere una source in ROI (già parziale via ROI_INCLUDE_CONSENSUS).
+
+### Odds Snapshot nelle ROI Picks (Iterazione 30)
+
+Scopo:
+Registrare le quote disponibili al momento della creazione della pick per audit, analisi del drift e future metriche (es. closing line value).
+
+Flag:
+- ENABLE_ROI_ODDS_SNAPSHOT (default true)
+
+Campi aggiunti nel ledger (se snapshot attivo e odds_latest entry presente):
+- market_snapshot: {home_win: 2.1, draw: 3.5, away_win: 3.4}
+- snapshot_implied: probabilità normalizzate (implied / sum(implied))
+- snapshot_overround: sum(1/odds) - 1
+- snapshot_provider: string (source/provider dell’entry)
+- snapshot_at: timestamp ISO al momento della pick
+
+Note:
+- Non altera calcoli di profit o stake.
+- Se odds_latest mancante o flag disattivato → nessun campo snapshot.
+- Sfrutta solo il market base 1X2; estensioni future possono includere mercati aggiuntivi.
+
+Evoluzioni possibili:
+- Calcolo CLV (closing line value) confrontando odds snapshot vs odds a fine pre-match.
+- Memorizzare multiple fasi (es. pre-match e live primo tempo).
+- Analisi regressione performance vs overround.
