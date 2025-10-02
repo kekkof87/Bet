@@ -113,10 +113,16 @@ class Settings:
 
     enable_roi_odds_snapshot: bool
 
-    # Merged value alerts
     enable_merged_value_alerts: bool
-    merged_value_edge_policy: str  # max|min|avg
+    merged_value_edge_policy: str
     roi_include_merged: bool
+
+    # CSV export ROI
+    enable_roi_csv_export: bool
+    roi_csv_file: str
+    roi_csv_include_open: bool
+    roi_csv_sort: str
+    roi_csv_limit: int
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -260,6 +266,14 @@ class Settings:
             merged_value_edge_policy = "max"
         roi_include_merged = _parse_bool(os.getenv("ROI_INCLUDE_MERGED"), True)
 
+        enable_roi_csv_export = _parse_bool(os.getenv("ENABLE_ROI_CSV_EXPORT"), True)
+        roi_csv_file = os.getenv("ROI_CSV_FILE", "roi_export.csv")
+        roi_csv_include_open = _parse_bool(os.getenv("ROI_CSV_INCLUDE_OPEN"), True)
+        roi_csv_sort = os.getenv("ROI_CSV_SORT", "created_at")
+        if roi_csv_sort not in {"created_at", "settled_at"}:
+            roi_csv_sort = "created_at"
+        roi_csv_limit = _int("ROI_CSV_LIMIT", 0)
+
         return cls(
             api_football_key=key,
             default_league_id=league_id,
@@ -333,6 +347,11 @@ class Settings:
             enable_merged_value_alerts=enable_merged_value_alerts,
             merged_value_edge_policy=merged_value_edge_policy,
             roi_include_merged=roi_include_merged,
+            enable_roi_csv_export=enable_roi_csv_export,
+            roi_csv_file=roi_csv_file,
+            roi_csv_include_open=roi_csv_include_open,
+            roi_csv_sort=roi_csv_sort,
+            roi_csv_limit=roi_csv_limit,
         )
 
 
