@@ -45,10 +45,12 @@ def build_value_alerts() -> List[Dict[str, Any]]:
     - source: prediction | consensus
     - value_type: prediction_value | consensus_value
     - edge, side, fixture_id
+    Applica filtro edge >= settings.value_alert_min_edge
     """
     settings = get_settings()
     base = Path(settings.bet_data_dir or "data")
     alerts: List[Dict[str, Any]] = []
+    threshold = settings.value_alert_min_edge
 
     preds = _load_predictions(base, settings.predictions_dir)
     for p in preds:
@@ -56,13 +58,20 @@ def build_value_alerts() -> List[Dict[str, Any]]:
         if not isinstance(vb, dict):
             continue
         if vb.get("active") is True:
+            edge = vb.get("value_edge")
+            try:
+                edge_f = float(edge)
+            except Exception:
+                continue
+            if edge_f < threshold:
+                continue
             alerts.append(
                 {
                     "source": "prediction",
                     "value_type": "prediction_value",
                     "fixture_id": p.get("fixture_id"),
                     "value_side": vb.get("value_side"),
-                    "value_edge": vb.get("value_edge"),
+                    "value_edge": edge_f,
                     "deltas": vb.get("deltas"),
                     "model_version": p.get("model_version"),
                 }
@@ -74,13 +83,20 @@ def build_value_alerts() -> List[Dict[str, Any]]:
         if not isinstance(cv, dict):
             continue
         if cv.get("active") is True:
+            edge = cv.get("value_edge")
+            try:
+                edge_f = float(edge)
+            except Exception:
+                continue
+            if edge_f < threshold:
+                continue
             alerts.append(
                 {
                     "source": "consensus",
                     "value_type": "consensus_value",
                     "fixture_id": c.get("fixture_id"),
                     "value_side": cv.get("value_side"),
-                    "value_edge": cv.get("value_edge"),
+                    "value_edge": edge_f,
                     "deltas": cv.get("deltas"),
                 }
             )
@@ -99,12 +115,13 @@ def write_value_alerts(alerts: List[Dict[str, Any]]) -> Optional[Path]:
 
     payload = {
         "count": len(alerts),
+        "threshold_edge": settings.value_alert_min_edge,
         "alerts": alerts,
     }
     tmp = target.with_suffix(".tmp")
     with tmp.open("w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     os.replace(tmp, target)
-    logger.info("value_alerts_written", extra={"count": len(alerts)})
+    logger.info("value_alerts_written", extra={"count": len(alerts), "threshold": settings.value_alert_min_edge})
 
     return target

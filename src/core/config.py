@@ -84,6 +84,9 @@ class Settings:
     value_min_edge: float
     value_include_adjusted: bool
 
+    # Nuova soglia per *pubblicazione* alert (filtra subset di quelli rilevati)
+    value_alert_min_edge: float
+
     enable_value_alerts: bool
     value_alerts_dir: str
 
@@ -101,7 +104,6 @@ class Settings:
     roi_include_consensus: bool
     roi_stake_units: float
 
-    # ROI Timeline
     enable_roi_timeline: bool
     roi_timeline_file: str
     roi_daily_file: str
@@ -203,6 +205,9 @@ class Settings:
         value_min_edge = _float("VALUE_MIN_EDGE", 0.05)
         value_include_adjusted = _parse_bool(os.getenv("VALUE_INCLUDE_ADJUSTED"), True)
 
+        # Soglia specifica per pubblicazione alerts (fallback alla detection)
+        value_alert_min_edge = _float("VALUE_ALERT_MIN_EDGE", value_min_edge)
+
         enable_value_alerts = _parse_bool(os.getenv("ENABLE_VALUE_ALERTS"), False)
         value_alerts_dir = os.getenv("VALUE_ALERTS_DIR", "value_alerts")
 
@@ -278,6 +283,7 @@ class Settings:
             enable_value_detection=enable_value_detection,
             value_min_edge=value_min_edge,
             value_include_adjusted=value_include_adjusted,
+            value_alert_min_edge=value_alert_min_edge,
             enable_value_alerts=enable_value_alerts,
             value_alerts_dir=value_alerts_dir,
             enable_value_history=enable_value_history,
