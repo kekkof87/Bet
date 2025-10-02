@@ -16,6 +16,10 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _utc_day() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
 def _load_json(path: Path) -> Any:
     if not path.exists():
         return None
@@ -30,6 +34,12 @@ def _save_json_atomic(path: Path, payload: Any) -> None:
     with tmp.open("w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     os.replace(tmp, path)
+
+
+def _append_jsonl(path: Path, record: Dict[str, Any]) -> None:
+    line = json.dumps(record, ensure_ascii=False)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(line + "\n")
 
 
 def _outcome_from_scores(home_score: Any, away_score: Any) -> Optional[str]:
@@ -72,9 +82,6 @@ def load_value_alerts() -> List[Dict[str, Any]]:
 
 
 def load_predictions_index() -> Dict[int, Dict[str, Any]]:
-    """
-    Carica predictions/latest_predictions.json e indicizza per fixture_id.
-    """
     settings = get_settings()
     base = Path(settings.bet_data_dir or "data")
     path = base / settings.predictions_dir / "latest_predictions.json"
@@ -109,15 +116,6 @@ def load_consensus_index() -> Dict[int, Dict[str, Any]]:
 
 
 def load_odds_latest_index() -> Dict[int, Dict[str, Any]]:
-    """
-    odds_latest.json:
-    {
-      "provider": "...",
-      "entries": [
-         {"fixture_id": X, "market": {"home_win": 2.1, "draw": 3.3, "away_win": 3.4}, ...}
-      ]
-    }
-    """
     settings = get_settings()
     base = Path(settings.bet_data_dir or "data")
     path = base / settings.odds_dir / "odds_latest.json"
@@ -186,14 +184,6 @@ def _find_decimal_odds(
     odds_latest_index: Dict[int, Dict[str, Any]],
     predictions_index: Dict[int, Dict[str, Any]],
 ) -> Tuple[float, str]:
-    """
-    Ritorna (decimal_odds, source_tag).
-    Priorità:
-      1. odds_latest.json (market)
-      2. predictions.latest (pred['odds']['odds_original'])
-      3. fallback 2.0
-    """
-    # 1: odds_latest
     entry = odds_latest_index.get(fid)
     if entry:
         market = entry.get("market")
@@ -201,8 +191,6 @@ def _find_decimal_odds(
             val = market.get(side)
             if isinstance(val, (int, float)) and val > 1.01:
                 return float(val), "odds_latest"
-
-    # 2: predictions
     pred = predictions_index.get(fid)
     if pred:
         odds_block = pred.get("odds")
@@ -212,18 +200,50 @@ def _find_decimal_odds(
                 val = orig.get(side)
                 if isinstance(val, (int, float)) and val > 1.01:
                     return float(val), "predictions_odds"
-
-    # fallback
     return 2.0, "fallback"
 
 
+def _append_timeline(base: Path, metrics: Dict[str, Any]) -> None:
+    settings = get_settings()
+    if not settings.enable_roi_timeline:
+        return
+    history_path = base / settings.roi_timeline_file
+    daily_path = base / settings.roi_daily_file
+    record = {
+        "ts": metrics.get("generated_at"),
+        "total_picks": metrics.get("total_picks"),
+        "settled_picks": metrics.get("settled_picks"),
+        "profit_units": metrics.get("profit_units"),
+        "yield": metrics.get("yield"),
+        "hit_rate": metrics.get("hit_rate"),
+    }
+    try:
+        _append_jsonl(history_path, record)
+    except Exception as exc:  # pragma: no cover
+        logger.error("Errore append ROI timeline: %s", exc)
+    # Aggiornamento giornaliero
+    day = _utc_day()
+    daily = _load_json(daily_path) or {}
+    if not isinstance(daily, dict):
+        daily = {}
+    d_entry = daily.get(day, {})
+    runs = int(d_entry.get("runs", 0)) + 1
+    daily[day] = {
+        "last_ts": record["ts"],
+        "runs": runs,
+        "total_picks": record["total_picks"],
+        "settled_picks": record["settled_picks"],
+        "profit_units": record["profit_units"],
+        "yield": record["yield"],
+        "hit_rate": record["hit_rate"],
+    }
+    try:
+        _save_json_atomic(daily_path, daily)
+    except Exception as exc:  # pragma: no cover
+        logger.error("Errore salvataggio daily ROI: %s", exc)
+
+
 def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
-    """
-    ROI tracking con odds reali:
-    - Genera nuove picks da value alerts (status NS, edge >= soglia).
-    - Recupera decimal_odds da odds_latest oppure predictions odds_original.
-    - Settle picks quando fixture FT.
-    """
     settings = get_settings()
     if not settings.enable_roi_tracking:
         return
@@ -246,7 +266,7 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
 
     now_ts = _now_iso()
 
-    # Creazione nuove picks
+    # Crea nuove picks
     for alert in alerts:
         fid = alert.get("fixture_id")
         source = str(alert.get("source"))
@@ -264,9 +284,7 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         if not isinstance(fid, int):
             continue
         fx = fixtures_map.get(fid)
-        if not fx:
-            continue
-        if fx.get("status") != "NS":
+        if not fx or fx.get("status") != "NS":
             continue
         key = (fid, source)
         if key in ledger_index:
@@ -274,10 +292,8 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         side = alert.get("value_side")
         if not isinstance(side, str):
             continue
-
         decimal_odds, odds_src = _find_decimal_odds(fid, side, odds_latest_index, predictions_index)
         fair_prob = round(1 / decimal_odds, 6) if decimal_odds > 0 else 0.5
-
         pick = {
             "created_at": now_ts,
             "fixture_id": fid,
@@ -287,7 +303,7 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
             "edge": edge,
             "stake": stake_units,
             "decimal_odds": round(decimal_odds, 6),
-            "est_odds": round(decimal_odds, 6),  # backward compatibility
+            "est_odds": round(decimal_odds, 6),
             "fair_prob": fair_prob,
             "odds_source": odds_src,
             "settled": False,
@@ -295,7 +311,7 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         ledger.append(pick)
         ledger_index[key] = pick
 
-    # Settlement
+    # Settle picks
     for p in ledger:
         if p.get("settled"):
             continue
@@ -323,6 +339,9 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     save_ledger(base, ledger)
     metrics = compute_metrics(ledger)
     save_metrics(base, metrics)
+    # Timeline append
+    _append_timeline(base, metrics)
+
     logger.info(
         "roi_updated",
         extra={
