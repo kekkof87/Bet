@@ -180,18 +180,39 @@ class Settings:
     roi_clv_buckets_raw: Optional[str]
     roi_clv_buckets: List[str]
 
-    # Batch 38 Advanced
-    enable_roi_kelly_effect: bool
-    enable_roi_payout_moments: bool
-    enable_roi_market_placeholder: bool
-    enable_roi_compact_export: bool
-    enable_roi_archive_stats: bool
-    enable_roi_montecarlo: bool
-    roi_mc_runs: int
-    roi_mc_window: int
-    enable_roi_profit_buckets: bool
-    roi_profit_buckets_raw: Optional[str]
-    roi_profit_buckets: List[str]
+    # ---------------- Batch 39 NEW FLAGS (stub phase) ----------------
+    enable_roi_regime: bool
+    roi_regime_lookback: int
+    roi_regime_dd_bear: float
+    roi_regime_vol_high: float
+
+    enable_roi_adaptive_stake: bool
+    roi_adaptive_stake_min: float
+    roi_adaptive_stake_max: float
+
+    enable_roi_adaptive_edge: bool
+    roi_adaptive_edge_max_bonus: float
+    roi_adaptive_edge_max_penalty: float
+
+    enable_roi_portfolio: bool
+    roi_portfolio_min_picks: int
+
+    enable_roi_drift_monitor: bool
+    roi_drift_edge_tol: float
+    roi_drift_clv_tol: float
+
+    enable_roi_stress_test: bool
+    roi_stress_scenarios_raw: str
+    roi_stress_horizon_picks: int
+
+    enable_roi_quality_guards: bool
+    roi_quality_max_stake_mult: float
+    roi_quality_max_odds: float
+
+    enable_roi_incremental: bool
+    enable_roi_micro_cache: bool
+
+    enable_roi_multi_market: bool
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -383,7 +404,7 @@ class Settings:
         roi_edge_buckets_raw = os.getenv("ROI_EDGE_BUCKETS", "0.05-0.07,0.07-0.09,0.09-0.12,0.12-")
         roi_edge_buckets = [r.strip() for r in roi_edge_buckets_raw.split(",") if r.strip()]
 
-        # Batch 37 core
+        # Batch 37 core new flags
         enable_roi_equity_vol = _parse_bool(os.getenv("ENABLE_ROI_EQUITY_VOL"), True)
         eq_vol_raw = os.getenv("ROI_EQUITY_VOL_WINDOWS", "30,100")
         roi_equity_vol_windows: List[int] = []
@@ -410,7 +431,7 @@ class Settings:
         enable_roi_ror = _parse_bool(os.getenv("ENABLE_ROI_ROR"), False)
         enable_roi_source_efficiency = _parse_bool(os.getenv("ENABLE_ROI_SOURCE_EFFICIENCY"), True)
 
-        # Batch 37 plus
+        # Batch 37 plus new
         enable_roi_edge_clv_corr = _parse_bool(os.getenv("ENABLE_ROI_EDGE_CLV_CORR"), False)
         enable_roi_stake_advisory = _parse_bool(os.getenv("ENABLE_ROI_STAKE_ADVISORY"), False)
         roi_stake_advisory_dd_pct = _float("ROI_STAKE_ADVISORY_DD_PCT", 0.25)
@@ -432,21 +453,42 @@ class Settings:
 
         enable_roi_side_breakdown = _parse_bool(os.getenv("ENABLE_ROI_SIDE_BREAKDOWN"), True)
         enable_roi_clv_buckets = _parse_bool(os.getenv("ENABLE_ROI_CLV_BUCKETS"), False)
-        roi_clv_buckets_raw = os.getenv("ROI_CLV_BUCKETS", "-0.1--0.05,-0.05-0,0-0.05,0-0.05,0.05-0.1,0.1-")
+        roi_clv_buckets_raw = os.getenv("ROI_CLV_BUCKETS", "-0.1--0.05,-0.05-0,0-0.05,0.05-0.1,0.1-")
         roi_clv_buckets = [r.strip() for r in roi_clv_buckets_raw.split(",") if r.strip()]
 
-        # Batch 38 advanced
-        enable_roi_kelly_effect = _parse_bool(os.getenv("ENABLE_ROI_KELLY_EFFECT"), False)
-        enable_roi_payout_moments = _parse_bool(os.getenv("ENABLE_ROI_PAYOUT_MOMENTS"), False)
-        enable_roi_market_placeholder = _parse_bool(os.getenv("ENABLE_ROI_MARKET_PLACEHOLDER"), False)
-        enable_roi_compact_export = _parse_bool(os.getenv("ENABLE_ROI_COMPACT_EXPORT"), False)
-        enable_roi_archive_stats = _parse_bool(os.getenv("ENABLE_ROI_ARCHIVE_STATS"), False)
-        enable_roi_montecarlo = _parse_bool(os.getenv("ENABLE_ROI_MONTECARLO"), False)
-        roi_mc_runs = _int("ROI_MC_RUNS", 500)
-        roi_mc_window = _int("ROI_MC_WINDOW", 200)
-        enable_roi_profit_buckets = _parse_bool(os.getenv("ENABLE_ROI_PROFIT_BUCKETS"), False)
-        roi_profit_buckets_raw = os.getenv("ROI_PROFIT_BUCKETS", "-2--1,-1--0.5,-0.5-0,0-0.5,0.5-1,1-")
-        roi_profit_buckets = [r.strip() for r in roi_profit_buckets_raw.split(",") if r.strip()]
+        # ---------------- Batch 39 parsing (all default OFF) ----------------
+        enable_roi_regime = _parse_bool(os.getenv("ENABLE_ROI_REGIME"), False)
+        roi_regime_lookback = _int("ROI_REGIME_LOOKBACK", 150)
+        roi_regime_dd_bear = _float("ROI_REGIME_DD_BEAR", 0.25)
+        roi_regime_vol_high = _float("ROI_REGIME_VOL_HIGH", 0.20)
+
+        enable_roi_adaptive_stake = _parse_bool(os.getenv("ENABLE_ROI_ADAPTIVE_STAKE"), False)
+        roi_adaptive_stake_min = _float("ROI_ADAPTIVE_STAKE_MIN", 0.6)
+        roi_adaptive_stake_max = _float("ROI_ADAPTIVE_STAKE_MAX", 1.25)
+
+        enable_roi_adaptive_edge = _parse_bool(os.getenv("ENABLE_ROI_ADAPTIVE_EDGE"), False)
+        roi_adaptive_edge_max_bonus = _float("ROI_ADAPTIVE_EDGE_MAX_BONUS", 0.02)
+        roi_adaptive_edge_max_penalty = _float("ROI_ADAPTIVE_EDGE_MAX_PENALTY", 0.03)
+
+        enable_roi_portfolio = _parse_bool(os.getenv("ENABLE_ROI_PORTFOLIO"), False)
+        roi_portfolio_min_picks = _int("ROI_PORTFOLIO_MIN_PICKS", 60)
+
+        enable_roi_drift_monitor = _parse_bool(os.getenv("ENABLE_ROI_DRIFT_MONITOR"), False)
+        roi_drift_edge_tol = _float("ROI_DRIFT_EDGE_TOL", 0.02)
+        roi_drift_clv_tol = _float("ROI_DRIFT_CLV_TOL", 0.02)
+
+        enable_roi_stress_test = _parse_bool(os.getenv("ENABLE_ROI_STRESS_TEST"), False)
+        roi_stress_scenarios_raw = os.getenv("ROI_STRESS_SCENARIOS", "-1sigma,-2sigma")
+        roi_stress_horizon_picks = _int("ROI_STRESS_HORIZON_PICKS", 50)
+
+        enable_roi_quality_guards = _parse_bool(os.getenv("ENABLE_ROI_QUALITY_GUARDS"), False)
+        roi_quality_max_stake_mult = _float("ROI_QUALITY_MAX_STAKE_MULT", 5.0)
+        roi_quality_max_odds = _float("ROI_QUALITY_MAX_ODDS", 25.0)
+
+        enable_roi_incremental = _parse_bool(os.getenv("ENABLE_ROI_INCREMENTAL"), False)
+        enable_roi_micro_cache = _parse_bool(os.getenv("ENABLE_ROI_MICRO_CACHE"), False)
+
+        enable_roi_multi_market = _parse_bool(os.getenv("ENABLE_ROI_MULTI_MARKET"), False)
 
         return cls(
             api_football_key=key,
@@ -571,17 +613,31 @@ class Settings:
             enable_roi_clv_buckets=enable_roi_clv_buckets,
             roi_clv_buckets_raw=roi_clv_buckets_raw,
             roi_clv_buckets=roi_clv_buckets,
-            enable_roi_kelly_effect=enable_roi_kelly_effect,
-            enable_roi_payout_moments=enable_roi_payout_moments,
-            enable_roi_market_placeholder=enable_roi_market_placeholder,
-            enable_roi_compact_export=enable_roi_compact_export,
-            enable_roi_archive_stats=enable_roi_archive_stats,
-            enable_roi_montecarlo=enable_roi_montecarlo,
-            roi_mc_runs=roi_mc_runs,
-            roi_mc_window=roi_mc_window,
-            enable_roi_profit_buckets=enable_roi_profit_buckets,
-            roi_profit_buckets_raw=roi_profit_buckets_raw,
-            roi_profit_buckets=roi_profit_buckets,
+            # Batch 39 args
+            enable_roi_regime=enable_roi_regime,
+            roi_regime_lookback=roi_regime_lookback,
+            roi_regime_dd_bear=roi_regime_dd_bear,
+            roi_regime_vol_high=roi_regime_vol_high,
+            enable_roi_adaptive_stake=enable_roi_adaptive_stake,
+            roi_adaptive_stake_min=roi_adaptive_stake_min,
+            roi_adaptive_stake_max=roi_adaptive_stake_max,
+            enable_roi_adaptive_edge=enable_roi_adaptive_edge,
+            roi_adaptive_edge_max_bonus=roi_adaptive_edge_max_bonus,
+            roi_adaptive_edge_max_penalty=roi_adaptive_edge_max_penalty,
+            enable_roi_portfolio=enable_roi_portfolio,
+            roi_portfolio_min_picks=roi_portfolio_min_picks,
+            enable_roi_drift_monitor=enable_roi_drift_monitor,
+            roi_drift_edge_tol=roi_drift_edge_tol,
+            roi_drift_clv_tol=roi_drift_clv_tol,
+            enable_roi_stress_test=enable_roi_stress_test,
+            roi_stress_scenarios_raw=roi_stress_scenarios_raw,
+            roi_stress_horizon_picks=roi_stress_horizon_picks,
+            enable_roi_quality_guards=enable_roi_quality_guards,
+            roi_quality_max_stake_mult=roi_quality_max_stake_mult,
+            roi_quality_max_odds=roi_quality_max_odds,
+            enable_roi_incremental=enable_roi_incremental,
+            enable_roi_micro_cache=enable_roi_micro_cache,
+            enable_roi_multi_market=enable_roi_multi_market,
         )
 
 
