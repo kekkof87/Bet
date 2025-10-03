@@ -155,7 +155,7 @@ class Settings:
     roi_edge_buckets_raw: Optional[str]
     roi_edge_buckets: List[str]
 
-    # Batch 37 CORE NEW
+    # Batch 37 core
     enable_roi_equity_vol: bool
     roi_equity_vol_windows: List[int]
 
@@ -169,7 +169,7 @@ class Settings:
     enable_roi_ror: bool
     enable_roi_source_efficiency: bool
 
-    # Batch 37 PLUS NEW
+    # Batch 37 plus
     enable_roi_edge_clv_corr: bool
     enable_roi_stake_advisory: bool
     roi_stake_advisory_dd_pct: float
@@ -180,7 +180,10 @@ class Settings:
     roi_clv_buckets_raw: Optional[str]
     roi_clv_buckets: List[str]
 
-    # ---------------- Batch 39 NEW FLAGS (stub phase) ----------------
+    # Batch 38 (già presenti nelle build avanzate – i flag relativi nel codice analytics usaranno quelli esistenti)
+    # (Kelly effectiveness, Montecarlo, Profit buckets, ecc.) – i parametri sono già letti nel file analytics.
+
+    # Batch 39 NEW FLAGS (stub)
     enable_roi_regime: bool
     roi_regime_lookback: int
     roi_regime_dd_bear: float
@@ -431,7 +434,7 @@ class Settings:
         enable_roi_ror = _parse_bool(os.getenv("ENABLE_ROI_ROR"), False)
         enable_roi_source_efficiency = _parse_bool(os.getenv("ENABLE_ROI_SOURCE_EFFICIENCY"), True)
 
-        # Batch 37 plus new
+        # Batch 37 plus
         enable_roi_edge_clv_corr = _parse_bool(os.getenv("ENABLE_ROI_EDGE_CLV_CORR"), False)
         enable_roi_stake_advisory = _parse_bool(os.getenv("ENABLE_ROI_STAKE_ADVISORY"), False)
         roi_stake_advisory_dd_pct = _float("ROI_STAKE_ADVISORY_DD_PCT", 0.25)
@@ -456,7 +459,7 @@ class Settings:
         roi_clv_buckets_raw = os.getenv("ROI_CLV_BUCKETS", "-0.1--0.05,-0.05-0,0-0.05,0.05-0.1,0.1-")
         roi_clv_buckets = [r.strip() for r in roi_clv_buckets_raw.split(",") if r.strip()]
 
-        # ---------------- Batch 39 parsing (all default OFF) ----------------
+        # Batch 39 flags (tutti OFF di default)
         enable_roi_regime = _parse_bool(os.getenv("ENABLE_ROI_REGIME"), False)
         roi_regime_lookback = _int("ROI_REGIME_LOOKBACK", 150)
         roi_regime_dd_bear = _float("ROI_REGIME_DD_BEAR", 0.25)
@@ -613,7 +616,6 @@ class Settings:
             enable_roi_clv_buckets=enable_roi_clv_buckets,
             roi_clv_buckets_raw=roi_clv_buckets_raw,
             roi_clv_buckets=roi_clv_buckets,
-            # Batch 39 args
             enable_roi_regime=enable_roi_regime,
             roi_regime_lookback=roi_regime_lookback,
             roi_regime_dd_bear=roi_regime_dd_bear,
