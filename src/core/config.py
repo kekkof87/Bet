@@ -180,7 +180,7 @@ class Settings:
     roi_clv_buckets_raw: Optional[str]
     roi_clv_buckets: List[str]
 
-    # Batch 38 advanced (aggiunti ora)
+    # Batch 38 advanced
     enable_roi_kelly_effect: bool
     enable_roi_payout_moments: bool
     enable_roi_market_placeholder: bool
@@ -193,11 +193,21 @@ class Settings:
     enable_roi_archive_stats: bool
     enable_roi_compact_export: bool
 
-    # Batch 39 stub flags
+    # Batch 39 stub + M1 regime
     enable_roi_regime: bool
+    roi_regime_version: str
     roi_regime_lookback: int
     roi_regime_dd_bear: float
     roi_regime_vol_high: float
+    roi_regime_min_points: int
+    roi_regime_momentum_windows_raw: str
+    roi_regime_momentum_windows: List[int]
+    roi_regime_min_hold: int
+    roi_regime_smooth_alpha: float
+    roi_regime_mom_threshold: float
+    enable_roi_regime_persistence: bool
+    roi_regime_state_file: str
+    roi_regime_history_max: int
 
     enable_roi_adaptive_stake: bool
     roi_adaptive_stake_min: float
@@ -482,11 +492,33 @@ class Settings:
         enable_roi_archive_stats = _parse_bool(os.getenv("ENABLE_ROI_ARCHIVE_STATS"), False)
         enable_roi_compact_export = _parse_bool(os.getenv("ENABLE_ROI_COMPACT_EXPORT"), False)
 
-        # Batch 39 stub
+        # Batch 39 regime + M1
         enable_roi_regime = _parse_bool(os.getenv("ENABLE_ROI_REGIME"), False)
+        roi_regime_version = os.getenv("ROI_REGIME_VERSION", "stub").lower()
         roi_regime_lookback = _int("ROI_REGIME_LOOKBACK", 150)
         roi_regime_dd_bear = _float("ROI_REGIME_DD_BEAR", 0.25)
         roi_regime_vol_high = _float("ROI_REGIME_VOL_HIGH", 0.20)
+        roi_regime_min_points = _int("ROI_REGIME_MIN_POINTS", 30)
+        roi_regime_momentum_windows_raw = os.getenv("ROI_REGIME_MOMENTUM_WINDOWS", "10,30")
+        mw_list: List[int] = []
+        for t in roi_regime_momentum_windows_raw.split(","):
+            t = t.strip()
+            if not t:
+                continue
+            try:
+                iv = int(t)
+                if iv > 1:
+                    mw_list.append(iv)
+            except ValueError:
+                continue
+        if not mw_list:
+            mw_list = [10, 30]
+        roi_regime_min_hold = _int("ROI_REGIME_MIN_HOLD", 8)
+        roi_regime_smooth_alpha = _float("ROI_REGIME_SMOOTH_ALPHA", 0.4)
+        roi_regime_mom_threshold = _float("ROI_REGIME_MOM_THRESHOLD", 0.002)
+        enable_roi_regime_persistence = _parse_bool(os.getenv("ENABLE_ROI_REGIME_PERSISTENCE"), False)
+        roi_regime_state_file = os.getenv("ROI_REGIME_STATE_FILE", "roi_regime_state.json")
+        roi_regime_history_max = _int("ROI_REGIME_HISTORY_MAX", 30)
 
         enable_roi_adaptive_stake = _parse_bool(os.getenv("ENABLE_ROI_ADAPTIVE_STAKE"), False)
         roi_adaptive_stake_min = _float("ROI_ADAPTIVE_STAKE_MIN", 0.6)
@@ -651,9 +683,19 @@ class Settings:
             enable_roi_archive_stats=enable_roi_archive_stats,
             enable_roi_compact_export=enable_roi_compact_export,
             enable_roi_regime=enable_roi_regime,
+            roi_regime_version=roi_regime_version,
             roi_regime_lookback=roi_regime_lookback,
             roi_regime_dd_bear=roi_regime_dd_bear,
             roi_regime_vol_high=roi_regime_vol_high,
+            roi_regime_min_points=roi_regime_min_points,
+            roi_regime_momentum_windows_raw=roi_regime_momentum_windows_raw,
+            roi_regime_momentum_windows=mw_list,
+            roi_regime_min_hold=roi_regime_min_hold,
+            roi_regime_smooth_alpha=roi_regime_smooth_alpha,
+            roi_regime_mom_threshold=roi_regime_mom_threshold,
+            enable_roi_regime_persistence=enable_roi_regime_persistence,
+            roi_regime_state_file=roi_regime_state_file,
+            roi_regime_history_max=roi_regime_history_max,
             enable_roi_adaptive_stake=enable_roi_adaptive_stake,
             roi_adaptive_stake_min=roi_adaptive_stake_min,
             roi_adaptive_stake_max=roi_adaptive_stake_max,
