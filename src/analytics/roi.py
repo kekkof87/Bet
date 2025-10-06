@@ -32,7 +32,6 @@ def _parse_dt(s: Optional[str]) -> Optional[datetime]:
     if not s or not isinstance(s, str):
         return None
     try:
-        # Tolleriamo eventuale 'Z'
         return datetime.fromisoformat(s.replace("Z", "+00:00"))
     except Exception:
         return None
@@ -1198,7 +1197,7 @@ def _anomaly_flags(metrics: Dict[str, Any]) -> Dict[str, bool]:
         vals = list(equity_vol.values())
         if vals:
             sorted_v = sorted(vals)
-            mid = sorted_v[len(sorted_v) // 2]
+            mid = sorted_v[len(sorted_v)//2]
             last_key = max(
                 equity_vol.keys(),
                 key=lambda k: int(k[1:]) if k.startswith("w") and k[1:].isdigit() else 0,
@@ -1223,7 +1222,7 @@ def _export_schema_if_enabled(base: Path, metrics: Dict[str, Any]) -> None:
         return
     schema = {
         "schema_version": "1.0",
-        "description": "ROI metrics schema (batch37+38)",
+        "description": "ROI metrics schema (batch37+38+regime)",
         "top_level_keys": sorted(list(metrics.keys())),
     }
     try:
@@ -1300,7 +1299,6 @@ def _market_placeholder_block(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     s = get_settings()
     if not s.enable_roi_market_placeholder:
         return {}
-    # Semplice placeholder: riusa side_breakdown come 1X2
     return {
         "markets": {
             "1X2": _side_breakdown(ledger)
@@ -1447,55 +1445,309 @@ def _sanitize_metrics(metrics: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # ============================================================
-# Regime (Batch 39 stub)
+# Regime M1 – Persistence & Classification
 # ============================================================
 
-def _regime_block(equity_curve: List[float]) -> Dict[str, Any]:
-    s = get_settings()
-    if not s.enable_roi_regime:
+def _regime_state_path(base: Path, s) -> Path:
+    return base / s.roi_regime_state_file
+
+
+def _regime_load_state(base: Path, s) -> Dict[str, Any]:
+    if not s.enable_roi_regime_persistence:
         return {}
+    path = _regime_state_path(base, s)
+    data = _load_json(path)
+    if isinstance(data, dict):
+        history = data.get("history")
+        if not isinstance(history, list):
+            data["history"] = []
+        return data
+    return {"history": []}
+
+
+def _regime_save_state(base: Path, s, state: Dict[str, Any]) -> None:
+    if not s.enable_roi_regime_persistence:
+        return
+    path = _regime_state_path(base, s)
+    try:
+        _save_json_atomic(path, state)
+    except Exception as exc:
+        logger.error("regime_state_save_failed %s", exc)
+
+
+def _regime_features(equity: List[float], s) -> Dict[str, Any]:
+    """
+    Calcola feature base per regime M1.
+    """
+    if not equity:
+        return {}
+    lookback = s.roi_regime_lookback
+    slice_eq = equity[-lookback:] if len(equity) > lookback else equity[:]
+    if len(slice_eq) < 2:
+        return {}
+
+    # Increments
+    inc = [slice_eq[i] - slice_eq[i - 1] for i in range(1, len(slice_eq))]
+    if not inc:
+        return {}
+
+    # Momentum windows
+    mom_windows = {}
+    for w in s.roi_regime_momentum_windows:
+        if len(inc) >= w:
+            window_inc = inc[-w:]
+        else:
+            window_inc = inc
+        mom_windows[f"m_w{w}"] = sum(window_inc)/len(window_inc)
+
+    # Basic stats
+    avg_inc = sum(inc)/len(inc)
+    abs_mean = sum(abs(x) for x in inc)/len(inc)
+    norm_momentum = avg_inc / (abs_mean + 1e-9)
+
+    # Volatility (std of increments)
+    if len(inc) > 1:
+        m = avg_inc
+        var = sum((x - m)**2 for x in inc)/len(inc)
+        vol = math.sqrt(var)
+    else:
+        vol = 0.0
+
+    # Drawdown percent (relative to max in slice)
+    current = slice_eq[-1]
+    peak = max(slice_eq)
+    dd = peak - current
+    dd_pct = dd / peak if peak > 0 else 0.0
+
+    # Linear regression slope (simple)
+    n = len(slice_eq)
+    xs = list(range(n))
+    sum_x = sum(xs)
+    sum_y = sum(slice_eq)
+    sum_xx = sum(x*x for x in xs)
+    sum_xy = sum(x*y for x, y in zip(xs, slice_eq))
+    denom = (n * sum_xx - sum_x * sum_x)
+    if denom != 0:
+        slope = (n * sum_xy - sum_x * sum_y) / denom
+    else:
+        slope = 0.0
+
+    return {
+        "lookback_points": len(slice_eq),
+        "increments": len(inc),
+        "avg_increment": avg_inc,
+        "norm_momentum": norm_momentum,
+        "volatility": vol,
+        "drawdown_pct": dd_pct,
+        "slope": slope,
+        "momentum_windows": mom_windows,
+    }
+
+
+def _regime_classify_m1(feat: Dict[str, Any], s, smooth_mom: float) -> Tuple[str, float]:
+    """
+    Regole di classificazione M1.
+    Ritorna (label, confidence)
+    """
+    if not feat:
+        return "neutral", 0.1
+    dd = feat["drawdown_pct"]
+    vol = feat["volatility"]
+    mom = smooth_mom
+    mom_th = s.roi_regime_mom_threshold
+    dd_bear = s.roi_regime_dd_bear
+
+    # Priorità drawdown estremo
+    if dd >= dd_bear:
+        confidence = min(0.95, 0.6 + dd)
+        return "bear", round(confidence, 4)
+
+    # Momentum forte positivo
+    if mom > mom_th and dd < 0.2 * dd_bear:
+        conf = min(0.9, 0.5 + mom * 20)
+        return "bull", round(conf, 4)
+
+    # Momentum negativo e drawdown moderato
+    if mom < -mom_th and dd >= 0.4 * dd_bear:
+        conf = min(0.85, 0.5 + abs(mom) * 15 + dd)
+        return "correction", round(conf, 4)
+
+    # Volatilità elevata, momentum neutro
+    if vol > s.roi_regime_vol_high and abs(mom) < mom_th:
+        return "volatile", 0.55
+
+    # Flat
+    base_conf = 0.45 + max(0.0, (0.02 - abs(mom)) * 5)
+    return "flat", round(min(base_conf, 0.6), 4)
+
+
+def _regime_apply_smoothing(raw_mom: float, prev_smooth: Optional[float], s) -> float:
+    alpha = s.roi_regime_smooth_alpha
+    if prev_smooth is None:
+        return raw_mom
+    return alpha * raw_mom + (1 - alpha) * prev_smooth
+
+
+def _regime_block_stub(equity_curve: List[float], s) -> Dict[str, Any]:
     if not equity_curve or len(equity_curve) < 5:
-        return {
-            "label": "neutral",
-            "confidence": 0.1,
-            "drawdown_pct": 0.0,
-            "volatility": 0.0,
-        }
+        return {"label": "neutral", "confidence": 0.1, "drawdown_pct": 0.0, "volatility": 0.0}
     peak = max(equity_curve)
     last = equity_curve[-1]
     dd = peak - last
     dd_pct = dd / peak if peak > 0 else 0.0
     increments = [equity_curve[i] - equity_curve[i - 1] for i in range(1, len(equity_curve))]
     if increments:
-        m_inc = sum(increments) / len(increments)
-        var_inc = sum((x - m_inc) ** 2 for x in increments) / len(increments)
+        mean_inc = sum(increments) / len(increments)
+        var_inc = sum((x - mean_inc) ** 2 for x in increments) / len(increments)
         vol = math.sqrt(var_inc) if var_inc > 0 else 0.0
     else:
         vol = 0.0
-
+    label = "bull" if dd_pct < 0.1 and (len(increments) > 0 and increments[-1] >= 0) else "flat"
+    confidence = 0.5 if label == "bull" else 0.4
     if dd_pct >= s.roi_regime_dd_bear:
         label = "bear"
         confidence = min(0.9, 0.5 + dd_pct)
-    elif dd_pct >= s.roi_regime_dd_bear * 0.6:
-        label = "correction"
-        confidence = 0.6
-    else:
-        if vol > s.roi_regime_vol_high and dd_pct < s.roi_regime_dd_bear * 0.4:
-            label = "volatile"
-            confidence = 0.55
-        elif last >= equity_curve[-2]:
-            label = "bull"
-            confidence = 0.65
-        else:
-            label = "flat"
-            confidence = 0.5
-
     return {
         "label": label,
         "confidence": round(confidence, 4),
         "drawdown_pct": round(dd_pct, 6),
         "volatility": round(vol, 6),
     }
+
+
+def _regime_block_m1(base: Path, equity_curve: List[float], s) -> Dict[str, Any]:
+    """
+    Implementazione completa M1 con:
+    - feature avanzate
+    - smoothing momentum
+    - min_hold
+    - persistence e history
+    """
+    if not equity_curve:
+        return {}
+    feat = _regime_features(equity_curve, s)
+    if not feat or feat.get("lookback_points", 0) < s.roi_regime_min_points:
+        return {
+            "label": "neutral",
+            "confidence": 0.1,
+            "reason": "insufficient_points",
+            "features": feat,
+        }
+
+    # Calcolo momentum grezzo come media di tutte le finestre normalizzate
+    norm_mom_base = feat["norm_momentum"]
+    prev_state = _regime_load_state(base, s) if s.enable_roi_regime_persistence else {}
+    prev_smooth = prev_state.get("smooth_momentum")
+
+    smooth_mom = _regime_apply_smoothing(norm_mom_base, prev_smooth, s)
+
+    label_raw, conf_raw = _regime_classify_m1(feat, s, smooth_mom)
+
+    # Hold logic
+    prev_label = prev_state.get("label")
+    hold_counter = prev_state.get("hold_counter", 0)
+    changed = False
+    label_final = label_raw
+
+    if prev_label and prev_label != label_raw:
+        if hold_counter + 1 < s.roi_regime_min_hold:
+            # Manteniamo precedente
+            label_final = prev_label
+            hold_counter += 1
+        else:
+            # Accettiamo cambio
+            changed = True
+            hold_counter = 0
+    else:
+        # Continuazione stato o nessun prev
+        if prev_label == label_raw:
+            hold_counter = 0  # reset se stabile
+        else:
+            changed = True  # primo stato
+            hold_counter = 0
+
+    now_ts = _now_iso()
+    history = prev_state.get("history", []) if s.enable_roi_regime_persistence else []
+    if changed and s.enable_roi_regime_persistence:
+        history.append({
+            "changed_at": now_ts,
+            "label": label_final
+        })
+        # truncate
+        max_hist = max(1, s.roi_regime_history_max)
+        if len(history) > max_hist:
+            history = history[-max_hist:]
+
+    # Durations (primitive)
+    durations: Dict[str, int] = {}
+    if history:
+        # We approximate duration by counting consecutive occurrences.
+        last_label = None
+        streak = 0
+        for h in history:
+            lab = h.get("label")
+            if lab == last_label:
+                streak += 1
+            else:
+                if last_label is not None:
+                    durations[last_label] = max(durations.get(last_label, 0), streak)
+                last_label = lab
+                streak = 1
+        if last_label is not None:
+            durations[last_label] = max(durations.get(last_label, 0), streak)
+
+    regime_block = {
+        "label": label_final,
+        "confidence": conf_raw,
+        "label_raw": label_raw,
+        "drawdown_pct": round(feat["drawdown_pct"], 6),
+        "volatility": round(feat["volatility"], 6),
+        "momentum_raw": round(norm_mom_base, 6),
+        "momentum_smooth": round(smooth_mom, 6),
+        "slope": round(feat["slope"], 6),
+        "hold_counter": hold_counter,
+        "min_hold": s.roi_regime_min_hold,
+        "features": {
+            "lookback_points": feat["lookback_points"],
+            "momentum_windows": {
+                k: round(v, 6) for k, v in feat["momentum_windows"].items()
+            },
+        },
+        "version": "m1",
+    }
+
+    if prev_label:
+        regime_block["label_prev"] = prev_label
+    if changed:
+        regime_block["changed_at"] = now_ts
+
+    if s.enable_roi_regime_persistence:
+        regime_block["history"] = history
+        regime_block["durations_max_streak"] = durations
+
+        # Save state
+        state = {
+            "label": label_final,
+            "smooth_momentum": smooth_mom,
+            "hold_counter": hold_counter,
+            "history": history,
+        }
+        _regime_save_state(base, s, state)
+
+    return regime_block
+
+
+def _regime_block(base: Path, equity_curve: List[float]) -> Dict[str, Any]:
+    """
+    Wrapper che seleziona stub o m1.
+    """
+    s = get_settings()
+    if not s.enable_roi_regime:
+        return {}
+    version = s.roi_regime_version
+    if version == "m1":
+        return _regime_block_m1(base, equity_curve, s)
+    return _regime_block_stub(equity_curve, s)
 
 
 # ============================================================
@@ -1555,7 +1807,6 @@ def _prune_ledger(base: Path, ledger: List[Dict[str, Any]]) -> List[Dict[str, An
 def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     global_stats = _compute_profit_and_stats(ledger)
 
-    # Per-source stats
     pred_picks = [p for p in ledger if p.get("source") == "prediction"]
     cons_picks = [p for p in ledger if p.get("source") == "consensus"]
     merged_picks = [p for p in ledger if p.get("source") == "merged"]
@@ -1600,7 +1851,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     clv_buckets = _clv_buckets_distribution(ledger)
     hit_rate_multi = _hit_rate_multi(rolling_multi)
 
-    # Batch 38 advanced
     kelly_eff = _kelly_effectiveness(ledger)
     payout_mom = _payout_moments(ledger)
     profit_buckets = _profit_buckets(ledger)
@@ -1608,11 +1858,15 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     market_placeholder = _market_placeholder_block(ledger)
     archive_block = _archive_stats(Path(s.bet_data_dir or "data") / s.roi_dir)
 
-    # Batch 39 stub
-    regime_block = _regime_block(equity_curve)
+    base = Path(s.bet_data_dir or "data") / s.roi_dir
+    regime_block = _regime_block(base, equity_curve)
+
+    metrics_version = "2.0"
+    if s.enable_roi_regime and s.roi_regime_version == "m1":
+        metrics_version = "3.0"
 
     metrics = {
-        "metrics_version": "2.0",
+        "metrics_version": metrics_version,
         "generated_at": _now_iso(),
 
         "total_picks": global_stats["picks"],
@@ -1685,7 +1939,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "profit_per_pick": profit_norm["profit_per_pick"],
         "profit_per_unit_staked": profit_norm["profit_per_unit_staked"],
 
-        # CLV flattened
         "avg_clv_pct": clv_block.get("avg_clv_pct"),
         "median_clv_pct": clv_block.get("median_clv_pct"),
         "clv_positive_rate": clv_block.get("clv_positive_rate"),
@@ -1702,7 +1955,6 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "clv_buckets": clv_buckets,
         "hit_rate_multi": hit_rate_multi,
 
-        # Advanced Batch 38
         "kelly_effectiveness": kelly_eff,
         "payout_moments": payout_mom,
         "profit_buckets": profit_buckets,
@@ -1710,16 +1962,13 @@ def compute_metrics(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "market_placeholder": market_placeholder,
         "archive_stats": archive_block if archive_block else {},
 
-        # Stub Batch 39
         "regime": regime_block,
     }
 
-    # Stake advisory & anomalies (final pass, using computed metrics)
     metrics["stake_advisory"] = _stake_advisory(metrics)
     metrics["anomalies"] = _anomaly_flags({
         **metrics,
-        "yield_rolling": metrics["yield_rolling"],
-        "risk": metrics.get("risk", {})
+        "risk": risk
     })
 
     return _sanitize_metrics(metrics)
@@ -1893,7 +2142,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     base = Path(s.bet_data_dir or "data") / s.roi_dir
     base.mkdir(parents=True, exist_ok=True)
 
-    # Load + prune
     ledger = load_ledger(base)
     ledger = _prune_ledger(base, ledger)
     ledger_index = {
@@ -1905,7 +2153,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     fixtures_map = load_fixtures_map(fixtures)
     alerts = load_value_alerts()
 
-    # Dedup merged
     if s.merged_dedup_enable:
         merged_pairs = {
             (a.get("fixture_id"), a.get("value_side"))
@@ -1945,7 +2192,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
     if include_merged:
         accepted_sources.add("merged")
 
-    # Insert new picks
     for alert in alerts:
         fid = alert.get("fixture_id")
         source = str(alert.get("source"))
@@ -2063,7 +2309,6 @@ def build_or_update_roi(fixtures: List[Dict[str, Any]]) -> None:
         ledger_index[key] = pick
         existing_today += 1
 
-    # Settlement + CLV
     enable_clv = s.enable_clv_capture
     for p in ledger:
         if p.get("settled"):
