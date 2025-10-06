@@ -180,10 +180,20 @@ class Settings:
     roi_clv_buckets_raw: Optional[str]
     roi_clv_buckets: List[str]
 
-    # Batch 38 (già presenti nelle build avanzate – i flag relativi nel codice analytics usaranno quelli esistenti)
-    # (Kelly effectiveness, Montecarlo, Profit buckets, ecc.) – i parametri sono già letti nel file analytics.
+    # Batch 38 advanced (aggiunti ora)
+    enable_roi_kelly_effect: bool
+    enable_roi_payout_moments: bool
+    enable_roi_market_placeholder: bool
+    enable_roi_profit_buckets: bool
+    roi_profit_buckets_raw: Optional[str]
+    roi_profit_buckets: List[str]
+    enable_roi_montecarlo: bool
+    roi_mc_runs: int
+    roi_mc_window: int
+    enable_roi_archive_stats: bool
+    enable_roi_compact_export: bool
 
-    # Batch 39 NEW FLAGS (stub)
+    # Batch 39 stub flags
     enable_roi_regime: bool
     roi_regime_lookback: int
     roi_regime_dd_bear: float
@@ -230,7 +240,7 @@ class Settings:
             try:
                 return int(raw)
             except ValueError as e:
-                raise ValueError(f"Variabile {name} deve essere un intero (valore: {raw!r})") from e
+                raise ValueError(f"{name} deve essere un intero (valore: {raw!r})") from e
 
         def _int(name: str, default: int) -> int:
             raw = os.getenv(name)
@@ -239,7 +249,7 @@ class Settings:
             try:
                 return int(raw)
             except ValueError as e:
-                raise ValueError(f"Variabile {name} deve essere un intero (valore: {raw!r})") from e
+                raise ValueError(f"{name} deve essere un intero (valore: {raw!r})") from e
 
         def _float(name: str, default: float) -> float:
             raw = os.getenv(name)
@@ -248,7 +258,7 @@ class Settings:
             try:
                 return float(raw)
             except ValueError as e:
-                raise ValueError(f"Variabile {name} deve essere un numero (valore: {raw!r})") from e
+                raise ValueError(f"{name} deve essere un numero (valore: {raw!r})") from e
 
         league_id = _opt_int("API_FOOTBALL_DEFAULT_LEAGUE_ID")
         season = _opt_int("API_FOOTBALL_DEFAULT_SEASON")
@@ -407,7 +417,7 @@ class Settings:
         roi_edge_buckets_raw = os.getenv("ROI_EDGE_BUCKETS", "0.05-0.07,0.07-0.09,0.09-0.12,0.12-")
         roi_edge_buckets = [r.strip() for r in roi_edge_buckets_raw.split(",") if r.strip()]
 
-        # Batch 37 core new flags
+        # Batch 37 core
         enable_roi_equity_vol = _parse_bool(os.getenv("ENABLE_ROI_EQUITY_VOL"), True)
         eq_vol_raw = os.getenv("ROI_EQUITY_VOL_WINDOWS", "30,100")
         roi_equity_vol_windows: List[int] = []
@@ -459,7 +469,20 @@ class Settings:
         roi_clv_buckets_raw = os.getenv("ROI_CLV_BUCKETS", "-0.1--0.05,-0.05-0,0-0.05,0.05-0.1,0.1-")
         roi_clv_buckets = [r.strip() for r in roi_clv_buckets_raw.split(",") if r.strip()]
 
-        # Batch 39 flags (tutti OFF di default)
+        # Batch 38 advanced
+        enable_roi_kelly_effect = _parse_bool(os.getenv("ENABLE_ROI_KELLY_EFFECT"), False)
+        enable_roi_payout_moments = _parse_bool(os.getenv("ENABLE_ROI_PAYOUT_MOMENTS"), False)
+        enable_roi_market_placeholder = _parse_bool(os.getenv("ENABLE_ROI_MARKET_PLACEHOLDER"), False)
+        enable_roi_profit_buckets = _parse_bool(os.getenv("ENABLE_ROI_PROFIT_BUCKETS"), False)
+        roi_profit_buckets_raw = os.getenv("ROI_PROFIT_BUCKETS", "-2--1,-1--0.5,-0.5-0,0-0.5,0.5-1,1-")
+        roi_profit_buckets = [r.strip() for r in roi_profit_buckets_raw.split(",") if r.strip()]
+        enable_roi_montecarlo = _parse_bool(os.getenv("ENABLE_ROI_MONTECARLO"), False)
+        roi_mc_runs = _int("ROI_MC_RUNS", 150)
+        roi_mc_window = _int("ROI_MC_WINDOW", 200)
+        enable_roi_archive_stats = _parse_bool(os.getenv("ENABLE_ROI_ARCHIVE_STATS"), False)
+        enable_roi_compact_export = _parse_bool(os.getenv("ENABLE_ROI_COMPACT_EXPORT"), False)
+
+        # Batch 39 stub
         enable_roi_regime = _parse_bool(os.getenv("ENABLE_ROI_REGIME"), False)
         roi_regime_lookback = _int("ROI_REGIME_LOOKBACK", 150)
         roi_regime_dd_bear = _float("ROI_REGIME_DD_BEAR", 0.25)
@@ -616,6 +639,17 @@ class Settings:
             enable_roi_clv_buckets=enable_roi_clv_buckets,
             roi_clv_buckets_raw=roi_clv_buckets_raw,
             roi_clv_buckets=roi_clv_buckets,
+            enable_roi_kelly_effect=enable_roi_kelly_effect,
+            enable_roi_payout_moments=enable_roi_payout_moments,
+            enable_roi_market_placeholder=enable_roi_market_placeholder,
+            enable_roi_profit_buckets=enable_roi_profit_buckets,
+            roi_profit_buckets_raw=roi_profit_buckets_raw,
+            roi_profit_buckets=roi_profit_buckets,
+            enable_roi_montecarlo=enable_roi_montecarlo,
+            roi_mc_runs=roi_mc_runs,
+            roi_mc_window=roi_mc_window,
+            enable_roi_archive_stats=enable_roi_archive_stats,
+            enable_roi_compact_export=enable_roi_compact_export,
             enable_roi_regime=enable_roi_regime,
             roi_regime_lookback=roi_regime_lookback,
             roi_regime_dd_bear=roi_regime_dd_bear,
