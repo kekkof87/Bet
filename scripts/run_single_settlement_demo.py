@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import List, Dict, Any
 
-from core.config import _reset_settings_cache_for_tests, get_settings
+from core.config import _reset_settings_cache_for_tests
 from analytics.roi import build_or_update_roi
 
 
@@ -23,7 +23,6 @@ def _simulate_finished(fixtures: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 def main():
     _reset_settings_cache_for_tests()
-    s = get_settings()
 
     # Genera un piccolo lotto di fixture dummy
     now = datetime.now(timezone.utc)
