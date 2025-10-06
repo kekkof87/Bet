@@ -239,4 +239,51 @@ def test_regime_m1_full_coverage(tmp_path: Path, monkeypatch):
     # Seed ledger + archive BEFORE first run (pruning + archive_stats)
     roi_dir = data_dir / s.roi_dir
     roi_dir.mkdir(parents=True, exist_ok=True)
-    _seed_old_ledger_for_pruning(
+    _seed_old_ledger_for_pruning(roi_dir)
+
+    # 1. Run: crea nuovi picks (NS) + prunes old -> sposta in archive
+    build_or_update_roi(_fixtures("NS"))
+
+    # 2. Run: settle (FT)
+    build_or_update_roi(_fixtures("FT"))
+
+    # 3. Run extra per regime hold/persistence + timeline append
+    build_or_update_roi(_fixtures("FT"))
+
+    summary = load_roi_summary()
+    assert summary is not None
+    assert summary.get("metrics_version") == "3.0"
+    regime = summary.get("regime")
+    assert isinstance(regime, dict)
+    assert "label" in regime
+    assert "momentum_smooth" in regime
+    assert regime.get("version") == "m1"
+
+    # Blocchi avanzati
+    assert "kelly_effectiveness" in summary
+    assert "profit_buckets" in summary
+    assert "montecarlo" in summary
+    assert "profit_distribution" in summary
+    assert "edge_clv_corr" in summary
+    assert "aging_buckets" in summary
+    assert "clv_buckets" in summary
+    assert "stake_advisory" in summary
+    assert "anomalies" in summary
+    assert "archive_stats" in summary  # adesso deve avere dati
+    archive_stats = summary["archive_stats"]
+    if archive_stats:
+        assert "archived_picks" in archive_stats
+
+    # Ledger e timeline / daily
+    ledger = load_roi_ledger()
+    assert isinstance(ledger, list) and len(ledger) > 0
+    timeline = load_roi_timeline_raw()
+    daily = load_roi_daily()
+    assert isinstance(timeline, list)
+    assert isinstance(daily, dict)
+
+    # Verifica export schema e compact
+    schema_file = roi_dir / "roi_metrics.schema.json"
+    compact_file = roi_dir / "roi_metrics_compact.json"
+    assert schema_file.exists()
+    assert compact_file.exists()
