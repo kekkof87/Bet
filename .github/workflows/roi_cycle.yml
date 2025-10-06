@@ -1,0 +1,94 @@
+name: ROI Scheduled Cycle
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_settlement_demo:
+        description: "Esegue script demo di settlement (solo ambiente test)"
+        required: false
+        default: "false"
+  schedule:
+    - cron: "15 * * * *" # Ogni ora al minuto 15 (modifica se necessario)
+
+permissions:
+  contents: read
+
+jobs:
+  roi-cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+            python-version: "3.11"
+            cache: "pip"
+
+      - name: Install deps
+        run: |
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install .; fi
+
+      - name: Show enabled flags (sanitized)
+        run: |
+          echo "ENABLE_ROI_TRACKING=${{ vars.ENABLE_ROI_TRACKING }}"
+          echo "ROI_REGIME_VERSION=${{ vars.ROI_REGIME_VERSION }}"
+          echo "ENABLE_ROI_REGIME_PERSISTENCE=${{ vars.ENABLE_ROI_REGIME_PERSISTENCE }}"
+
+      - name: Run cycle
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          BET_DATA_DIR: data
+          # Core flags (repo variables)
+          ENABLE_PREDICTIONS: ${{ vars.ENABLE_PREDICTIONS }}
+          ENABLE_VALUE_ALERTS: ${{ vars.ENABLE_VALUE_ALERTS }}
+          ENABLE_VALUE_DETECTION: ${{ vars.ENABLE_VALUE_DETECTION }}
+          ENABLE_ROI_TRACKING: ${{ vars.ENABLE_ROI_TRACKING }}
+          ENABLE_ROI_REGIME: ${{ vars.ENABLE_ROI_REGIME }}
+          ROI_REGIME_VERSION: ${{ vars.ROI_REGIME_VERSION }}
+          ENABLE_ROI_REGIME_PERSISTENCE: ${{ vars.ENABLE_ROI_REGIME_PERSISTENCE }}
+          ROI_REGIME_MIN_POINTS: ${{ vars.ROI_REGIME_MIN_POINTS }}
+          ROI_LEDGER_MAX_AGE_DAYS: ${{ vars.ROI_LEDGER_MAX_AGE_DAYS }}
+          ENABLE_ROI_ARCHIVE_STATS: ${{ vars.ENABLE_ROI_ARCHIVE_STATS }}
+          ENABLE_ROI_COMPACT_EXPORT: ${{ vars.ENABLE_ROI_COMPACT_EXPORT }}
+          ENABLE_ROI_SCHEMA_EXPORT: ${{ vars.ENABLE_ROI_SCHEMA_EXPORT }}
+          ENABLE_KELLY_STAKING: ${{ vars.ENABLE_KELLY_STAKING }}
+          KELLY_BASE_UNITS: ${{ vars.KELLY_BASE_UNITS }}
+          KELLY_MAX_UNITS: ${{ vars.KELLY_MAX_UNITS }}
+          KELLY_EDGE_CAP: ${{ vars.KELLY_EDGE_CAP }}
+          ENABLE_ROI_KELLY_EFFECT: ${{ vars.ENABLE_ROI_KELLY_EFFECT }}
+          ENABLE_ROI_MONTECARLO: ${{ vars.ENABLE_ROI_MONTECARLO }}
+          ROI_MC_RUNS: ${{ vars.ROI_MC_RUNS }}
+          ROI_MC_WINDOW: ${{ vars.ROI_MC_WINDOW }}
+          ENABLE_ROI_PROFIT_BUCKETS: ${{ vars.ENABLE_ROI_PROFIT_BUCKETS }}
+          ROI_PROFIT_BUCKETS: ${{ vars.ROI_PROFIT_BUCKETS }}
+          ENABLE_ROI_CLV_BUCKETS: ${{ vars.ENABLE_ROI_CLV_BUCKETS }}
+          ROI_CLV_BUCKETS: ${{ vars.ROI_CLV_BUCKETS }}
+        run: |
+          python scripts/run_cycle.py
+          if [ "${{ github.event.inputs.force_settlement_demo }}" = "true" ]; then
+            echo "Running settlement demo..."
+            python scripts/run_single_settlement_demo.py || true
+            python scripts/run_cycle.py
+          fi
+
+      - name: Collect ROI artifacts
+        if: always()
+        run: |
+          mkdir -p artifacts
+          if [ -f data/roi/roi_metrics.json ]; then cp data/roi/roi_metrics.json artifacts/; fi
+          if [ -f data/roi/roi_metrics_compact.json ]; then cp data/roi/roi_metrics_compact.json artifacts/; fi
+          if [ -f data/roi/roi_export.csv ]; then cp data/roi/roi_export.csv artifacts/; fi
+          if [ -f data/roi/roi_history.jsonl ]; then cp data/roi/roi_history.jsonl artifacts/; fi
+          if [ -f data/roi/roi_daily.json ]; then cp data/roi/roi_daily.json artifacts/; fi
+          if [ -f data/roi/roi_regime_state.json ]; then cp data/roi/roi_regime_state.json artifacts/; fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: roi-cycle-${{ github.run_number }}
+          path: artifacts
+          retention-days: 5
