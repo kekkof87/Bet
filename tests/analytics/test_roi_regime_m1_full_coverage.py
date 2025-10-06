@@ -5,7 +5,13 @@ from typing import List, Dict
 from datetime import datetime, timezone, timedelta
 
 from core.config import _reset_settings_cache_for_tests, get_settings
-from analytics.roi import build_or_update_roi, load_roi_summary, load_roi_ledger, load_roi_timeline_raw, load_roi_daily
+from analytics.roi import (
+    build_or_update_roi,
+    load_roi_summary,
+    load_roi_ledger,
+    load_roi_timeline_raw,
+    load_roi_daily,
+)
 
 
 def _write_json(path: Path, payload) -> None:
@@ -35,13 +41,11 @@ def _gen_alerts() -> List[Dict]:
 
 
 def _prepare_input_files(base: Path):
-    # value alerts
     _write_json(base / "value_alerts" / "value_alerts.json", {
         "alerts": _gen_alerts(),
         "effective_threshold": 0.05
     })
 
-    # predictions
     preds = []
     for i in range(1,13):
         fid = 1000 + i
@@ -62,7 +66,6 @@ def _prepare_input_files(base: Path):
         })
     _write_json(base / "predictions" / "latest_predictions.json", {"predictions": preds})
 
-    # consensus
     entries = []
     for i in range(1,13):
         fid = 1000 + i
@@ -76,7 +79,6 @@ def _prepare_input_files(base: Path):
         })
     _write_json(base / "consensus" / "consensus.json", {"entries": entries})
 
-    # odds_latest
     odds_entries = []
     for i in range(1,13):
         fid = 1000 + i
@@ -113,10 +115,6 @@ def _fixtures(status: str) -> List[Dict]:
 
 
 def _seed_old_ledger_for_pruning(roi_dir: Path):
-    """
-    Crea un ledger.json con un pick vecchio (30 giorni) e uno recente
-    per coprire il ramo di pruning per età e generare archive stats.
-    """
     old_date = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
     recent_date = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
     ledger = [
@@ -156,7 +154,6 @@ def _seed_old_ledger_for_pruning(roi_dir: Path):
     ]
     _write_json(roi_dir / "ledger.json", ledger)
 
-    # Seed archive to trigger archive_stats path (non vuoto)
     archive = [
         {
             "created_at": (datetime.now(timezone.utc) - timedelta(days=40)).isoformat(),
@@ -181,20 +178,19 @@ def _seed_old_ledger_for_pruning(roi_dir: Path):
 
 
 def test_regime_m1_full_coverage(tmp_path: Path, monkeypatch):
-    # ENV base obbligatorio
     os.environ["API_FOOTBALL_KEY"] = "DUMMY_KEY"
 
     data_dir = tmp_path / "data"
     os.environ["BET_DATA_DIR"] = str(data_dir)
 
-    # Core ROI
+    # Core ROI / regime
     os.environ["ENABLE_ROI_TRACKING"] = "1"
     os.environ["ENABLE_ROI_REGIME"] = "1"
     os.environ["ROI_REGIME_VERSION"] = "m1"
     os.environ["ENABLE_ROI_REGIME_PERSISTENCE"] = "1"
 
-    # Regime params
-    os.environ["ROI_REGIME_MIN_POINTS"] = "20"
+    # Regime params (abbasso min points a 10 per avere momentum_smooth)
+    os.environ["ROI_REGIME_MIN_POINTS"] = "10"
     os.environ["ROI_REGIME_MIN_HOLD"] = "2"
     os.environ["ROI_REGIME_SMOOTH_ALPHA"] = "0.5"
     os.environ["ROI_REGIME_MOM_THRESHOLD"] = "0.0015"
@@ -227,27 +223,20 @@ def test_regime_m1_full_coverage(tmp_path: Path, monkeypatch):
     os.environ["ENABLE_ROI_EDGE_CLV_CORR"] = "1"
     os.environ["ENABLE_ROI_STAKE_ADVISORY"] = "1"
     os.environ["ENABLE_ROI_PROFIT_DISTRIBUTION"] = "1"
-    os.environ["ENABLE_ROI_SCHEMA_EXPORT"] = "1"  # copre export schema
+    os.environ["ENABLE_ROI_SCHEMA_EXPORT"] = "1"
 
-    # Reset settings cache
     _reset_settings_cache_for_tests()
     s = get_settings()
     assert s.enable_roi_regime
 
     _prepare_input_files(data_dir)
 
-    # Seed ledger + archive BEFORE first run (pruning + archive_stats)
     roi_dir = data_dir / s.roi_dir
     roi_dir.mkdir(parents=True, exist_ok=True)
     _seed_old_ledger_for_pruning(roi_dir)
 
-    # 1. Run: crea nuovi picks (NS) + prunes old -> sposta in archive
     build_or_update_roi(_fixtures("NS"))
-
-    # 2. Run: settle (FT)
     build_or_update_roi(_fixtures("FT"))
-
-    # 3. Run extra per regime hold/persistence + timeline append
     build_or_update_roi(_fixtures("FT"))
 
     summary = load_roi_summary()
@@ -256,8 +245,10 @@ def test_regime_m1_full_coverage(tmp_path: Path, monkeypatch):
     regime = summary.get("regime")
     assert isinstance(regime, dict)
     assert "label" in regime
-    assert "momentum_smooth" in regime
+    assert "momentum_smooth" in regime  # ora presente grazie a MIN_POINTS ridotto
     assert regime.get("version") == "m1"
+    assert "features" in regime
+    assert "momentum_windows" in regime["features"]
 
     # Blocchi avanzati
     assert "kelly_effectiveness" in summary
@@ -269,12 +260,11 @@ def test_regime_m1_full_coverage(tmp_path: Path, monkeypatch):
     assert "clv_buckets" in summary
     assert "stake_advisory" in summary
     assert "anomalies" in summary
-    assert "archive_stats" in summary  # adesso deve avere dati
+    assert "archive_stats" in summary
     archive_stats = summary["archive_stats"]
     if archive_stats:
         assert "archived_picks" in archive_stats
 
-    # Ledger e timeline / daily
     ledger = load_roi_ledger()
     assert isinstance(ledger, list) and len(ledger) > 0
     timeline = load_roi_timeline_raw()
@@ -282,7 +272,6 @@ def test_regime_m1_full_coverage(tmp_path: Path, monkeypatch):
     assert isinstance(timeline, list)
     assert isinstance(daily, dict)
 
-    # Verifica export schema e compact
     schema_file = roi_dir / "roi_metrics.schema.json"
     compact_file = roi_dir / "roi_metrics_compact.json"
     assert schema_file.exists()
