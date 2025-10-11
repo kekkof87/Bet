@@ -14,7 +14,7 @@
   "fetch_stats": {
     "attempts": 1,
     "retries": 0,
-    "latency_ms": 175.32,
+    "latency_ms": 387.46,
     "last_status": 200
   },
   "total_fixtures": 0
