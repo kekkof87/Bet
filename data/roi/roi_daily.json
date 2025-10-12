@@ -88,5 +88,14 @@
     "profit_units": 0.0,
     "yield": 0.0,
     "hit_rate": 0.0
+  },
+  "2025-10-12": {
+    "last_ts": "2025-10-12T03:14:47.856898+00:00",
+    "runs": 1,
+    "total_picks": 0,
+    "settled_picks": 0,
+    "profit_units": 0.0,
+    "yield": 0.0,
+    "hit_rate": 0.0
   }
 }
