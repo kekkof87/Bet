@@ -37,11 +37,16 @@ jobs:
           echo "ENABLE_ROI_TRACKING=${{ vars.ENABLE_ROI_TRACKING }}"
           echo "ROI_REGIME_VERSION=${{ vars.ROI_REGIME_VERSION }}"
           echo "ENABLE_ROI_REGIME_PERSISTENCE=${{ vars.ENABLE_ROI_REGIME_PERSISTENCE }}"
+          echo "DEFAULT_LEAGUE_ID=${{ vars.DEFAULT_LEAGUE_ID }}"
+          echo "DEFAULT_SEASON=${{ vars.DEFAULT_SEASON }}"
+          echo "BET_DATA_DIR=${{ vars.BET_DATA_DIR }}"
 
       - name: Run cycle
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
-          BET_DATA_DIR: data
+          BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
+          DEFAULT_LEAGUE_ID: ${{ vars.DEFAULT_LEAGUE_ID }}
+          DEFAULT_SEASON: ${{ vars.DEFAULT_SEASON }}
           # Core flags (repo variables)
           ENABLE_PREDICTIONS: ${{ vars.ENABLE_PREDICTIONS }}
           ENABLE_VALUE_ALERTS: ${{ vars.ENABLE_VALUE_ALERTS }}
