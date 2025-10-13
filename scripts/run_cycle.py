@@ -22,9 +22,7 @@ def main() -> int:
       1. Reload settings (per applicare variabili aggiornate nei workflow)
       2. Fetch fixtures del giorno (normalizzate)
       3. Predictions (se abilitate)
-      4. ROI build/update (ledger + metriche + regime + export)
-
-    Nota: i workflow Actions esportano PYTHONPATH=src, quindi non servono hack su sys.path.
+      4. ROI build/update (ledger + metrics + regime + export)
     """
     _reset_settings_cache_for_tests()
     settings = get_settings()
@@ -41,16 +39,35 @@ def main() -> int:
         },
     )
 
-    # 1. Fetch fixtures
     provider = ApiFootballFixturesProvider()
+
+    # Primo tentativo: solo data odierna (lega/stagione dalle env)
     try:
-        fixtures: List[Dict[str, Any]] = provider.fetch_fixtures(date=_iso_today())
-    except Exception as e:  # pragma: no cover
+        fixtures: List[Dict[str, Any]] = provider.fetch_fixtures(
+            date=_iso_today(),
+            league_id=settings.default_league_id,
+            season=settings.default_season,
+        )
+    except Exception as e:  # pragma: no cover (difensivo)
         log.error("fixtures_fetch_error %s", e)
         fixtures = []
 
+    # Fallback: se vuoto, allarga a tutte le leghe (stessa data)
     if not fixtures:
-        log.warning("no_fixtures_fetched")
+        log.warning(
+            "no_fixtures_fetched for league=%s season=%s on %s. Fallback to ALL leagues for today.",
+            settings.default_league_id,
+            settings.default_season,
+            _iso_today(),
+        )
+        try:
+            fixtures = provider.fetch_fixtures(date=_iso_today(), league_id=None, season=None)
+        except Exception as e:  # pragma: no cover
+            log.error("fixtures_fallback_error %s", e)
+            fixtures = []
+
+    if not fixtures:
+        log.warning("still_no_fixtures_after_fallback")
 
     # 2. Predictions
     try:
