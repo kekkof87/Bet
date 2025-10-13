@@ -32,6 +32,9 @@ jobs:
           pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install .; fi
 
+      - name: Export PYTHONPATH
+        run: echo "PYTHONPATH=${{ github.workspace }}/src" >> $GITHUB_ENV
+
       - name: Show enabled flags (sanitized)
         run: |
           echo "ENABLE_ROI_TRACKING=${{ vars.ENABLE_ROI_TRACKING }}"
@@ -43,6 +46,7 @@ jobs:
 
       - name: Run cycle
         env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
           BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
           DEFAULT_LEAGUE_ID: ${{ vars.DEFAULT_LEAGUE_ID }}
