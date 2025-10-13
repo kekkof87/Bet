@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, cast, TYPE_CHECKING
 
@@ -36,6 +37,10 @@ def _load_json_if_exists(path: Path) -> Optional[Dict[str, Any]]:
         return None
 
 
+def _iso_today_utc() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
 def main() -> None:
     logger = get_logger("scripts.fetch_fixtures")
 
@@ -54,11 +59,28 @@ def main() -> None:
 
     logger.info("Avvio fetch fixtures (API-Football)...")
     provider = ApiFootballFixturesProvider()
+
+    # Primo tentativo: con lega/stagione (come previsto dalla config)
     loaded_new = provider.fetch_fixtures(
         league_id=settings.default_league_id,
         season=settings.default_season,
         date=None,
     )
+
+    # Fallback: se vuoto, prova tutte le leghe per la data odierna (massimizza chance di >0)
+    if not loaded_new:
+        logger.warning(
+            "Fetch vuoto con league=%s season=%s. Fallback a tutte le leghe per oggi=%s",
+            settings.default_league_id,
+            settings.default_season,
+            _iso_today_utc(),
+        )
+        loaded_new = provider.fetch_fixtures(
+            date=_iso_today_utc(),
+            league_id=None,
+            season=None,
+        )
+
     if not isinstance(loaded_new, list):
         logger.error("Provider ha restituito tipo inatteso %s, forzo lista vuota", type(loaded_new))
         loaded_new = []
@@ -117,6 +139,10 @@ def main() -> None:
     summary: Dict[str, Any] = dict(base_summary)
     if compare_keys:
         summary["compare_keys"] = ",".join(compare_keys)
+
+    # Se abbiamo usato fallback, annotiamo nel summary (utile in debug)
+    if not (settings.default_league_id and settings.default_season):
+        summary["note"] = "fallback_date_today_all_leagues"
 
     fetch_stats = provider.get_last_stats()
 
