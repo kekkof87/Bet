@@ -3,12 +3,6 @@ from pathlib import Path
 from typing import List, Dict, Any
 from datetime import datetime, timezone
 
-# Ensure src/ is on sys.path when running from repository root (CI or local)
-_repo_root = Path(__file__).resolve().parents[1]
-_src = _repo_root / "src"
-if str(_src) not in sys.path:
-    sys.path.insert(0, str(_src))
-
 from core.config import _reset_settings_cache_for_tests, get_settings
 from core.logging import get_logger
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
@@ -28,9 +22,9 @@ def main() -> int:
       1. Reload settings (per applicare variabili aggiornate nei workflow)
       2. Fetch fixtures del giorno (normalizzate)
       3. Predictions (se abilitate)
-      4. ROI build/update (ledger + metrics + regime + export)
-    Non forza settlement artificiale: quello avverrà quando le fixture diventeranno FT
-    (oppure tramite lo script demo separato).
+      4. ROI build/update (ledger + metriche + regime + export)
+
+    Nota: i workflow Actions esportano PYTHONPATH=src, quindi non servono hack su sys.path.
     """
     _reset_settings_cache_for_tests()
     settings = get_settings()
@@ -51,7 +45,7 @@ def main() -> int:
     provider = ApiFootballFixturesProvider()
     try:
         fixtures: List[Dict[str, Any]] = provider.fetch_fixtures(date=_iso_today())
-    except Exception as e:  # pragma: no cover (difensivo)
+    except Exception as e:  # pragma: no cover
         log.error("fixtures_fetch_error %s", e)
         fixtures = []
 
