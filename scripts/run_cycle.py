@@ -3,6 +3,12 @@ from pathlib import Path
 from typing import List, Dict, Any
 from datetime import datetime, timezone
 
+# Ensure src/ is on sys.path when running from repository root (CI or local)
+_repo_root = Path(__file__).resolve().parents[1]
+_src = _repo_root / "src"
+if str(_src) not in sys.path:
+    sys.path.insert(0, str(_src))
+
 from core.config import _reset_settings_cache_for_tests, get_settings
 from core.logging import get_logger
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
