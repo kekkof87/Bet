@@ -54,6 +54,12 @@ jobs:
       - name: Export PYTHONPATH
         run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
 
+      - name: Show selected provider scope
+        run: |
+          echo "DEFAULT_LEAGUE_ID=${{ vars.DEFAULT_LEAGUE_ID }}"
+          echo "DEFAULT_SEASON=${{ vars.DEFAULT_SEASON }}"
+          echo "BET_DATA_DIR=${{ vars.BET_DATA_DIR }}"
+
       - name: Tests
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
@@ -63,6 +69,9 @@ jobs:
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          DEFAULT_LEAGUE_ID: ${{ vars.DEFAULT_LEAGUE_ID }}
+          DEFAULT_SEASON: ${{ vars.DEFAULT_SEASON }}
+          BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
           ENABLE_ODDS_INGESTION: ${{ vars.ENABLE_ODDS_INGESTION }}
           ENABLE_PREDICTIONS: ${{ vars.ENABLE_PREDICTIONS }}
           ENABLE_PREDICTIONS_USE_ODDS: ${{ vars.ENABLE_PREDICTIONS_USE_ODDS }}
