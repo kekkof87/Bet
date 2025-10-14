@@ -3,12 +3,13 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from datetime import datetime, timezone, timedelta
+from typing import Any, Dict, List
+from datetime import datetime, timezone
 
 from core.config import get_settings
 from core.logging import get_logger
 from core.persistence import save_latest_fixtures
+from core.models import FixtureDataset
 
 from providers.api_football.fixtures_provider import ApiFootballFixturesProvider
 from providers.football_data.fixtures_provider import FootballDataFixturesProvider
@@ -61,7 +62,7 @@ def main() -> None:
     provider_src = (os.getenv("PROVIDER_SOURCE") or "fd").lower().strip()
     upcoming_days = int(os.getenv("UPCOMING_DAYS") or "2")
 
-    fixtures: List[Dict[str, Any]] = []
+    fixtures: FixtureDataset = []
     live_ids: set[int] = set()
 
     if provider_src == "api":
