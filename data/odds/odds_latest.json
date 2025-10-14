@@ -1,5 +1,2266 @@
 {
   "provider": "stub",
-  "count": 0,
-  "entries": []
+  "count": 226,
+  "entries": [
+    {
+      "fixture_id": 1397460,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.444,
+        "draw": 2.865,
+        "away_win": 3.861
+      }
+    },
+    {
+      "fixture_id": 1353576,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.118,
+        "draw": 2.923,
+        "away_win": 2.862
+      }
+    },
+    {
+      "fixture_id": 1392493,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.91,
+        "draw": 2.997,
+        "away_win": 3.092
+      }
+    },
+    {
+      "fixture_id": 1405406,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.887,
+        "draw": 2.896,
+        "away_win": 2.962
+      }
+    },
+    {
+      "fixture_id": 1397459,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.317,
+        "draw": 3.006,
+        "away_win": 4.192
+      }
+    },
+    {
+      "fixture_id": 1445476,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.26,
+        "draw": 2.889,
+        "away_win": 2.592
+      }
+    },
+    {
+      "fixture_id": 1472221,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.485,
+        "draw": 3.173,
+        "away_win": 2.403
+      }
+    },
+    {
+      "fixture_id": 1400493,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.452,
+        "draw": 2.999,
+        "away_win": 4.059
+      }
+    },
+    {
+      "fixture_id": 1430830,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.333,
+        "draw": 2.894,
+        "away_win": 4.093
+      }
+    },
+    {
+      "fixture_id": 1481205,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.496,
+        "draw": 2.982,
+        "away_win": 2.475
+      }
+    },
+    {
+      "fixture_id": 1366915,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 4.056,
+        "draw": 3.181,
+        "away_win": 2.287
+      }
+    },
+    {
+      "fixture_id": 1366916,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.496,
+        "draw": 3.217,
+        "away_win": 3.726
+      }
+    },
+    {
+      "fixture_id": 1472222,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.549,
+        "draw": 3.098,
+        "away_win": 2.765
+      }
+    },
+    {
+      "fixture_id": 1320895,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 4.52,
+        "draw": 2.968,
+        "away_win": 2.407
+      }
+    },
+    {
+      "fixture_id": 1321338,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 5.291,
+        "draw": 3.209,
+        "away_win": 2.097
+      }
+    },
+    {
+      "fixture_id": 1321340,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.972,
+        "draw": 2.94,
+        "away_win": 2.41
+      }
+    },
+    {
+      "fixture_id": 1449844,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.898,
+        "draw": 2.978,
+        "away_win": 3.221
+      }
+    },
+    {
+      "fixture_id": 1320894,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.767,
+        "draw": 2.911,
+        "away_win": 3.099
+      }
+    },
+    {
+      "fixture_id": 1400491,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.75,
+        "draw": 2.928,
+        "away_win": 3.276
+      }
+    },
+    {
+      "fixture_id": 1449845,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.603,
+        "draw": 2.985,
+        "away_win": 3.394
+      }
+    },
+    {
+      "fixture_id": 1479833,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 7.601,
+        "draw": 3.222,
+        "away_win": 1.825
+      }
+    },
+    {
+      "fixture_id": 1479834,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 14.18,
+        "draw": 3.037,
+        "away_win": 1.683
+      }
+    },
+    {
+      "fixture_id": 1481579,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.149,
+        "draw": 2.993,
+        "away_win": 3.069
+      }
+    },
+    {
+      "fixture_id": 1481591,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.499,
+        "draw": 2.983,
+        "away_win": 3.364
+      }
+    },
+    {
+      "fixture_id": 1321335,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.802,
+        "draw": 3.161,
+        "away_win": 3.133
+      }
+    },
+    {
+      "fixture_id": 1433971,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.907,
+        "draw": 2.947,
+        "away_win": 3.081
+      }
+    },
+    {
+      "fixture_id": 1433972,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.684,
+        "draw": 3.212,
+        "away_win": 3.306
+      }
+    },
+    {
+      "fixture_id": 1433974,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.135,
+        "draw": 3.18,
+        "away_win": 2.997
+      }
+    },
+    {
+      "fixture_id": 1321342,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.051,
+        "draw": 3.164,
+        "away_win": 3.001
+      }
+    },
+    {
+      "fixture_id": 1126105,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.863,
+        "draw": 2.86,
+        "away_win": 2.926
+      }
+    },
+    {
+      "fixture_id": 1321341,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.966,
+        "draw": 3.202,
+        "away_win": 2.934
+      }
+    },
+    {
+      "fixture_id": 1394801,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.075,
+        "draw": 3.139,
+        "away_win": 2.826
+      }
+    },
+    {
+      "fixture_id": 1433975,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.107,
+        "draw": 2.917,
+        "away_win": 2.971
+      }
+    },
+    {
+      "fixture_id": 1479835,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.918,
+        "draw": 3.001,
+        "away_win": 2.934
+      }
+    },
+    {
+      "fixture_id": 1479837,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.147,
+        "draw": 2.897,
+        "away_win": 2.784
+      }
+    },
+    {
+      "fixture_id": 1479838,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.97,
+        "draw": 2.885,
+        "away_win": 2.989
+      }
+    },
+    {
+      "fixture_id": 1479839,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.174,
+        "draw": 3.168,
+        "away_win": 2.995
+      }
+    },
+    {
+      "fixture_id": 1479840,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.875,
+        "draw": 2.97,
+        "away_win": 3.013
+      }
+    },
+    {
+      "fixture_id": 1480333,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.996,
+        "draw": 2.88,
+        "away_win": 3.066
+      }
+    },
+    {
+      "fixture_id": 1321337,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.928,
+        "draw": 2.998,
+        "away_win": 3.047
+      }
+    },
+    {
+      "fixture_id": 1321326,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.922,
+        "draw": 2.898,
+        "away_win": 3.04
+      }
+    },
+    {
+      "fixture_id": 1350062,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.078,
+        "draw": 2.896,
+        "away_win": 2.882
+      }
+    },
+    {
+      "fixture_id": 1367145,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.012,
+        "draw": 3.059,
+        "away_win": 2.908
+      }
+    },
+    {
+      "fixture_id": 1479841,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.045,
+        "draw": 2.89,
+        "away_win": 2.83
+      }
+    },
+    {
+      "fixture_id": 1479842,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.167,
+        "draw": 2.864,
+        "away_win": 2.853
+      }
+    },
+    {
+      "fixture_id": 1321339,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.1,
+        "draw": 3.185,
+        "away_win": 2.843
+      }
+    },
+    {
+      "fixture_id": 1350049,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.039,
+        "draw": 2.983,
+        "away_win": 2.955
+      }
+    },
+    {
+      "fixture_id": 1350051,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.165,
+        "draw": 3.197,
+        "away_win": 2.959
+      }
+    },
+    {
+      "fixture_id": 1366917,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.952,
+        "draw": 3.004,
+        "away_win": 2.885
+      }
+    },
+    {
+      "fixture_id": 1366918,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.961,
+        "draw": 2.864,
+        "away_win": 2.779
+      }
+    },
+    {
+      "fixture_id": 1478574,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.88,
+        "draw": 2.897,
+        "away_win": 3.006
+      }
+    },
+    {
+      "fixture_id": 1478584,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.957,
+        "draw": 3.043,
+        "away_win": 2.801
+      }
+    },
+    {
+      "fixture_id": 1126095,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.136,
+        "draw": 3.18,
+        "away_win": 2.792
+      }
+    },
+    {
+      "fixture_id": 1126097,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.99,
+        "draw": 2.925,
+        "away_win": 2.827
+      }
+    },
+    {
+      "fixture_id": 1126107,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.067,
+        "draw": 2.956,
+        "away_win": 2.995
+      }
+    },
+    {
+      "fixture_id": 1126108,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.945,
+        "draw": 3.116,
+        "away_win": 3.0
+      }
+    },
+    {
+      "fixture_id": 1126109,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.981,
+        "draw": 3.014,
+        "away_win": 2.916
+      }
+    },
+    {
+      "fixture_id": 1321334,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.951,
+        "draw": 3.126,
+        "away_win": 3.124
+      }
+    },
+    {
+      "fixture_id": 1323340,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.88,
+        "draw": 2.866,
+        "away_win": 3.011
+      }
+    },
+    {
+      "fixture_id": 1350045,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.199,
+        "draw": 2.899,
+        "away_win": 2.865
+      }
+    },
+    {
+      "fixture_id": 1350046,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.174,
+        "draw": 2.927,
+        "away_win": 2.831
+      }
+    },
+    {
+      "fixture_id": 1350048,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.09,
+        "draw": 2.942,
+        "away_win": 3.03
+      }
+    },
+    {
+      "fixture_id": 1350050,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.913,
+        "draw": 3.022,
+        "away_win": 2.912
+      }
+    },
+    {
+      "fixture_id": 1350053,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.884,
+        "draw": 2.986,
+        "away_win": 2.857
+      }
+    },
+    {
+      "fixture_id": 1350054,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.921,
+        "draw": 2.975,
+        "away_win": 2.981
+      }
+    },
+    {
+      "fixture_id": 1350055,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.145,
+        "draw": 2.947,
+        "away_win": 2.891
+      }
+    },
+    {
+      "fixture_id": 1350056,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.051,
+        "draw": 2.969,
+        "away_win": 2.823
+      }
+    },
+    {
+      "fixture_id": 1350059,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.884,
+        "draw": 2.974,
+        "away_win": 2.989
+      }
+    },
+    {
+      "fixture_id": 1350060,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.085,
+        "draw": 2.861,
+        "away_win": 3.122
+      }
+    },
+    {
+      "fixture_id": 1352746,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.06,
+        "draw": 2.943,
+        "away_win": 2.853
+      }
+    },
+    {
+      "fixture_id": 1479843,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.966,
+        "draw": 2.911,
+        "away_win": 2.871
+      }
+    },
+    {
+      "fixture_id": 1350058,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.131,
+        "draw": 2.936,
+        "away_win": 3.086
+      }
+    },
+    {
+      "fixture_id": 1350044,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.055,
+        "draw": 3.042,
+        "away_win": 2.845
+      }
+    },
+    {
+      "fixture_id": 1350061,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.103,
+        "draw": 2.983,
+        "away_win": 2.87
+      }
+    },
+    {
+      "fixture_id": 1321333,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.958,
+        "draw": 3.14,
+        "away_win": 3.072
+      }
+    },
+    {
+      "fixture_id": 1350047,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.19,
+        "draw": 3.017,
+        "away_win": 2.897
+      }
+    },
+    {
+      "fixture_id": 1350052,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.924,
+        "draw": 2.978,
+        "away_win": 2.889
+      }
+    },
+    {
+      "fixture_id": 1350063,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.149,
+        "draw": 2.887,
+        "away_win": 2.838
+      }
+    },
+    {
+      "fixture_id": 1401467,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.202,
+        "draw": 3.19,
+        "away_win": 2.972
+      }
+    },
+    {
+      "fixture_id": 1408420,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.946,
+        "draw": 2.988,
+        "away_win": 2.957
+      }
+    },
+    {
+      "fixture_id": 1409523,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.146,
+        "draw": 2.904,
+        "away_win": 2.909
+      }
+    },
+    {
+      "fixture_id": 1433976,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.173,
+        "draw": 3.002,
+        "away_win": 3.068
+      }
+    },
+    {
+      "fixture_id": 1435557,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.978,
+        "draw": 2.893,
+        "away_win": 2.861
+      }
+    },
+    {
+      "fixture_id": 1469296,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.136,
+        "draw": 2.873,
+        "away_win": 2.795
+      }
+    },
+    {
+      "fixture_id": 1479254,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.133,
+        "draw": 3.015,
+        "away_win": 2.893
+      }
+    },
+    {
+      "fixture_id": 1350057,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.889,
+        "draw": 2.905,
+        "away_win": 2.935
+      }
+    },
+    {
+      "fixture_id": 1353925,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.015,
+        "draw": 3.182,
+        "away_win": 2.93
+      }
+    },
+    {
+      "fixture_id": 1353926,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.995,
+        "draw": 3.177,
+        "away_win": 3.059
+      }
+    },
+    {
+      "fixture_id": 1353927,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.058,
+        "draw": 2.921,
+        "away_win": 2.888
+      }
+    },
+    {
+      "fixture_id": 1433939,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.18,
+        "draw": 2.946,
+        "away_win": 2.956
+      }
+    },
+    {
+      "fixture_id": 1444551,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.053,
+        "draw": 3.216,
+        "away_win": 2.946
+      }
+    },
+    {
+      "fixture_id": 1453378,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.086,
+        "draw": 2.999,
+        "away_win": 2.964
+      }
+    },
+    {
+      "fixture_id": 1453379,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.081,
+        "draw": 3.125,
+        "away_win": 3.069
+      }
+    },
+    {
+      "fixture_id": 1475947,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.891,
+        "draw": 2.924,
+        "away_win": 2.955
+      }
+    },
+    {
+      "fixture_id": 1480334,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.028,
+        "draw": 3.138,
+        "away_win": 2.929
+      }
+    },
+    {
+      "fixture_id": 1428268,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.135,
+        "draw": 2.912,
+        "away_win": 3.119
+      }
+    },
+    {
+      "fixture_id": 1444090,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.206,
+        "draw": 2.897,
+        "away_win": 2.874
+      }
+    },
+    {
+      "fixture_id": 1444552,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.079,
+        "draw": 3.153,
+        "away_win": 3.014
+      }
+    },
+    {
+      "fixture_id": 1435224,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.029,
+        "draw": 2.974,
+        "away_win": 3.038
+      }
+    },
+    {
+      "fixture_id": 1323338,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.097,
+        "draw": 2.938,
+        "away_win": 2.846
+      }
+    },
+    {
+      "fixture_id": 1323339,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.148,
+        "draw": 2.911,
+        "away_win": 3.058
+      }
+    },
+    {
+      "fixture_id": 1323341,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.077,
+        "draw": 3.222,
+        "away_win": 2.874
+      }
+    },
+    {
+      "fixture_id": 1323342,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.16,
+        "draw": 3.146,
+        "away_win": 2.931
+      }
+    },
+    {
+      "fixture_id": 1366308,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.104,
+        "draw": 3.114,
+        "away_win": 3.035
+      }
+    },
+    {
+      "fixture_id": 1366309,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.224,
+        "draw": 3.019,
+        "away_win": 2.862
+      }
+    },
+    {
+      "fixture_id": 1366310,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.999,
+        "draw": 2.989,
+        "away_win": 3.046
+      }
+    },
+    {
+      "fixture_id": 1405127,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.035,
+        "draw": 2.891,
+        "away_win": 2.869
+      }
+    },
+    {
+      "fixture_id": 1405128,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.893,
+        "draw": 3.047,
+        "away_win": 3.092
+      }
+    },
+    {
+      "fixture_id": 1405129,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.222,
+        "draw": 2.876,
+        "away_win": 2.891
+      }
+    },
+    {
+      "fixture_id": 1405130,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.071,
+        "draw": 3.059,
+        "away_win": 2.962
+      }
+    },
+    {
+      "fixture_id": 1405131,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.053,
+        "draw": 3.036,
+        "away_win": 3.1
+      }
+    },
+    {
+      "fixture_id": 1405132,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.939,
+        "draw": 2.969,
+        "away_win": 2.946
+      }
+    },
+    {
+      "fixture_id": 1424524,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.171,
+        "draw": 2.992,
+        "away_win": 2.863
+      }
+    },
+    {
+      "fixture_id": 1424525,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.905,
+        "draw": 3.022,
+        "away_win": 2.933
+      }
+    },
+    {
+      "fixture_id": 1424526,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.995,
+        "draw": 3.098,
+        "away_win": 2.903
+      }
+    },
+    {
+      "fixture_id": 1424527,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.859,
+        "draw": 3.144,
+        "away_win": 2.797
+      }
+    },
+    {
+      "fixture_id": 1424528,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.076,
+        "draw": 3.145,
+        "away_win": 2.795
+      }
+    },
+    {
+      "fixture_id": 1424530,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.053,
+        "draw": 2.895,
+        "away_win": 2.824
+      }
+    },
+    {
+      "fixture_id": 1424531,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.896,
+        "draw": 3.036,
+        "away_win": 2.857
+      }
+    },
+    {
+      "fixture_id": 1424533,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.93,
+        "draw": 3.134,
+        "away_win": 2.852
+      }
+    },
+    {
+      "fixture_id": 1427806,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.1,
+        "draw": 2.918,
+        "away_win": 2.867
+      }
+    },
+    {
+      "fixture_id": 1427807,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.138,
+        "draw": 3.017,
+        "away_win": 2.977
+      }
+    },
+    {
+      "fixture_id": 1427808,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.224,
+        "draw": 2.915,
+        "away_win": 2.969
+      }
+    },
+    {
+      "fixture_id": 1427809,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.114,
+        "draw": 2.862,
+        "away_win": 3.064
+      }
+    },
+    {
+      "fixture_id": 1427810,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.194,
+        "draw": 3.209,
+        "away_win": 2.861
+      }
+    },
+    {
+      "fixture_id": 1427811,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.87,
+        "draw": 2.93,
+        "away_win": 3.04
+      }
+    },
+    {
+      "fixture_id": 1427812,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.135,
+        "draw": 3.056,
+        "away_win": 3.113
+      }
+    },
+    {
+      "fixture_id": 1427813,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.947,
+        "draw": 2.996,
+        "away_win": 2.966
+      }
+    },
+    {
+      "fixture_id": 1427814,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.958,
+        "draw": 3.048,
+        "away_win": 2.93
+      }
+    },
+    {
+      "fixture_id": 1428269,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.073,
+        "draw": 3.194,
+        "away_win": 2.878
+      }
+    },
+    {
+      "fixture_id": 1428271,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.151,
+        "draw": 3.142,
+        "away_win": 2.986
+      }
+    },
+    {
+      "fixture_id": 1428272,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.149,
+        "draw": 3.148,
+        "away_win": 3.075
+      }
+    },
+    {
+      "fixture_id": 1428273,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.902,
+        "draw": 3.121,
+        "away_win": 2.81
+      }
+    },
+    {
+      "fixture_id": 1428274,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.903,
+        "draw": 2.858,
+        "away_win": 2.944
+      }
+    },
+    {
+      "fixture_id": 1428275,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.165,
+        "draw": 3.198,
+        "away_win": 2.78
+      }
+    },
+    {
+      "fixture_id": 1428276,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.938,
+        "draw": 2.866,
+        "away_win": 3.004
+      }
+    },
+    {
+      "fixture_id": 1428277,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.11,
+        "draw": 3.104,
+        "away_win": 2.95
+      }
+    },
+    {
+      "fixture_id": 1428704,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.172,
+        "draw": 3.215,
+        "away_win": 2.956
+      }
+    },
+    {
+      "fixture_id": 1428734,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.95,
+        "draw": 2.893,
+        "away_win": 2.952
+      }
+    },
+    {
+      "fixture_id": 1428736,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.151,
+        "draw": 2.915,
+        "away_win": 2.985
+      }
+    },
+    {
+      "fixture_id": 1434834,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.089,
+        "draw": 3.112,
+        "away_win": 3.024
+      }
+    },
+    {
+      "fixture_id": 1434835,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.985,
+        "draw": 3.095,
+        "away_win": 3.065
+      }
+    },
+    {
+      "fixture_id": 1434836,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.886,
+        "draw": 3.058,
+        "away_win": 3.017
+      }
+    },
+    {
+      "fixture_id": 1434837,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.033,
+        "draw": 3.122,
+        "away_win": 3.047
+      }
+    },
+    {
+      "fixture_id": 1434838,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.176,
+        "draw": 2.911,
+        "away_win": 2.829
+      }
+    },
+    {
+      "fixture_id": 1434840,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.129,
+        "draw": 3.211,
+        "away_win": 2.996
+      }
+    },
+    {
+      "fixture_id": 1434841,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.077,
+        "draw": 3.215,
+        "away_win": 2.979
+      }
+    },
+    {
+      "fixture_id": 1435225,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.086,
+        "draw": 2.879,
+        "away_win": 2.906
+      }
+    },
+    {
+      "fixture_id": 1435226,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.959,
+        "draw": 3.167,
+        "away_win": 3.105
+      }
+    },
+    {
+      "fixture_id": 1435227,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.047,
+        "draw": 3.0,
+        "away_win": 2.913
+      }
+    },
+    {
+      "fixture_id": 1435228,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.185,
+        "draw": 3.116,
+        "away_win": 3.069
+      }
+    },
+    {
+      "fixture_id": 1435229,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.149,
+        "draw": 3.219,
+        "away_win": 3.06
+      }
+    },
+    {
+      "fixture_id": 1435230,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.061,
+        "draw": 3.002,
+        "away_win": 3.061
+      }
+    },
+    {
+      "fixture_id": 1435231,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.148,
+        "draw": 3.075,
+        "away_win": 2.878
+      }
+    },
+    {
+      "fixture_id": 1435515,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.963,
+        "draw": 3.076,
+        "away_win": 3.101
+      }
+    },
+    {
+      "fixture_id": 1442678,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.923,
+        "draw": 3.139,
+        "away_win": 2.993
+      }
+    },
+    {
+      "fixture_id": 1442679,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.913,
+        "draw": 3.014,
+        "away_win": 2.821
+      }
+    },
+    {
+      "fixture_id": 1442680,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.031,
+        "draw": 2.939,
+        "away_win": 3.084
+      }
+    },
+    {
+      "fixture_id": 1442681,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.058,
+        "draw": 3.183,
+        "away_win": 3.018
+      }
+    },
+    {
+      "fixture_id": 1442682,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.082,
+        "draw": 3.16,
+        "away_win": 2.944
+      }
+    },
+    {
+      "fixture_id": 1442683,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.985,
+        "draw": 2.92,
+        "away_win": 2.812
+      }
+    },
+    {
+      "fixture_id": 1442684,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.159,
+        "draw": 3.073,
+        "away_win": 3.033
+      }
+    },
+    {
+      "fixture_id": 1442685,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.971,
+        "draw": 3.176,
+        "away_win": 3.011
+      }
+    },
+    {
+      "fixture_id": 1443142,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.106,
+        "draw": 2.948,
+        "away_win": 3.036
+      }
+    },
+    {
+      "fixture_id": 1443143,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.905,
+        "draw": 3.224,
+        "away_win": 3.012
+      }
+    },
+    {
+      "fixture_id": 1443144,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.147,
+        "draw": 3.079,
+        "away_win": 2.913
+      }
+    },
+    {
+      "fixture_id": 1443145,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.919,
+        "draw": 3.132,
+        "away_win": 2.836
+      }
+    },
+    {
+      "fixture_id": 1443146,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.069,
+        "draw": 2.875,
+        "away_win": 2.883
+      }
+    },
+    {
+      "fixture_id": 1443147,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.913,
+        "draw": 2.94,
+        "away_win": 2.839
+      }
+    },
+    {
+      "fixture_id": 1443148,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.117,
+        "draw": 3.009,
+        "away_win": 2.836
+      }
+    },
+    {
+      "fixture_id": 1443649,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.099,
+        "draw": 3.062,
+        "away_win": 2.815
+      }
+    },
+    {
+      "fixture_id": 1443650,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.979,
+        "draw": 3.14,
+        "away_win": 3.047
+      }
+    },
+    {
+      "fixture_id": 1443651,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.164,
+        "draw": 3.223,
+        "away_win": 2.91
+      }
+    },
+    {
+      "fixture_id": 1443652,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.094,
+        "draw": 2.876,
+        "away_win": 2.825
+      }
+    },
+    {
+      "fixture_id": 1443653,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.217,
+        "draw": 3.116,
+        "away_win": 3.11
+      }
+    },
+    {
+      "fixture_id": 1443654,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.171,
+        "draw": 3.18,
+        "away_win": 2.968
+      }
+    },
+    {
+      "fixture_id": 1444091,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.956,
+        "draw": 2.896,
+        "away_win": 2.945
+      }
+    },
+    {
+      "fixture_id": 1444092,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.128,
+        "draw": 3.101,
+        "away_win": 3.031
+      }
+    },
+    {
+      "fixture_id": 1444093,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.136,
+        "draw": 3.116,
+        "away_win": 2.827
+      }
+    },
+    {
+      "fixture_id": 1444094,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.039,
+        "draw": 3.112,
+        "away_win": 3.11
+      }
+    },
+    {
+      "fixture_id": 1444095,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.102,
+        "draw": 3.065,
+        "away_win": 2.799
+      }
+    },
+    {
+      "fixture_id": 1444096,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.217,
+        "draw": 3.11,
+        "away_win": 3.045
+      }
+    },
+    {
+      "fixture_id": 1444097,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.886,
+        "draw": 2.87,
+        "away_win": 2.932
+      }
+    },
+    {
+      "fixture_id": 1444098,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.923,
+        "draw": 2.894,
+        "away_win": 2.804
+      }
+    },
+    {
+      "fixture_id": 1444099,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.95,
+        "draw": 2.927,
+        "away_win": 2.927
+      }
+    },
+    {
+      "fixture_id": 1444411,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.909,
+        "draw": 3.047,
+        "away_win": 3.074
+      }
+    },
+    {
+      "fixture_id": 1444491,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.967,
+        "draw": 2.973,
+        "away_win": 2.884
+      }
+    },
+    {
+      "fixture_id": 1473066,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.175,
+        "draw": 3.041,
+        "away_win": 2.93
+      }
+    },
+    {
+      "fixture_id": 1473067,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.887,
+        "draw": 2.965,
+        "away_win": 2.956
+      }
+    },
+    {
+      "fixture_id": 1473068,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.204,
+        "draw": 3.084,
+        "away_win": 2.961
+      }
+    },
+    {
+      "fixture_id": 1473069,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.869,
+        "draw": 2.885,
+        "away_win": 2.873
+      }
+    },
+    {
+      "fixture_id": 1473070,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.964,
+        "draw": 3.033,
+        "away_win": 2.788
+      }
+    },
+    {
+      "fixture_id": 1473071,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.99,
+        "draw": 2.894,
+        "away_win": 3.018
+      }
+    },
+    {
+      "fixture_id": 1473072,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.933,
+        "draw": 3.19,
+        "away_win": 3.025
+      }
+    },
+    {
+      "fixture_id": 1473073,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.912,
+        "draw": 2.921,
+        "away_win": 2.91
+      }
+    },
+    {
+      "fixture_id": 1473074,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.986,
+        "draw": 3.21,
+        "away_win": 3.04
+      }
+    },
+    {
+      "fixture_id": 1476084,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.992,
+        "draw": 2.921,
+        "away_win": 3.007
+      }
+    },
+    {
+      "fixture_id": 1476085,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.994,
+        "draw": 3.203,
+        "away_win": 2.872
+      }
+    },
+    {
+      "fixture_id": 1476086,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.9,
+        "draw": 3.103,
+        "away_win": 3.039
+      }
+    },
+    {
+      "fixture_id": 1476087,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.146,
+        "draw": 3.04,
+        "away_win": 2.816
+      }
+    },
+    {
+      "fixture_id": 1476088,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.936,
+        "draw": 3.05,
+        "away_win": 2.918
+      }
+    },
+    {
+      "fixture_id": 1476089,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.944,
+        "draw": 3.18,
+        "away_win": 3.032
+      }
+    },
+    {
+      "fixture_id": 1476090,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.157,
+        "draw": 3.098,
+        "away_win": 3.048
+      }
+    },
+    {
+      "fixture_id": 1476091,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.916,
+        "draw": 3.0,
+        "away_win": 2.845
+      }
+    },
+    {
+      "fixture_id": 1476092,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.058,
+        "draw": 2.995,
+        "away_win": 3.089
+      }
+    },
+    {
+      "fixture_id": 1479255,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.007,
+        "draw": 3.044,
+        "away_win": 3.101
+      }
+    },
+    {
+      "fixture_id": 1481502,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.101,
+        "draw": 2.878,
+        "away_win": 2.916
+      }
+    },
+    {
+      "fixture_id": 1481503,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.013,
+        "draw": 3.094,
+        "away_win": 2.961
+      }
+    },
+    {
+      "fixture_id": 1481504,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.947,
+        "draw": 3.159,
+        "away_win": 2.78
+      }
+    },
+    {
+      "fixture_id": 1481505,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.866,
+        "draw": 3.146,
+        "away_win": 3.09
+      }
+    },
+    {
+      "fixture_id": 1481506,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.899,
+        "draw": 3.005,
+        "away_win": 3.01
+      }
+    },
+    {
+      "fixture_id": 1481507,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.88,
+        "draw": 2.94,
+        "away_win": 3.097
+      }
+    },
+    {
+      "fixture_id": 1481508,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.914,
+        "draw": 2.925,
+        "away_win": 3.021
+      }
+    },
+    {
+      "fixture_id": 1434839,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.993,
+        "draw": 2.916,
+        "away_win": 2.941
+      }
+    },
+    {
+      "fixture_id": 1126092,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.053,
+        "draw": 3.037,
+        "away_win": 2.816
+      }
+    },
+    {
+      "fixture_id": 1126094,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.912,
+        "draw": 2.973,
+        "away_win": 2.899
+      }
+    },
+    {
+      "fixture_id": 1126103,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.04,
+        "draw": 2.911,
+        "away_win": 2.812
+      }
+    },
+    {
+      "fixture_id": 1126104,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.076,
+        "draw": 3.138,
+        "away_win": 2.986
+      }
+    },
+    {
+      "fixture_id": 1126106,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.966,
+        "draw": 3.164,
+        "away_win": 3.104
+      }
+    },
+    {
+      "fixture_id": 1481121,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.136,
+        "draw": 3.198,
+        "away_win": 2.925
+      }
+    },
+    {
+      "fixture_id": 1353928,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.087,
+        "draw": 3.045,
+        "away_win": 2.836
+      }
+    },
+    {
+      "fixture_id": 1353573,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.018,
+        "draw": 2.93,
+        "away_win": 3.065
+      }
+    },
+    {
+      "fixture_id": 1353574,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.939,
+        "draw": 3.146,
+        "away_win": 3.082
+      }
+    },
+    {
+      "fixture_id": 1446015,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.011,
+        "draw": 2.871,
+        "away_win": 3.016
+      }
+    },
+    {
+      "fixture_id": 1446144,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 3.062,
+        "draw": 2.877,
+        "away_win": 2.919
+      }
+    },
+    {
+      "fixture_id": 1479788,
+      "source": "stub-book",
+      "fetched_at": "2025-10-14T12:47:21.044883+00:00",
+      "market": {
+        "home_win": 2.921,
+        "draw": 3.111,
+        "away_win": 3.031
+      }
+    }
+  ]
 }

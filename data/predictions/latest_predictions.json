@@ -1,9 +1,7252 @@
 {
   "model_version": "baseline-v1",
-  "count": 0,
-  "enriched_with_odds": false,
+  "count": 226,
+  "enriched_with_odds": true,
   "value_detection": true,
   "model_adjust_enabled": false,
   "model_adjust_weight": null,
-  "predictions": []
+  "predictions": [
+    {
+      "fixture_id": 1397460,
+      "prob": {
+        "home_win": 0.48,
+        "draw": 0.33,
+        "away_win": 0.19
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.444,
+          "draw": 2.865,
+          "away_win": 3.861
+        },
+        "odds_implied": {
+          "home_win": 0.402244,
+          "draw": 0.343136,
+          "away_win": 0.254619
+        },
+        "odds_margin": 0.017206
+      },
+      "value": {
+        "active": true,
+        "value_side": "home_win",
+        "value_edge": 0.077756,
+        "deltas": {
+          "home_win": 0.077756,
+          "draw": -0.013136,
+          "away_win": -0.064619
+        },
+        "adjusted_edge": 0.079094
+      }
+    },
+    {
+      "fixture_id": 1353576,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.118,
+          "draw": 2.923,
+          "away_win": 2.862
+        },
+        "odds_implied": {
+          "home_win": 0.316841,
+          "draw": 0.337978,
+          "away_win": 0.345181
+        },
+        "odds_margin": 0.012239
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.013159,
+        "deltas": {
+          "home_win": 0.013159,
+          "draw": -0.007978,
+          "away_win": -0.005181
+        }
+      }
+    },
+    {
+      "fixture_id": 1392493,
+      "prob": {
+        "home_win": 0.38,
+        "draw": 0.33,
+        "away_win": 0.29
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.91,
+          "draw": 2.997,
+          "away_win": 3.092
+        },
+        "odds_implied": {
+          "home_win": 0.343394,
+          "draw": 0.333425,
+          "away_win": 0.323181
+        },
+        "odds_margin": 0.000725
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.036606,
+        "deltas": {
+          "home_win": 0.036606,
+          "draw": -0.003425,
+          "away_win": -0.033181
+        }
+      }
+    },
+    {
+      "fixture_id": 1405406,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.887,
+          "draw": 2.896,
+          "away_win": 2.962
+        },
+        "odds_implied": {
+          "home_win": 0.336522,
+          "draw": 0.335476,
+          "away_win": 0.328001
+        },
+        "odds_margin": 0.029294
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.011999,
+        "deltas": {
+          "home_win": -0.006522,
+          "draw": -0.005476,
+          "away_win": 0.011999
+        }
+      }
+    },
+    {
+      "fixture_id": 1397459,
+      "prob": {
+        "home_win": 0.48,
+        "draw": 0.33,
+        "away_win": 0.19
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.317,
+          "draw": 3.006,
+          "away_win": 4.192
+        },
+        "odds_implied": {
+          "home_win": 0.430383,
+          "draw": 0.331736,
+          "away_win": 0.237881
+        },
+        "odds_margin": 0.00281
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.049617,
+        "deltas": {
+          "home_win": 0.049617,
+          "draw": -0.001736,
+          "away_win": -0.047881
+        }
+      }
+    },
+    {
+      "fixture_id": 1445476,
+      "prob": {
+        "home_win": 0.28,
+        "draw": 0.33,
+        "away_win": 0.39
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.26,
+          "draw": 2.889,
+          "away_win": 2.592
+        },
+        "odds_implied": {
+          "home_win": 0.295322,
+          "draw": 0.333247,
+          "away_win": 0.371431
+        },
+        "odds_margin": 0.038691
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.018569,
+        "deltas": {
+          "home_win": -0.015322,
+          "draw": -0.003247,
+          "away_win": 0.018569
+        }
+      }
+    },
+    {
+      "fixture_id": 1472221,
+      "prob": {
+        "home_win": 0.23,
+        "draw": 0.33,
+        "away_win": 0.44
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.485,
+          "draw": 3.173,
+          "away_win": 2.403
+        },
+        "odds_implied": {
+          "home_win": 0.281801,
+          "draw": 0.309511,
+          "away_win": 0.408688
+        },
+        "odds_margin": 0.01825
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.031312,
+        "deltas": {
+          "home_win": -0.051801,
+          "draw": 0.020489,
+          "away_win": 0.031312
+        }
+      }
+    },
+    {
+      "fixture_id": 1400493,
+      "prob": {
+        "home_win": 0.48,
+        "draw": 0.33,
+        "away_win": 0.19
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.452,
+          "draw": 2.999,
+          "away_win": 4.059
+        },
+        "odds_implied": {
+          "home_win": 0.412934,
+          "draw": 0.337617,
+          "away_win": 0.249449
+        },
+        "odds_margin": -0.012359
+      },
+      "value": {
+        "active": true,
+        "value_side": "home_win",
+        "value_edge": 0.067066,
+        "deltas": {
+          "home_win": 0.067066,
+          "draw": -0.007617,
+          "away_win": -0.059449
+        },
+        "adjusted_edge": 0.066237
+      }
+    },
+    {
+      "fixture_id": 1430830,
+      "prob": {
+        "home_win": 0.48,
+        "draw": 0.33,
+        "away_win": 0.19
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.333,
+          "draw": 2.894,
+          "away_win": 4.093
+        },
+        "odds_implied": {
+          "home_win": 0.420849,
+          "draw": 0.339268,
+          "away_win": 0.239883
+        },
+        "odds_margin": 0.018495
+      },
+      "value": {
+        "active": true,
+        "value_side": "home_win",
+        "value_edge": 0.059151,
+        "deltas": {
+          "home_win": 0.059151,
+          "draw": -0.009268,
+          "away_win": -0.049883
+        },
+        "adjusted_edge": 0.060245
+      }
+    },
+    {
+      "fixture_id": 1481205,
+      "prob": {
+        "home_win": 0.23,
+        "draw": 0.33,
+        "away_win": 0.44
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.496,
+          "draw": 2.982,
+          "away_win": 2.475
+        },
+        "odds_implied": {
+          "home_win": 0.278948,
+          "draw": 0.32703,
+          "away_win": 0.394022
+        },
+        "odds_margin": 0.025427
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.045978,
+        "deltas": {
+          "home_win": -0.048948,
+          "draw": 0.00297,
+          "away_win": 0.045978
+        }
+      }
+    },
+    {
+      "fixture_id": 1366915,
+      "prob": {
+        "home_win": 0.18,
+        "draw": 0.33,
+        "away_win": 0.49
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 4.056,
+          "draw": 3.181,
+          "away_win": 2.287
+        },
+        "odds_implied": {
+          "home_win": 0.247001,
+          "draw": 0.314943,
+          "away_win": 0.438056
+        },
+        "odds_margin": -0.001831
+      },
+      "value": {
+        "active": true,
+        "value_side": "away_win",
+        "value_edge": 0.051944,
+        "deltas": {
+          "home_win": -0.067001,
+          "draw": 0.015057,
+          "away_win": 0.051944
+        },
+        "adjusted_edge": 0.051849
+      }
+    },
+    {
+      "fixture_id": 1366916,
+      "prob": {
+        "home_win": 0.43,
+        "draw": 0.33,
+        "away_win": 0.24
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.496,
+          "draw": 3.217,
+          "away_win": 3.726
+        },
+        "odds_implied": {
+          "home_win": 0.40887,
+          "draw": 0.317233,
+          "away_win": 0.273897
+        },
+        "odds_margin": -0.020126
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.02113,
+        "deltas": {
+          "home_win": 0.02113,
+          "draw": 0.012767,
+          "away_win": -0.033897
+        }
+      }
+    },
+    {
+      "fixture_id": 1472222,
+      "prob": {
+        "home_win": 0.28,
+        "draw": 0.33,
+        "away_win": 0.39
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.549,
+          "draw": 3.098,
+          "away_win": 2.765
+        },
+        "odds_implied": {
+          "home_win": 0.29162,
+          "draw": 0.334073,
+          "away_win": 0.374307
+        },
+        "odds_margin": -0.033778
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.015693,
+        "deltas": {
+          "home_win": -0.01162,
+          "draw": -0.004073,
+          "away_win": 0.015693
+        }
+      }
+    },
+    {
+      "fixture_id": 1320895,
+      "prob": {
+        "home_win": 0.18,
+        "draw": 0.33,
+        "away_win": 0.49
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 4.52,
+          "draw": 2.968,
+          "away_win": 2.407
+        },
+        "odds_implied": {
+          "home_win": 0.227233,
+          "draw": 0.346056,
+          "away_win": 0.426711
+        },
+        "odds_margin": -0.026379
+      },
+      "value": {
+        "active": true,
+        "value_side": "away_win",
+        "value_edge": 0.063289,
+        "deltas": {
+          "home_win": -0.047233,
+          "draw": -0.016056,
+          "away_win": 0.063289
+        },
+        "adjusted_edge": 0.061619
+      }
+    },
+    {
+      "fixture_id": 1321338,
+      "prob": {
+        "home_win": 0.08,
+        "draw": 0.33,
+        "away_win": 0.59
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 5.291,
+          "draw": 3.209,
+          "away_win": 2.097
+        },
+        "odds_implied": {
+          "home_win": 0.193351,
+          "draw": 0.318798,
+          "away_win": 0.487851
+        },
+        "odds_margin": -0.022505
+      },
+      "value": {
+        "active": true,
+        "value_side": "away_win",
+        "value_edge": 0.102149,
+        "deltas": {
+          "home_win": -0.113351,
+          "draw": 0.011202,
+          "away_win": 0.102149
+        },
+        "adjusted_edge": 0.09985
+      }
+    },
+    {
+      "fixture_id": 1321340,
+      "prob": {
+        "home_win": 0.18,
+        "draw": 0.33,
+        "away_win": 0.49
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.972,
+          "draw": 2.94,
+          "away_win": 2.41
+        },
+        "odds_implied": {
+          "home_win": 0.250053,
+          "draw": 0.337827,
+          "away_win": 0.41212
+        },
+        "odds_margin": 0.006836
+      },
+      "value": {
+        "active": true,
+        "value_side": "away_win",
+        "value_edge": 0.07788,
+        "deltas": {
+          "home_win": -0.070053,
+          "draw": -0.007827,
+          "away_win": 0.07788
+        },
+        "adjusted_edge": 0.078412
+      }
+    },
+    {
+      "fixture_id": 1449844,
+      "prob": {
+        "home_win": 0.38,
+        "draw": 0.33,
+        "away_win": 0.29
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.898,
+          "draw": 2.978,
+          "away_win": 3.221
+        },
+        "odds_implied": {
+          "home_win": 0.348086,
+          "draw": 0.338735,
+          "away_win": 0.31318
+        },
+        "odds_margin": -0.008676
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.031914,
+        "deltas": {
+          "home_win": 0.031914,
+          "draw": -0.008735,
+          "away_win": -0.02318
+        }
+      }
+    },
+    {
+      "fixture_id": 1320894,
+      "prob": {
+        "home_win": 0.38,
+        "draw": 0.33,
+        "away_win": 0.29
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.767,
+          "draw": 2.911,
+          "away_win": 3.099
+        },
+        "odds_implied": {
+          "home_win": 0.351691,
+          "draw": 0.334294,
+          "away_win": 0.314014
+        },
+        "odds_margin": 0.027612
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.028309,
+        "deltas": {
+          "home_win": 0.028309,
+          "draw": -0.004294,
+          "away_win": -0.024014
+        }
+      }
+    },
+    {
+      "fixture_id": 1400491,
+      "prob": {
+        "home_win": 0.38,
+        "draw": 0.33,
+        "away_win": 0.29
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.75,
+          "draw": 2.928,
+          "away_win": 3.276
+        },
+        "odds_implied": {
+          "home_win": 0.359888,
+          "draw": 0.338009,
+          "away_win": 0.302103
+        },
+        "odds_margin": 0.010417
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.020112,
+        "deltas": {
+          "home_win": 0.020112,
+          "draw": -0.008009,
+          "away_win": -0.012103
+        }
+      }
+    },
+    {
+      "fixture_id": 1449845,
+      "prob": {
+        "home_win": 0.43,
+        "draw": 0.33,
+        "away_win": 0.24
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.603,
+          "draw": 2.985,
+          "away_win": 3.394
+        },
+        "odds_implied": {
+          "home_win": 0.378936,
+          "draw": 0.330442,
+          "away_win": 0.290622
+        },
+        "odds_margin": 0.013818
+      },
+      "value": {
+        "active": true,
+        "value_side": "home_win",
+        "value_edge": 0.051064,
+        "deltas": {
+          "home_win": 0.051064,
+          "draw": -0.000442,
+          "away_win": -0.050622
+        },
+        "adjusted_edge": 0.05177
+      }
+    },
+    {
+      "fixture_id": 1479833,
+      "prob": {
+        "home_win": 0.05,
+        "draw": 0.26,
+        "away_win": 0.69
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 7.601,
+          "draw": 3.222,
+          "away_win": 1.825
+        },
+        "odds_implied": {
+          "home_win": 0.132908,
+          "draw": 0.313541,
+          "away_win": 0.553551
+        },
+        "odds_margin": -0.010127
+      },
+      "value": {
+        "active": true,
+        "value_side": "away_win",
+        "value_edge": 0.136449,
+        "deltas": {
+          "home_win": -0.082908,
+          "draw": -0.053541,
+          "away_win": 0.136449
+        },
+        "adjusted_edge": 0.135067
+      }
+    },
+    {
+      "fixture_id": 1479834,
+      "prob": {
+        "home_win": 0.05,
+        "draw": 0.25,
+        "away_win": 0.7
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 14.18,
+          "draw": 3.037,
+          "away_win": 1.683
+        },
+        "odds_implied": {
+          "home_win": 0.07095,
+          "draw": 0.331269,
+          "away_win": 0.597781
+        },
+        "odds_margin": -0.006029
+      },
+      "value": {
+        "active": true,
+        "value_side": "away_win",
+        "value_edge": 0.102219,
+        "deltas": {
+          "home_win": -0.02095,
+          "draw": -0.081269,
+          "away_win": 0.102219
+        },
+        "adjusted_edge": 0.101603
+      }
+    },
+    {
+      "fixture_id": 1481579,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.149,
+          "draw": 2.993,
+          "away_win": 3.069
+        },
+        "odds_implied": {
+          "home_win": 0.324866,
+          "draw": 0.341799,
+          "away_win": 0.333335
+        },
+        "odds_margin": -0.022487
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.006665,
+        "deltas": {
+          "home_win": 0.005134,
+          "draw": -0.011799,
+          "away_win": 0.006665
+        }
+      }
+    },
+    {
+      "fixture_id": 1481591,
+      "prob": {
+        "home_win": 0.43,
+        "draw": 0.33,
+        "away_win": 0.24
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.499,
+          "draw": 2.983,
+          "away_win": 3.364
+        },
+        "odds_implied": {
+          "home_win": 0.387505,
+          "draw": 0.324631,
+          "away_win": 0.287864
+        },
+        "odds_margin": 0.032658
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.042495,
+        "deltas": {
+          "home_win": 0.042495,
+          "draw": 0.005369,
+          "away_win": -0.047864
+        }
+      }
+    },
+    {
+      "fixture_id": 1321335,
+      "prob": {
+        "home_win": 0.38,
+        "draw": 0.33,
+        "away_win": 0.29
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.802,
+          "draw": 3.161,
+          "away_win": 3.133
+        },
+        "odds_implied": {
+          "home_win": 0.359611,
+          "draw": 0.31877,
+          "away_win": 0.321619
+        },
+        "odds_margin": -0.007574
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.020389,
+        "deltas": {
+          "home_win": 0.020389,
+          "draw": 0.01123,
+          "away_win": -0.031619
+        }
+      }
+    },
+    {
+      "fixture_id": 1433971,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.907,
+          "draw": 2.947,
+          "away_win": 3.081
+        },
+        "odds_implied": {
+          "home_win": 0.341303,
+          "draw": 0.33667,
+          "away_win": 0.322027
+        },
+        "odds_margin": 0.007895
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.017973,
+        "deltas": {
+          "home_win": -0.011303,
+          "draw": -0.00667,
+          "away_win": 0.017973
+        }
+      }
+    },
+    {
+      "fixture_id": 1433972,
+      "prob": {
+        "home_win": 0.38,
+        "draw": 0.33,
+        "away_win": 0.29
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.684,
+          "draw": 3.212,
+          "away_win": 3.306
+        },
+        "odds_implied": {
+          "home_win": 0.377719,
+          "draw": 0.315628,
+          "away_win": 0.306654
+        },
+        "odds_margin": -0.013609
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.014372,
+        "deltas": {
+          "home_win": 0.002281,
+          "draw": 0.014372,
+          "away_win": -0.016654
+        }
+      }
+    },
+    {
+      "fixture_id": 1433974,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.135,
+          "draw": 3.18,
+          "away_win": 2.997
+        },
+        "odds_implied": {
+          "home_win": 0.329827,
+          "draw": 0.325159,
+          "away_win": 0.345014
+        },
+        "odds_margin": -0.032888
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.004841,
+        "deltas": {
+          "home_win": 0.000173,
+          "draw": 0.004841,
+          "away_win": -0.005014
+        }
+      }
+    },
+    {
+      "fixture_id": 1321342,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.051,
+          "draw": 3.164,
+          "away_win": 3.001
+        },
+        "odds_implied": {
+          "home_win": 0.335464,
+          "draw": 0.323483,
+          "away_win": 0.341053
+        },
+        "odds_margin": -0.022961
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.006517,
+        "deltas": {
+          "home_win": -0.005464,
+          "draw": 0.006517,
+          "away_win": -0.001053
+        }
+      }
+    },
+    {
+      "fixture_id": 1126105,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.863,
+          "draw": 2.86,
+          "away_win": 2.926
+        },
+        "odds_implied": {
+          "home_win": 0.335625,
+          "draw": 0.335977,
+          "away_win": 0.328398
+        },
+        "odds_margin": 0.040698
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.011602,
+        "deltas": {
+          "home_win": -0.005625,
+          "draw": -0.005977,
+          "away_win": 0.011602
+        }
+      }
+    },
+    {
+      "fixture_id": 1321341,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.966,
+          "draw": 3.202,
+          "away_win": 2.934
+        },
+        "odds_implied": {
+          "home_win": 0.34046,
+          "draw": 0.315367,
+          "away_win": 0.344173
+        },
+        "odds_margin": -0.009709
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.014633,
+        "deltas": {
+          "home_win": -0.01046,
+          "draw": 0.014633,
+          "away_win": -0.004173
+        }
+      }
+    },
+    {
+      "fixture_id": 1394801,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.075,
+          "draw": 3.139,
+          "away_win": 2.826
+        },
+        "odds_implied": {
+          "home_win": 0.325975,
+          "draw": 0.319329,
+          "away_win": 0.354697
+        },
+        "odds_margin": -0.002367
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.010671,
+        "deltas": {
+          "home_win": 0.004025,
+          "draw": 0.010671,
+          "away_win": -0.014697
+        }
+      }
+    },
+    {
+      "fixture_id": 1433975,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.107,
+          "draw": 2.917,
+          "away_win": 2.971
+        },
+        "odds_implied": {
+          "home_win": 0.321449,
+          "draw": 0.342387,
+          "away_win": 0.336164
+        },
+        "odds_margin": 0.001259
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.008551,
+        "deltas": {
+          "home_win": 0.008551,
+          "draw": -0.012387,
+          "away_win": 0.003836
+        }
+      }
+    },
+    {
+      "fixture_id": 1479835,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.918,
+          "draw": 3.001,
+          "away_win": 2.934
+        },
+        "odds_implied": {
+          "home_win": 0.337053,
+          "draw": 0.327731,
+          "away_win": 0.335215
+        },
+        "odds_margin": 0.016754
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.004785,
+        "deltas": {
+          "home_win": -0.007053,
+          "draw": 0.002269,
+          "away_win": 0.004785
+        }
+      }
+    },
+    {
+      "fixture_id": 1479837,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.147,
+          "draw": 2.897,
+          "away_win": 2.784
+        },
+        "odds_implied": {
+          "home_win": 0.310879,
+          "draw": 0.337707,
+          "away_win": 0.351414
+        },
+        "odds_margin": 0.022143
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.019121,
+        "deltas": {
+          "home_win": 0.019121,
+          "draw": -0.007707,
+          "away_win": -0.011414
+        }
+      }
+    },
+    {
+      "fixture_id": 1479838,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.97,
+          "draw": 2.885,
+          "away_win": 2.989
+        },
+        "odds_implied": {
+          "home_win": 0.330786,
+          "draw": 0.340531,
+          "away_win": 0.328683
+        },
+        "odds_margin": 0.017881
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.011317,
+        "deltas": {
+          "home_win": -0.000786,
+          "draw": -0.010531,
+          "away_win": 0.011317
+        }
+      }
+    },
+    {
+      "fixture_id": 1479839,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.174,
+          "draw": 3.168,
+          "away_win": 2.995
+        },
+        "odds_implied": {
+          "home_win": 0.32662,
+          "draw": 0.327239,
+          "away_win": 0.346141
+        },
+        "odds_margin": -0.035394
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.00338,
+        "deltas": {
+          "home_win": 0.00338,
+          "draw": 0.002761,
+          "away_win": -0.006141
+        }
+      }
+    },
+    {
+      "fixture_id": 1479840,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.875,
+          "draw": 2.97,
+          "away_win": 3.013
+        },
+        "odds_implied": {
+          "home_win": 0.342207,
+          "draw": 0.331261,
+          "away_win": 0.326533
+        },
+        "odds_margin": 0.016422
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.013467,
+        "deltas": {
+          "home_win": -0.012207,
+          "draw": -0.001261,
+          "away_win": 0.013467
+        }
+      }
+    },
+    {
+      "fixture_id": 1480333,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.996,
+          "draw": 2.88,
+          "away_win": 3.066
+        },
+        "odds_implied": {
+          "home_win": 0.331406,
+          "draw": 0.344754,
+          "away_win": 0.32384
+        },
+        "odds_margin": 0.007158
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.01616,
+        "deltas": {
+          "home_win": -0.001406,
+          "draw": -0.014754,
+          "away_win": 0.01616
+        }
+      }
+    },
+    {
+      "fixture_id": 1321337,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.928,
+          "draw": 2.998,
+          "away_win": 3.047
+        },
+        "odds_implied": {
+          "home_win": 0.340414,
+          "draw": 0.332466,
+          "away_win": 0.32712
+        },
+        "odds_margin": 0.003277
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.01288,
+        "deltas": {
+          "home_win": -0.010414,
+          "draw": -0.002466,
+          "away_win": 0.01288
+        }
+      }
+    },
+    {
+      "fixture_id": 1321326,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.922,
+          "draw": 2.898,
+          "away_win": 3.04
+        },
+        "odds_implied": {
+          "home_win": 0.336761,
+          "draw": 0.33955,
+          "away_win": 0.323689
+        },
+        "odds_margin": 0.016244
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.016311,
+        "deltas": {
+          "home_win": -0.006761,
+          "draw": -0.00955,
+          "away_win": 0.016311
+        }
+      }
+    },
+    {
+      "fixture_id": 1350062,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.078,
+          "draw": 2.896,
+          "away_win": 2.882
+        },
+        "odds_implied": {
+          "home_win": 0.319402,
+          "draw": 0.339475,
+          "away_win": 0.341124
+        },
+        "odds_margin": 0.017171
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.010598,
+        "deltas": {
+          "home_win": 0.010598,
+          "draw": -0.009475,
+          "away_win": -0.001124
+        }
+      }
+    },
+    {
+      "fixture_id": 1367145,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.012,
+          "draw": 3.059,
+          "away_win": 2.908
+        },
+        "odds_implied": {
+          "home_win": 0.331082,
+          "draw": 0.325995,
+          "away_win": 0.342923
+        },
+        "odds_margin": 0.002788
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.004005,
+        "deltas": {
+          "home_win": -0.001082,
+          "draw": 0.004005,
+          "away_win": -0.002923
+        }
+      }
+    },
+    {
+      "fixture_id": 1479841,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.045,
+          "draw": 2.89,
+          "away_win": 2.83
+        },
+        "odds_implied": {
+          "home_win": 0.319529,
+          "draw": 0.336667,
+          "away_win": 0.343804
+        },
+        "odds_margin": 0.027785
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.010471,
+        "deltas": {
+          "home_win": 0.010471,
+          "draw": -0.006667,
+          "away_win": -0.003804
+        }
+      }
+    },
+    {
+      "fixture_id": 1479842,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.167,
+          "draw": 2.864,
+          "away_win": 2.853
+        },
+        "odds_implied": {
+          "home_win": 0.310959,
+          "draw": 0.343857,
+          "away_win": 0.345183
+        },
+        "odds_margin": 0.015426
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.019041,
+        "deltas": {
+          "home_win": 0.019041,
+          "draw": -0.013857,
+          "away_win": -0.005183
+        }
+      }
+    },
+    {
+      "fixture_id": 1321339,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.1,
+          "draw": 3.185,
+          "away_win": 2.843
+        },
+        "odds_implied": {
+          "home_win": 0.326402,
+          "draw": 0.317691,
+          "away_win": 0.355908
+        },
+        "odds_margin": -0.011706
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.012309,
+        "deltas": {
+          "home_win": 0.003598,
+          "draw": 0.012309,
+          "away_win": -0.015908
+        }
+      }
+    },
+    {
+      "fixture_id": 1350049,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.039,
+          "draw": 2.983,
+          "away_win": 2.955
+        },
+        "odds_implied": {
+          "home_win": 0.32817,
+          "draw": 0.334331,
+          "away_win": 0.337499
+        },
+        "odds_margin": 0.002698
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.002501,
+        "deltas": {
+          "home_win": 0.00183,
+          "draw": -0.004331,
+          "away_win": 0.002501
+        }
+      }
+    },
+    {
+      "fixture_id": 1350051,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.165,
+          "draw": 3.197,
+          "away_win": 2.959
+        },
+        "odds_implied": {
+          "home_win": 0.326839,
+          "draw": 0.323568,
+          "away_win": 0.349593
+        },
+        "odds_margin": -0.033299
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.006432,
+        "deltas": {
+          "home_win": 0.003161,
+          "draw": 0.006432,
+          "away_win": -0.009593
+        }
+      }
+    },
+    {
+      "fixture_id": 1366917,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.952,
+          "draw": 3.004,
+          "away_win": 2.885
+        },
+        "odds_implied": {
+          "home_win": 0.332678,
+          "draw": 0.326919,
+          "away_win": 0.340404
+        },
+        "odds_margin": 0.018263
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.003081,
+        "deltas": {
+          "home_win": -0.002678,
+          "draw": 0.003081,
+          "away_win": -0.000404
+        }
+      }
+    },
+    {
+      "fixture_id": 1366918,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.961,
+          "draw": 2.864,
+          "away_win": 2.779
+        },
+        "odds_implied": {
+          "home_win": 0.322647,
+          "draw": 0.333575,
+          "away_win": 0.343778
+        },
+        "odds_margin": 0.046727
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.007353,
+        "deltas": {
+          "home_win": 0.007353,
+          "draw": -0.003575,
+          "away_win": -0.003778
+        }
+      }
+    },
+    {
+      "fixture_id": 1478574,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.88,
+          "draw": 2.897,
+          "away_win": 3.006
+        },
+        "odds_implied": {
+          "home_win": 0.338729,
+          "draw": 0.336741,
+          "away_win": 0.32453
+        },
+        "odds_margin": 0.025075
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.01547,
+        "deltas": {
+          "home_win": -0.008729,
+          "draw": -0.006741,
+          "away_win": 0.01547
+        }
+      }
+    },
+    {
+      "fixture_id": 1478584,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.957,
+          "draw": 3.043,
+          "away_win": 2.801
+        },
+        "odds_implied": {
+          "home_win": 0.330313,
+          "draw": 0.320978,
+          "away_win": 0.348709
+        },
+        "odds_margin": 0.023819
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.009022,
+        "deltas": {
+          "home_win": -0.000313,
+          "draw": 0.009022,
+          "away_win": -0.008709
+        }
+      }
+    },
+    {
+      "fixture_id": 1126095,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.136,
+          "draw": 3.18,
+          "away_win": 2.792
+        },
+        "odds_implied": {
+          "home_win": 0.321608,
+          "draw": 0.317158,
+          "away_win": 0.361233
+        },
+        "odds_margin": -0.008491
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.012842,
+        "deltas": {
+          "home_win": 0.008392,
+          "draw": 0.012842,
+          "away_win": -0.021233
+        }
+      }
+    },
+    {
+      "fixture_id": 1126097,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.99,
+          "draw": 2.925,
+          "away_win": 2.827
+        },
+        "odds_implied": {
+          "home_win": 0.324688,
+          "draw": 0.331903,
+          "away_win": 0.343409
+        },
+        "odds_margin": 0.03006
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.005312,
+        "deltas": {
+          "home_win": 0.005312,
+          "draw": -0.001903,
+          "away_win": -0.003409
+        }
+      }
+    },
+    {
+      "fixture_id": 1126107,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.067,
+          "draw": 2.956,
+          "away_win": 2.995
+        },
+        "odds_implied": {
+          "home_win": 0.326628,
+          "draw": 0.338893,
+          "away_win": 0.33448
+        },
+        "odds_margin": -0.001764
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.00552,
+        "deltas": {
+          "home_win": 0.003372,
+          "draw": -0.008893,
+          "away_win": 0.00552
+        }
+      }
+    },
+    {
+      "fixture_id": 1126108,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.945,
+          "draw": 3.116,
+          "away_win": 3.0
+        },
+        "odds_implied": {
+          "home_win": 0.341671,
+          "draw": 0.322921,
+          "away_win": 0.335407
+        },
+        "odds_margin": -0.006184
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.007079,
+        "deltas": {
+          "home_win": -0.011671,
+          "draw": 0.007079,
+          "away_win": 0.004593
+        }
+      }
+    },
+    {
+      "fixture_id": 1126109,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.981,
+          "draw": 3.014,
+          "away_win": 2.916
+        },
+        "odds_implied": {
+          "home_win": 0.332078,
+          "draw": 0.328442,
+          "away_win": 0.33948
+        },
+        "odds_margin": 0.010178
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.001558,
+        "deltas": {
+          "home_win": -0.002078,
+          "draw": 0.001558,
+          "away_win": 0.00052
+        }
+      }
+    },
+    {
+      "fixture_id": 1321334,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.951,
+          "draw": 3.126,
+          "away_win": 3.124
+        },
+        "odds_implied": {
+          "home_win": 0.346184,
+          "draw": 0.326804,
+          "away_win": 0.327013
+        },
+        "odds_margin": -0.021132
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.012987,
+        "deltas": {
+          "home_win": -0.016184,
+          "draw": 0.003196,
+          "away_win": 0.012987
+        }
+      }
+    },
+    {
+      "fixture_id": 1323340,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.88,
+          "draw": 2.866,
+          "away_win": 3.011
+        },
+        "odds_implied": {
+          "home_win": 0.337681,
+          "draw": 0.33933,
+          "away_win": 0.322989
+        },
+        "odds_margin": 0.028256
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.017011,
+        "deltas": {
+          "home_win": -0.007681,
+          "draw": -0.00933,
+          "away_win": 0.017011
+        }
+      }
+    },
+    {
+      "fixture_id": 1350045,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.199,
+          "draw": 2.899,
+          "away_win": 2.865
+        },
+        "odds_implied": {
+          "home_win": 0.310553,
+          "draw": 0.34269,
+          "away_win": 0.346757
+        },
+        "odds_margin": 0.006584
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.019447,
+        "deltas": {
+          "home_win": 0.019447,
+          "draw": -0.01269,
+          "away_win": -0.006757
+        }
+      }
+    },
+    {
+      "fixture_id": 1350046,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.174,
+          "draw": 2.927,
+          "away_win": 2.831
+        },
+        "odds_implied": {
+          "home_win": 0.311959,
+          "draw": 0.338285,
+          "away_win": 0.349756
+        },
+        "odds_margin": 0.009939
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.018041,
+        "deltas": {
+          "home_win": 0.018041,
+          "draw": -0.008285,
+          "away_win": -0.009756
+        }
+      }
+    },
+    {
+      "fixture_id": 1350048,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.09,
+          "draw": 2.942,
+          "away_win": 3.03
+        },
+        "odds_implied": {
+          "home_win": 0.325721,
+          "draw": 0.342107,
+          "away_win": 0.332171
+        },
+        "odds_margin": -0.006438
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.007829,
+        "deltas": {
+          "home_win": 0.004279,
+          "draw": -0.012107,
+          "away_win": 0.007829
+        }
+      }
+    },
+    {
+      "fixture_id": 1350050,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.913,
+          "draw": 3.022,
+          "away_win": 2.912
+        },
+        "odds_implied": {
+          "home_win": 0.337351,
+          "draw": 0.325183,
+          "away_win": 0.337467
+        },
+        "odds_margin": 0.017602
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.004817,
+        "deltas": {
+          "home_win": -0.007351,
+          "draw": 0.004817,
+          "away_win": 0.002533
+        }
+      }
+    },
+    {
+      "fixture_id": 1350053,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.884,
+          "draw": 2.986,
+          "away_win": 2.857
+        },
+        "odds_implied": {
+          "home_win": 0.336102,
+          "draw": 0.324621,
+          "away_win": 0.339278
+        },
+        "odds_margin": 0.031654
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.005379,
+        "deltas": {
+          "home_win": -0.006102,
+          "draw": 0.005379,
+          "away_win": 0.000722
+        }
+      }
+    },
+    {
+      "fixture_id": 1350054,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.921,
+          "draw": 2.975,
+          "away_win": 2.981
+        },
+        "odds_implied": {
+          "home_win": 0.337641,
+          "draw": 0.331513,
+          "away_win": 0.330846
+        },
+        "odds_margin": 0.013941
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.009154,
+        "deltas": {
+          "home_win": -0.007641,
+          "draw": -0.001513,
+          "away_win": 0.009154
+        }
+      }
+    },
+    {
+      "fixture_id": 1350055,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.145,
+          "draw": 2.947,
+          "away_win": 2.891
+        },
+        "odds_implied": {
+          "home_win": 0.316953,
+          "draw": 0.338248,
+          "away_win": 0.3448
+        },
+        "odds_margin": 0.003194
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.013047,
+        "deltas": {
+          "home_win": 0.013047,
+          "draw": -0.008248,
+          "away_win": -0.0048
+        }
+      }
+    },
+    {
+      "fixture_id": 1350056,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.051,
+          "draw": 2.969,
+          "away_win": 2.823
+        },
+        "odds_implied": {
+          "home_win": 0.321711,
+          "draw": 0.330596,
+          "away_win": 0.347694
+        },
+        "odds_margin": 0.018808
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.008289,
+        "deltas": {
+          "home_win": 0.008289,
+          "draw": -0.000596,
+          "away_win": -0.007694
+        }
+      }
+    },
+    {
+      "fixture_id": 1350059,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.884,
+          "draw": 2.974,
+          "away_win": 2.989
+        },
+        "odds_implied": {
+          "home_win": 0.340761,
+          "draw": 0.330449,
+          "away_win": 0.32879
+        },
+        "odds_margin": 0.017548
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.01121,
+        "deltas": {
+          "home_win": -0.010761,
+          "draw": -0.000449,
+          "away_win": 0.01121
+        }
+      }
+    },
+    {
+      "fixture_id": 1350060,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.085,
+          "draw": 2.861,
+          "away_win": 3.122
+        },
+        "odds_implied": {
+          "home_win": 0.326111,
+          "draw": 0.351643,
+          "away_win": 0.322246
+        },
+        "odds_margin": -0.006015
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.017754,
+        "deltas": {
+          "home_win": 0.003889,
+          "draw": -0.021643,
+          "away_win": 0.017754
+        }
+      }
+    },
+    {
+      "fixture_id": 1352746,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.06,
+          "draw": 2.943,
+          "away_win": 2.853
+        },
+        "odds_implied": {
+          "home_win": 0.321305,
+          "draw": 0.334078,
+          "away_win": 0.344617
+        },
+        "odds_margin": 0.017095
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.008695,
+        "deltas": {
+          "home_win": 0.008695,
+          "draw": -0.004078,
+          "away_win": -0.004617
+        }
+      }
+    },
+    {
+      "fixture_id": 1479843,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.966,
+          "draw": 2.911,
+          "away_win": 2.871
+        },
+        "odds_implied": {
+          "home_win": 0.327656,
+          "draw": 0.333846,
+          "away_win": 0.338498
+        },
+        "odds_margin": 0.02899
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.002344,
+        "deltas": {
+          "home_win": 0.002344,
+          "draw": -0.003846,
+          "away_win": 0.001502
+        }
+      }
+    },
+    {
+      "fixture_id": 1350058,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.131,
+          "draw": 2.936,
+          "away_win": 3.086
+        },
+        "odds_implied": {
+          "home_win": 0.32457,
+          "draw": 0.346127,
+          "away_win": 0.329303
+        },
+        "odds_margin": -0.01597
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.010697,
+        "deltas": {
+          "home_win": 0.00543,
+          "draw": -0.016127,
+          "away_win": 0.010697
+        }
+      }
+    },
+    {
+      "fixture_id": 1350044,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.055,
+          "draw": 3.042,
+          "away_win": 2.845
+        },
+        "odds_implied": {
+          "home_win": 0.324877,
+          "draw": 0.326265,
+          "away_win": 0.348857
+        },
+        "odds_margin": 0.007557
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.005123,
+        "deltas": {
+          "home_win": 0.005123,
+          "draw": 0.003735,
+          "away_win": -0.008857
+        }
+      }
+    },
+    {
+      "fixture_id": 1350061,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.103,
+          "draw": 2.983,
+          "away_win": 2.87
+        },
+        "odds_implied": {
+          "home_win": 0.320368,
+          "draw": 0.333256,
+          "away_win": 0.346377
+        },
+        "odds_margin": 0.005934
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.009632,
+        "deltas": {
+          "home_win": 0.009632,
+          "draw": -0.003256,
+          "away_win": -0.006377
+        }
+      }
+    },
+    {
+      "fixture_id": 1321333,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.958,
+          "draw": 3.14,
+          "away_win": 3.072
+        },
+        "odds_implied": {
+          "home_win": 0.344243,
+          "draw": 0.32429,
+          "away_win": 0.331468
+        },
+        "odds_margin": -0.017942
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.008532,
+        "deltas": {
+          "home_win": -0.014243,
+          "draw": 0.00571,
+          "away_win": 0.008532
+        }
+      }
+    },
+    {
+      "fixture_id": 1350047,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.19,
+          "draw": 3.017,
+          "away_win": 2.897
+        },
+        "odds_implied": {
+          "home_win": 0.316608,
+          "draw": 0.334763,
+          "away_win": 0.348629
+        },
+        "odds_margin": -0.009881
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.013392,
+        "deltas": {
+          "home_win": 0.013392,
+          "draw": -0.004763,
+          "away_win": -0.008629
+        }
+      }
+    },
+    {
+      "fixture_id": 1350052,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.924,
+          "draw": 2.978,
+          "away_win": 2.889
+        },
+        "odds_implied": {
+          "home_win": 0.334003,
+          "draw": 0.327947,
+          "away_win": 0.33805
+        },
+        "odds_margin": 0.023934
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.002053,
+        "deltas": {
+          "home_win": -0.004003,
+          "draw": 0.002053,
+          "away_win": 0.00195
+        }
+      }
+    },
+    {
+      "fixture_id": 1350063,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.149,
+          "draw": 2.887,
+          "away_win": 2.838
+        },
+        "odds_implied": {
+          "home_win": 0.312467,
+          "draw": 0.340824,
+          "away_win": 0.346709
+        },
+        "odds_margin": 0.016302
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.017533,
+        "deltas": {
+          "home_win": 0.017533,
+          "draw": -0.010824,
+          "away_win": -0.006709
+        }
+      }
+    },
+    {
+      "fixture_id": 1401467,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.202,
+          "draw": 3.19,
+          "away_win": 2.972
+        },
+        "odds_implied": {
+          "home_win": 0.324554,
+          "draw": 0.325775,
+          "away_win": 0.349671
+        },
+        "odds_margin": -0.037742
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.005446,
+        "deltas": {
+          "home_win": 0.005446,
+          "draw": 0.004225,
+          "away_win": -0.009671
+        }
+      }
+    },
+    {
+      "fixture_id": 1408420,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.946,
+          "draw": 2.988,
+          "away_win": 2.957
+        },
+        "odds_implied": {
+          "home_win": 0.33532,
+          "draw": 0.330607,
+          "away_win": 0.334073
+        },
+        "odds_margin": 0.012296
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.005927,
+        "deltas": {
+          "home_win": -0.00532,
+          "draw": -0.000607,
+          "away_win": 0.005927
+        }
+      }
+    },
+    {
+      "fixture_id": 1409523,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.146,
+          "draw": 2.904,
+          "away_win": 2.909
+        },
+        "odds_implied": {
+          "home_win": 0.315975,
+          "draw": 0.342307,
+          "away_win": 0.341718
+        },
+        "odds_margin": 0.005977
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.014025,
+        "deltas": {
+          "home_win": 0.014025,
+          "draw": -0.012307,
+          "away_win": -0.001718
+        }
+      }
+    },
+    {
+      "fixture_id": 1433976,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.173,
+          "draw": 3.002,
+          "away_win": 3.068
+        },
+        "odds_implied": {
+          "home_win": 0.3235,
+          "draw": 0.341928,
+          "away_win": 0.334572
+        },
+        "odds_margin": -0.025784
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.0065,
+        "deltas": {
+          "home_win": 0.0065,
+          "draw": -0.011928,
+          "away_win": 0.005428
+        }
+      }
+    },
+    {
+      "fixture_id": 1435557,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.978,
+          "draw": 2.893,
+          "away_win": 2.861
+        },
+        "odds_implied": {
+          "home_win": 0.325704,
+          "draw": 0.335273,
+          "away_win": 0.339023
+        },
+        "odds_margin": 0.030986
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.004296,
+        "deltas": {
+          "home_win": 0.004296,
+          "draw": -0.005273,
+          "away_win": 0.000977
+        }
+      }
+    },
+    {
+      "fixture_id": 1469296,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.136,
+          "draw": 2.873,
+          "away_win": 2.795
+        },
+        "odds_implied": {
+          "home_win": 0.311183,
+          "draw": 0.339669,
+          "away_win": 0.349148
+        },
+        "odds_margin": 0.024728
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.018817,
+        "deltas": {
+          "home_win": 0.018817,
+          "draw": -0.009669,
+          "away_win": -0.009148
+        }
+      }
+    },
+    {
+      "fixture_id": 1479254,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.133,
+          "draw": 3.015,
+          "away_win": 2.893
+        },
+        "odds_implied": {
+          "home_win": 0.320298,
+          "draw": 0.332833,
+          "away_win": 0.346869
+        },
+        "odds_margin": -0.00348
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.009702,
+        "deltas": {
+          "home_win": 0.009702,
+          "draw": -0.002833,
+          "away_win": -0.006869
+        }
+      }
+    },
+    {
+      "fixture_id": 1350057,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.889,
+          "draw": 2.905,
+          "away_win": 2.935
+        },
+        "odds_implied": {
+          "home_win": 0.335703,
+          "draw": 0.333855,
+          "away_win": 0.330442
+        },
+        "odds_margin": 0.03109
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.009558,
+        "deltas": {
+          "home_win": -0.005703,
+          "draw": -0.003855,
+          "away_win": 0.009558
+        }
+      }
+    },
+    {
+      "fixture_id": 1353925,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.015,
+          "draw": 3.182,
+          "away_win": 2.93
+        },
+        "odds_implied": {
+          "home_win": 0.335962,
+          "draw": 0.31833,
+          "away_win": 0.345708
+        },
+        "odds_margin": -0.01276
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.01167,
+        "deltas": {
+          "home_win": -0.005962,
+          "draw": 0.01167,
+          "away_win": -0.005708
+        }
+      }
+    },
+    {
+      "fixture_id": 1353926,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.995,
+          "draw": 3.177,
+          "away_win": 3.059
+        },
+        "odds_implied": {
+          "home_win": 0.342256,
+          "draw": 0.322649,
+          "away_win": 0.335095
+        },
+        "odds_margin": -0.024444
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.007351,
+        "deltas": {
+          "home_win": -0.012256,
+          "draw": 0.007351,
+          "away_win": 0.004905
+        }
+      }
+    },
+    {
+      "fixture_id": 1353927,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.058,
+          "draw": 2.921,
+          "away_win": 2.888
+        },
+        "odds_implied": {
+          "home_win": 0.321982,
+          "draw": 0.337083,
+          "away_win": 0.340935
+        },
+        "odds_margin": 0.01562
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.008018,
+        "deltas": {
+          "home_win": 0.008018,
+          "draw": -0.007083,
+          "away_win": -0.000935
+        }
+      }
+    },
+    {
+      "fixture_id": 1433939,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.18,
+          "draw": 2.946,
+          "away_win": 2.956
+        },
+        "odds_implied": {
+          "home_win": 0.316936,
+          "draw": 0.342111,
+          "away_win": 0.340953
+        },
+        "odds_margin": -0.007796
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.013064,
+        "deltas": {
+          "home_win": 0.013064,
+          "draw": -0.012111,
+          "away_win": -0.000953
+        }
+      }
+    },
+    {
+      "fixture_id": 1444551,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.053,
+          "draw": 3.216,
+          "away_win": 2.946
+        },
+        "odds_implied": {
+          "home_win": 0.334937,
+          "draw": 0.317961,
+          "away_win": 0.347102
+        },
+        "odds_margin": -0.022065
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.012039,
+        "deltas": {
+          "home_win": -0.004937,
+          "draw": 0.012039,
+          "away_win": -0.007102
+        }
+      }
+    },
+    {
+      "fixture_id": 1453378,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.086,
+          "draw": 2.999,
+          "away_win": 2.964
+        },
+        "odds_implied": {
+          "home_win": 0.325715,
+          "draw": 0.335164,
+          "away_win": 0.339121
+        },
+        "odds_margin": -0.00513
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.004285,
+        "deltas": {
+          "home_win": 0.004285,
+          "draw": -0.005164,
+          "away_win": 0.000879
+        }
+      }
+    },
+    {
+      "fixture_id": 1453379,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.081,
+          "draw": 3.125,
+          "away_win": 3.069
+        },
+        "odds_implied": {
+          "home_win": 0.334467,
+          "draw": 0.329758,
+          "away_win": 0.335775
+        },
+        "odds_margin": -0.029591
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.004225,
+        "deltas": {
+          "home_win": -0.004467,
+          "draw": 0.000242,
+          "away_win": 0.004225
+        }
+      }
+    },
+    {
+      "fixture_id": 1475947,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.891,
+          "draw": 2.924,
+          "away_win": 2.955
+        },
+        "odds_implied": {
+          "home_win": 0.337034,
+          "draw": 0.333231,
+          "away_win": 0.329735
+        },
+        "odds_margin": 0.026308
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.010265,
+        "deltas": {
+          "home_win": -0.007034,
+          "draw": -0.003231,
+          "away_win": 0.010265
+        }
+      }
+    },
+    {
+      "fixture_id": 1480334,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.028,
+          "draw": 3.138,
+          "away_win": 2.929
+        },
+        "odds_implied": {
+          "home_win": 0.333473,
+          "draw": 0.321783,
+          "away_win": 0.344744
+        },
+        "odds_margin": -0.009661
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.008217,
+        "deltas": {
+          "home_win": -0.003473,
+          "draw": 0.008217,
+          "away_win": -0.004744
+        }
+      }
+    },
+    {
+      "fixture_id": 1428268,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.135,
+          "draw": 2.912,
+          "away_win": 3.119
+        },
+        "odds_implied": {
+          "home_win": 0.324495,
+          "draw": 0.349345,
+          "away_win": 0.32616
+        },
+        "odds_margin": -0.016999
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.01384,
+        "deltas": {
+          "home_win": 0.005505,
+          "draw": -0.019345,
+          "away_win": 0.01384
+        }
+      }
+    },
+    {
+      "fixture_id": 1444090,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.206,
+          "draw": 2.897,
+          "away_win": 2.874
+        },
+        "odds_implied": {
+          "home_win": 0.310349,
+          "draw": 0.343451,
+          "away_win": 0.3462
+        },
+        "odds_margin": 0.005047
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.019651,
+        "deltas": {
+          "home_win": 0.019651,
+          "draw": -0.013451,
+          "away_win": -0.0062
+        }
+      }
+    },
+    {
+      "fixture_id": 1444552,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.079,
+          "draw": 3.153,
+          "away_win": 3.014
+        },
+        "odds_implied": {
+          "home_win": 0.333545,
+          "draw": 0.325717,
+          "away_win": 0.340738
+        },
+        "odds_margin": -0.026276
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.004283,
+        "deltas": {
+          "home_win": -0.003545,
+          "draw": 0.004283,
+          "away_win": -0.000738
+        }
+      }
+    },
+    {
+      "fixture_id": 1435224,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.029,
+          "draw": 2.974,
+          "away_win": 3.038
+        },
+        "odds_implied": {
+          "home_win": 0.331617,
+          "draw": 0.337749,
+          "away_win": 0.330634
+        },
+        "odds_margin": -0.004447
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.009366,
+        "deltas": {
+          "home_win": -0.001617,
+          "draw": -0.007749,
+          "away_win": 0.009366
+        }
+      }
+    },
+    {
+      "fixture_id": 1323338,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.097,
+          "draw": 2.938,
+          "away_win": 2.846
+        },
+        "odds_implied": {
+          "home_win": 0.318237,
+          "draw": 0.335459,
+          "away_win": 0.346304
+        },
+        "odds_margin": 0.014631
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.011763,
+        "deltas": {
+          "home_win": 0.011763,
+          "draw": -0.005459,
+          "away_win": -0.006304
+        }
+      }
+    },
+    {
+      "fixture_id": 1323339,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.148,
+          "draw": 2.911,
+          "away_win": 3.058
+        },
+        "odds_implied": {
+          "home_win": 0.321456,
+          "draw": 0.347627,
+          "away_win": 0.330917
+        },
+        "odds_margin": -0.011802
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.009083,
+        "deltas": {
+          "home_win": 0.008544,
+          "draw": -0.017627,
+          "away_win": 0.009083
+        }
+      }
+    },
+    {
+      "fixture_id": 1323341,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.077,
+          "draw": 3.222,
+          "away_win": 2.874
+        },
+        "odds_implied": {
+          "home_win": 0.33051,
+          "draw": 0.315636,
+          "away_win": 0.353855
+        },
+        "odds_margin": -0.016695
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.014364,
+        "deltas": {
+          "home_win": -0.00051,
+          "draw": 0.014364,
+          "away_win": -0.013855
+        }
+      }
+    },
+    {
+      "fixture_id": 1323342,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.16,
+          "draw": 3.146,
+          "away_win": 2.931
+        },
+        "odds_implied": {
+          "home_win": 0.324404,
+          "draw": 0.325847,
+          "away_win": 0.349749
+        },
+        "odds_margin": -0.0245
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.005596,
+        "deltas": {
+          "home_win": 0.005596,
+          "draw": 0.004153,
+          "away_win": -0.009749
+        }
+      }
+    },
+    {
+      "fixture_id": 1366308,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.104,
+          "draw": 3.114,
+          "away_win": 3.035
+        },
+        "odds_implied": {
+          "home_win": 0.331178,
+          "draw": 0.330115,
+          "away_win": 0.338707
+        },
+        "odds_margin": -0.027215
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.001293,
+        "deltas": {
+          "home_win": -0.001178,
+          "draw": -0.000115,
+          "away_win": 0.001293
+        }
+      }
+    },
+    {
+      "fixture_id": 1366309,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.224,
+          "draw": 3.019,
+          "away_win": 2.862
+        },
+        "odds_implied": {
+          "home_win": 0.313049,
+          "draw": 0.334306,
+          "away_win": 0.352645
+        },
+        "odds_margin": -0.009185
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.016951,
+        "deltas": {
+          "home_win": 0.016951,
+          "draw": -0.004306,
+          "away_win": -0.012645
+        }
+      }
+    },
+    {
+      "fixture_id": 1366310,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.999,
+          "draw": 2.989,
+          "away_win": 3.046
+        },
+        "odds_implied": {
+          "home_win": 0.334681,
+          "draw": 0.335801,
+          "away_win": 0.329517
+        },
+        "odds_margin": -0.003696
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.010483,
+        "deltas": {
+          "home_win": -0.004681,
+          "draw": -0.005801,
+          "away_win": 0.010483
+        }
+      }
+    },
+    {
+      "fixture_id": 1405127,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.035,
+          "draw": 2.891,
+          "away_win": 2.869
+        },
+        "odds_implied": {
+          "home_win": 0.321785,
+          "draw": 0.337813,
+          "away_win": 0.340403
+        },
+        "odds_margin": 0.023944
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.008215,
+        "deltas": {
+          "home_win": 0.008215,
+          "draw": -0.007813,
+          "away_win": -0.000403
+        }
+      }
+    },
+    {
+      "fixture_id": 1405128,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.893,
+          "draw": 3.047,
+          "away_win": 3.092
+        },
+        "odds_implied": {
+          "home_win": 0.346609,
+          "draw": 0.32909,
+          "away_win": 0.324301
+        },
+        "odds_margin": -0.002731
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.015699,
+        "deltas": {
+          "home_win": -0.016609,
+          "draw": 0.00091,
+          "away_win": 0.015699
+        }
+      }
+    },
+    {
+      "fixture_id": 1405129,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.222,
+          "draw": 2.876,
+          "away_win": 2.891
+        },
+        "odds_implied": {
+          "home_win": 0.309138,
+          "draw": 0.346329,
+          "away_win": 0.344532
+        },
+        "odds_margin": 0.003972
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.020862,
+        "deltas": {
+          "home_win": 0.020862,
+          "draw": -0.016329,
+          "away_win": -0.004532
+        }
+      }
+    },
+    {
+      "fixture_id": 1405130,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.071,
+          "draw": 3.059,
+          "away_win": 2.962
+        },
+        "odds_implied": {
+          "home_win": 0.328869,
+          "draw": 0.330159,
+          "away_win": 0.340971
+        },
+        "odds_margin": -0.009859
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.001131,
+        "deltas": {
+          "home_win": 0.001131,
+          "draw": -0.000159,
+          "away_win": -0.000971
+        }
+      }
+    },
+    {
+      "fixture_id": 1405131,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.053,
+          "draw": 3.036,
+          "away_win": 3.1
+        },
+        "odds_implied": {
+          "home_win": 0.334399,
+          "draw": 0.336272,
+          "away_win": 0.329329
+        },
+        "odds_margin": -0.020492
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.010671,
+        "deltas": {
+          "home_win": -0.004399,
+          "draw": -0.006272,
+          "away_win": 0.010671
+        }
+      }
+    },
+    {
+      "fixture_id": 1405132,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.939,
+          "draw": 2.969,
+          "away_win": 2.946
+        },
+        "odds_implied": {
+          "home_win": 0.334726,
+          "draw": 0.331344,
+          "away_win": 0.333931
+        },
+        "odds_margin": 0.016509
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.006069,
+        "deltas": {
+          "home_win": -0.004726,
+          "draw": -0.001344,
+          "away_win": 0.006069
+        }
+      }
+    },
+    {
+      "fixture_id": 1424524,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.171,
+          "draw": 2.992,
+          "away_win": 2.863
+        },
+        "odds_implied": {
+          "home_win": 0.315716,
+          "draw": 0.334604,
+          "away_win": 0.34968
+        },
+        "odds_margin": -0.001134
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.014284,
+        "deltas": {
+          "home_win": 0.014284,
+          "draw": -0.004604,
+          "away_win": -0.00968
+        }
+      }
+    },
+    {
+      "fixture_id": 1424525,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.905,
+          "draw": 3.022,
+          "away_win": 2.933
+        },
+        "odds_implied": {
+          "home_win": 0.338784,
+          "draw": 0.325667,
+          "away_win": 0.335549
+        },
+        "odds_margin": 0.016089
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.004451,
+        "deltas": {
+          "home_win": -0.008784,
+          "draw": 0.004333,
+          "away_win": 0.004451
+        }
+      }
+    },
+    {
+      "fixture_id": 1424526,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.995,
+          "draw": 3.098,
+          "away_win": 2.903
+        },
+        "odds_implied": {
+          "home_win": 0.333506,
+          "draw": 0.322418,
+          "away_win": 0.344076
+        },
+        "odds_margin": 0.00115
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.007582,
+        "deltas": {
+          "home_win": -0.003506,
+          "draw": 0.007582,
+          "away_win": -0.004076
+        }
+      }
+    },
+    {
+      "fixture_id": 1424527,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.859,
+          "draw": 3.144,
+          "away_win": 2.797
+        },
+        "odds_implied": {
+          "home_win": 0.34112,
+          "draw": 0.310198,
+          "away_win": 0.348682
+        },
+        "odds_margin": 0.025365
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.019802,
+        "deltas": {
+          "home_win": -0.01112,
+          "draw": 0.019802,
+          "away_win": -0.008682
+        }
+      }
+    },
+    {
+      "fixture_id": 1424528,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.076,
+          "draw": 3.145,
+          "away_win": 2.795
+        },
+        "odds_implied": {
+          "home_win": 0.324823,
+          "draw": 0.317697,
+          "away_win": 0.35748
+        },
+        "odds_margin": 0.000844
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.012303,
+        "deltas": {
+          "home_win": 0.005177,
+          "draw": 0.012303,
+          "away_win": -0.01748
+        }
+      }
+    },
+    {
+      "fixture_id": 1424530,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.053,
+          "draw": 2.895,
+          "away_win": 2.824
+        },
+        "odds_implied": {
+          "home_win": 0.318911,
+          "draw": 0.336317,
+          "away_win": 0.344772
+        },
+        "odds_margin": 0.027077
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.011089,
+        "deltas": {
+          "home_win": 0.011089,
+          "draw": -0.006317,
+          "away_win": -0.004772
+        }
+      }
+    },
+    {
+      "fixture_id": 1424531,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.896,
+          "draw": 3.036,
+          "away_win": 2.857
+        },
+        "odds_implied": {
+          "home_win": 0.33698,
+          "draw": 0.32144,
+          "away_win": 0.34158
+        },
+        "odds_margin": 0.024702
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.00856,
+        "deltas": {
+          "home_win": -0.00698,
+          "draw": 0.00856,
+          "away_win": -0.00158
+        }
+      }
+    },
+    {
+      "fixture_id": 1424533,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.93,
+          "draw": 3.134,
+          "away_win": 2.852
+        },
+        "odds_implied": {
+          "home_win": 0.33758,
+          "draw": 0.315606,
+          "away_win": 0.346813
+        },
+        "odds_margin": 0.011009
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.014394,
+        "deltas": {
+          "home_win": -0.00758,
+          "draw": 0.014394,
+          "away_win": -0.006813
+        }
+      }
+    },
+    {
+      "fixture_id": 1427806,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.1,
+          "draw": 2.918,
+          "away_win": 2.867
+        },
+        "odds_implied": {
+          "home_win": 0.318102,
+          "draw": 0.337943,
+          "away_win": 0.343955
+        },
+        "odds_margin": 0.014078
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.011898,
+        "deltas": {
+          "home_win": 0.011898,
+          "draw": -0.007943,
+          "away_win": -0.003955
+        }
+      }
+    },
+    {
+      "fixture_id": 1427807,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.138,
+          "draw": 3.017,
+          "away_win": 2.977
+        },
+        "odds_implied": {
+          "home_win": 0.323187,
+          "draw": 0.336148,
+          "away_win": 0.340665
+        },
+        "odds_margin": -0.013962
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.006813,
+        "deltas": {
+          "home_win": 0.006813,
+          "draw": -0.006148,
+          "away_win": -0.000665
+        }
+      }
+    },
+    {
+      "fixture_id": 1427808,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.224,
+          "draw": 2.915,
+          "away_win": 2.969
+        },
+        "odds_implied": {
+          "home_win": 0.313294,
+          "draw": 0.346504,
+          "away_win": 0.340202
+        },
+        "odds_margin": -0.009959
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.016706,
+        "deltas": {
+          "home_win": 0.016706,
+          "draw": -0.016504,
+          "away_win": -0.000202
+        }
+      }
+    },
+    {
+      "fixture_id": 1427809,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.114,
+          "draw": 2.862,
+          "away_win": 3.064
+        },
+        "odds_implied": {
+          "home_win": 0.322127,
+          "draw": 0.35049,
+          "away_win": 0.327383
+        },
+        "odds_margin": -0.003093
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.012617,
+        "deltas": {
+          "home_win": 0.007873,
+          "draw": -0.02049,
+          "away_win": 0.012617
+        }
+      }
+    },
+    {
+      "fixture_id": 1427810,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.194,
+          "draw": 3.209,
+          "away_win": 2.861
+        },
+        "odds_implied": {
+          "home_win": 0.321366,
+          "draw": 0.319864,
+          "away_win": 0.358771
+        },
+        "odds_margin": -0.025761
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.010136,
+        "deltas": {
+          "home_win": 0.008634,
+          "draw": 0.010136,
+          "away_win": -0.018771
+        }
+      }
+    },
+    {
+      "fixture_id": 1427811,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.87,
+          "draw": 2.93,
+          "away_win": 3.04
+        },
+        "odds_implied": {
+          "home_win": 0.342044,
+          "draw": 0.33504,
+          "away_win": 0.322916
+        },
+        "odds_margin": 0.018676
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.017084,
+        "deltas": {
+          "home_win": -0.012044,
+          "draw": -0.00504,
+          "away_win": 0.017084
+        }
+      }
+    },
+    {
+      "fixture_id": 1427812,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.135,
+          "draw": 3.056,
+          "away_win": 3.113
+        },
+        "odds_implied": {
+          "home_win": 0.329715,
+          "draw": 0.338239,
+          "away_win": 0.332046
+        },
+        "odds_margin": -0.032562
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.007954,
+        "deltas": {
+          "home_win": 0.000285,
+          "draw": -0.008239,
+          "away_win": 0.007954
+        }
+      }
+    },
+    {
+      "fixture_id": 1427813,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.947,
+          "draw": 2.996,
+          "away_win": 2.966
+        },
+        "odds_implied": {
+          "home_win": 0.335882,
+          "draw": 0.330388,
+          "away_win": 0.33373
+        },
+        "odds_margin": 0.010261
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.00627,
+        "deltas": {
+          "home_win": -0.005882,
+          "draw": -0.000388,
+          "away_win": 0.00627
+        }
+      }
+    },
+    {
+      "fixture_id": 1427814,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.958,
+          "draw": 3.048,
+          "away_win": 2.93
+        },
+        "odds_implied": {
+          "home_win": 0.335567,
+          "draw": 0.325659,
+          "away_win": 0.338774
+        },
+        "odds_margin": 0.007447
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.004341,
+        "deltas": {
+          "home_win": -0.005567,
+          "draw": 0.004341,
+          "away_win": 0.001226
+        }
+      }
+    },
+    {
+      "fixture_id": 1428269,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.073,
+          "draw": 3.194,
+          "away_win": 2.878
+        },
+        "odds_implied": {
+          "home_win": 0.330047,
+          "draw": 0.317544,
+          "away_win": 0.352409
+        },
+        "odds_margin": -0.014035
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.012456,
+        "deltas": {
+          "home_win": -4.7e-05,
+          "draw": 0.012456,
+          "away_win": -0.012409
+        }
+      }
+    },
+    {
+      "fixture_id": 1428271,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.151,
+          "draw": 3.142,
+          "away_win": 2.986
+        },
+        "odds_implied": {
+          "home_win": 0.326998,
+          "draw": 0.327935,
+          "away_win": 0.345067
+        },
+        "odds_margin": -0.029476
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.003002,
+        "deltas": {
+          "home_win": 0.003002,
+          "draw": 0.002065,
+          "away_win": -0.005067
+        }
+      }
+    },
+    {
+      "fixture_id": 1428272,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.149,
+          "draw": 3.148,
+          "away_win": 3.075
+        },
+        "odds_implied": {
+          "home_win": 0.330646,
+          "draw": 0.330751,
+          "away_win": 0.338603
+        },
+        "odds_margin": -0.039574
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.001397,
+        "deltas": {
+          "home_win": -0.000646,
+          "draw": -0.000751,
+          "away_win": 0.001397
+        }
+      }
+    },
+    {
+      "fixture_id": 1428273,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.902,
+          "draw": 3.121,
+          "away_win": 2.81
+        },
+        "odds_implied": {
+          "home_win": 0.337545,
+          "draw": 0.313859,
+          "away_win": 0.348596
+        },
+        "odds_margin": 0.020872
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.016141,
+        "deltas": {
+          "home_win": -0.007545,
+          "draw": 0.016141,
+          "away_win": -0.008596
+        }
+      }
+    },
+    {
+      "fixture_id": 1428274,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.903,
+          "draw": 2.858,
+          "away_win": 2.944
+        },
+        "odds_implied": {
+          "home_win": 0.333131,
+          "draw": 0.338377,
+          "away_win": 0.328492
+        },
+        "odds_margin": 0.03404
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.011508,
+        "deltas": {
+          "home_win": -0.003131,
+          "draw": -0.008377,
+          "away_win": 0.011508
+        }
+      }
+    },
+    {
+      "fixture_id": 1428275,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.165,
+          "draw": 3.198,
+          "away_win": 2.78
+        },
+        "odds_implied": {
+          "home_win": 0.319676,
+          "draw": 0.316377,
+          "away_win": 0.363947
+        },
+        "odds_margin": -0.011637
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.013623,
+        "deltas": {
+          "home_win": 0.010324,
+          "draw": 0.013623,
+          "away_win": -0.023947
+        }
+      }
+    },
+    {
+      "fixture_id": 1428276,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.938,
+          "draw": 2.866,
+          "away_win": 3.004
+        },
+        "odds_implied": {
+          "home_win": 0.332984,
+          "draw": 0.341349,
+          "away_win": 0.325668
+        },
+        "odds_margin": 0.022175
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.014332,
+        "deltas": {
+          "home_win": -0.002984,
+          "draw": -0.011349,
+          "away_win": 0.014332
+        }
+      }
+    },
+    {
+      "fixture_id": 1428277,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.11,
+          "draw": 3.104,
+          "away_win": 2.95
+        },
+        "odds_implied": {
+          "home_win": 0.327207,
+          "draw": 0.327839,
+          "away_win": 0.344954
+        },
+        "odds_margin": -0.017309
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.002793,
+        "deltas": {
+          "home_win": 0.002793,
+          "draw": 0.002161,
+          "away_win": -0.004954
+        }
+      }
+    },
+    {
+      "fixture_id": 1428704,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.172,
+          "draw": 3.215,
+          "away_win": 2.956
+        },
+        "odds_implied": {
+          "home_win": 0.32683,
+          "draw": 0.322458,
+          "away_win": 0.350712
+        },
+        "odds_margin": -0.035405
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.007542,
+        "deltas": {
+          "home_win": 0.00317,
+          "draw": 0.007542,
+          "away_win": -0.010712
+        }
+      }
+    },
+    {
+      "fixture_id": 1428734,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.95,
+          "draw": 2.893,
+          "away_win": 2.952
+        },
+        "odds_implied": {
+          "home_win": 0.331233,
+          "draw": 0.337759,
+          "away_win": 0.331008
+        },
+        "odds_margin": 0.023398
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.008992,
+        "deltas": {
+          "home_win": -0.001233,
+          "draw": -0.007759,
+          "away_win": 0.008992
+        }
+      }
+    },
+    {
+      "fixture_id": 1428736,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.151,
+          "draw": 2.915,
+          "away_win": 2.985
+        },
+        "odds_implied": {
+          "home_win": 0.318819,
+          "draw": 0.344631,
+          "away_win": 0.336549
+        },
+        "odds_margin": -0.004579
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.011181,
+        "deltas": {
+          "home_win": 0.011181,
+          "draw": -0.014631,
+          "away_win": 0.003451
+        }
+      }
+    },
+    {
+      "fixture_id": 1434834,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.089,
+          "draw": 3.112,
+          "away_win": 3.024
+        },
+        "odds_implied": {
+          "home_win": 0.331774,
+          "draw": 0.329322,
+          "away_win": 0.338905
+        },
+        "odds_margin": -0.024246
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.001095,
+        "deltas": {
+          "home_win": -0.001774,
+          "draw": 0.000678,
+          "away_win": 0.001095
+        }
+      }
+    },
+    {
+      "fixture_id": 1434835,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.985,
+          "draw": 3.095,
+          "away_win": 3.065
+        },
+        "odds_implied": {
+          "home_win": 0.340326,
+          "draw": 0.328231,
+          "away_win": 0.331443
+        },
+        "odds_margin": -0.015626
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.008557,
+        "deltas": {
+          "home_win": -0.010326,
+          "draw": 0.001769,
+          "away_win": 0.008557
+        }
+      }
+    },
+    {
+      "fixture_id": 1434836,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.886,
+          "draw": 3.058,
+          "away_win": 3.017
+        },
+        "odds_implied": {
+          "home_win": 0.344788,
+          "draw": 0.325395,
+          "away_win": 0.329817
+        },
+        "odds_margin": 0.004967
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.010183,
+        "deltas": {
+          "home_win": -0.014788,
+          "draw": 0.004605,
+          "away_win": 0.010183
+        }
+      }
+    },
+    {
+      "fixture_id": 1434837,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.033,
+          "draw": 3.122,
+          "away_win": 3.047
+        },
+        "odds_implied": {
+          "home_win": 0.337052,
+          "draw": 0.327444,
+          "away_win": 0.335504
+        },
+        "odds_margin": -0.021794
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.004496,
+        "deltas": {
+          "home_win": -0.007052,
+          "draw": 0.002556,
+          "away_win": 0.004496
+        }
+      }
+    },
+    {
+      "fixture_id": 1434838,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.176,
+          "draw": 2.911,
+          "away_win": 2.829
+        },
+        "odds_implied": {
+          "home_win": 0.311169,
+          "draw": 0.339495,
+          "away_win": 0.349336
+        },
+        "odds_margin": 0.011868
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.018831,
+        "deltas": {
+          "home_win": 0.018831,
+          "draw": -0.009495,
+          "away_win": -0.009336
+        }
+      }
+    },
+    {
+      "fixture_id": 1434840,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.129,
+          "draw": 3.211,
+          "away_win": 2.996
+        },
+        "odds_implied": {
+          "home_win": 0.331251,
+          "draw": 0.322792,
+          "away_win": 0.345956
+        },
+        "odds_margin": -0.035201
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.007208,
+        "deltas": {
+          "home_win": -0.001251,
+          "draw": 0.007208,
+          "away_win": -0.005956
+        }
+      }
+    },
+    {
+      "fixture_id": 1434841,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.077,
+          "draw": 3.215,
+          "away_win": 2.979
+        },
+        "odds_implied": {
+          "home_win": 0.334451,
+          "draw": 0.320095,
+          "away_win": 0.345454
+        },
+        "odds_margin": -0.028283
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.009905,
+        "deltas": {
+          "home_win": -0.004451,
+          "draw": 0.009905,
+          "away_win": -0.005454
+        }
+      }
+    },
+    {
+      "fixture_id": 1435225,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.086,
+          "draw": 2.879,
+          "away_win": 2.906
+        },
+        "odds_implied": {
+          "home_win": 0.319097,
+          "draw": 0.34204,
+          "away_win": 0.338862
+        },
+        "odds_margin": 0.015503
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.010903,
+        "deltas": {
+          "home_win": 0.010903,
+          "draw": -0.01204,
+          "away_win": 0.001138
+        }
+      }
+    },
+    {
+      "fixture_id": 1435226,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.959,
+          "draw": 3.167,
+          "away_win": 3.105
+        },
+        "odds_implied": {
+          "home_win": 0.346344,
+          "draw": 0.323597,
+          "away_win": 0.330059
+        },
+        "odds_margin": -0.024231
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.009941,
+        "deltas": {
+          "home_win": -0.016344,
+          "draw": 0.006403,
+          "away_win": 0.009941
+        }
+      }
+    },
+    {
+      "fixture_id": 1435227,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.047,
+          "draw": 3.0,
+          "away_win": 2.913
+        },
+        "odds_implied": {
+          "home_win": 0.326619,
+          "draw": 0.331736,
+          "away_win": 0.341644
+        },
+        "odds_margin": 0.004814
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.003381,
+        "deltas": {
+          "home_win": 0.003381,
+          "draw": -0.001736,
+          "away_win": -0.001644
+        }
+      }
+    },
+    {
+      "fixture_id": 1435228,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.185,
+          "draw": 3.116,
+          "away_win": 3.069
+        },
+        "odds_implied": {
+          "home_win": 0.326804,
+          "draw": 0.33404,
+          "away_win": 0.339156
+        },
+        "odds_margin": -0.039265
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.003196,
+        "deltas": {
+          "home_win": 0.003196,
+          "draw": -0.00404,
+          "away_win": 0.000844
+        }
+      }
+    },
+    {
+      "fixture_id": 1435229,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.149,
+          "draw": 3.219,
+          "away_win": 3.06
+        },
+        "odds_implied": {
+          "home_win": 0.33252,
+          "draw": 0.325289,
+          "away_win": 0.342191
+        },
+        "odds_margin": -0.044986
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.004711,
+        "deltas": {
+          "home_win": -0.00252,
+          "draw": 0.004711,
+          "away_win": -0.002191
+        }
+      }
+    },
+    {
+      "fixture_id": 1435230,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.061,
+          "draw": 3.002,
+          "away_win": 3.061
+        },
+        "odds_implied": {
+          "home_win": 0.331164,
+          "draw": 0.337672,
+          "away_win": 0.331164
+        },
+        "odds_margin": -0.013507
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.008836,
+        "deltas": {
+          "home_win": -0.001164,
+          "draw": -0.007672,
+          "away_win": 0.008836
+        }
+      }
+    },
+    {
+      "fixture_id": 1435231,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.148,
+          "draw": 3.075,
+          "away_win": 2.878
+        },
+        "odds_implied": {
+          "home_win": 0.320764,
+          "draw": 0.328379,
+          "away_win": 0.350857
+        },
+        "odds_margin": -0.009671
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.009236,
+        "deltas": {
+          "home_win": 0.009236,
+          "draw": 0.001621,
+          "away_win": -0.010857
+        }
+      }
+    },
+    {
+      "fixture_id": 1435515,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.963,
+          "draw": 3.076,
+          "away_win": 3.101
+        },
+        "odds_implied": {
+          "home_win": 0.342611,
+          "draw": 0.330025,
+          "away_win": 0.327364
+        },
+        "odds_margin": -0.01493
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.012636,
+        "deltas": {
+          "home_win": -0.012611,
+          "draw": -2.5e-05,
+          "away_win": 0.012636
+        }
+      }
+    },
+    {
+      "fixture_id": 1442678,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.923,
+          "draw": 3.139,
+          "away_win": 2.993
+        },
+        "odds_implied": {
+          "home_win": 0.343903,
+          "draw": 0.320238,
+          "away_win": 0.335859
+        },
+        "odds_margin": -0.0052
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.009762,
+        "deltas": {
+          "home_win": -0.013903,
+          "draw": 0.009762,
+          "away_win": 0.004141
+        }
+      }
+    },
+    {
+      "fixture_id": 1442679,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.913,
+          "draw": 3.014,
+          "away_win": 2.821
+        },
+        "odds_implied": {
+          "home_win": 0.333433,
+          "draw": 0.32226,
+          "away_win": 0.344307
+        },
+        "odds_margin": 0.029558
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.00774,
+        "deltas": {
+          "home_win": -0.003433,
+          "draw": 0.00774,
+          "away_win": -0.004307
+        }
+      }
+    },
+    {
+      "fixture_id": 1442680,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.031,
+          "draw": 2.939,
+          "away_win": 3.084
+        },
+        "odds_implied": {
+          "home_win": 0.331772,
+          "draw": 0.342158,
+          "away_win": 0.32607
+        },
+        "odds_margin": -0.00557
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.01393,
+        "deltas": {
+          "home_win": -0.001772,
+          "draw": -0.012158,
+          "away_win": 0.01393
+        }
+      }
+    },
+    {
+      "fixture_id": 1442681,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.058,
+          "draw": 3.183,
+          "away_win": 3.018
+        },
+        "odds_implied": {
+          "home_win": 0.336249,
+          "draw": 0.323045,
+          "away_win": 0.340706
+        },
+        "odds_margin": -0.027475
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.006955,
+        "deltas": {
+          "home_win": -0.006249,
+          "draw": 0.006955,
+          "away_win": -0.000706
+        }
+      }
+    },
+    {
+      "fixture_id": 1442682,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.082,
+          "draw": 3.16,
+          "away_win": 2.944
+        },
+        "odds_implied": {
+          "home_win": 0.330886,
+          "draw": 0.322718,
+          "away_win": 0.346396
+        },
+        "odds_margin": -0.019406
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.007282,
+        "deltas": {
+          "home_win": -0.000886,
+          "draw": 0.007282,
+          "away_win": -0.006396
+        }
+      }
+    },
+    {
+      "fixture_id": 1442683,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.985,
+          "draw": 2.92,
+          "away_win": 2.812
+        },
+        "odds_implied": {
+          "home_win": 0.324277,
+          "draw": 0.331496,
+          "away_win": 0.344227
+        },
+        "odds_margin": 0.033093
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.005723,
+        "deltas": {
+          "home_win": 0.005723,
+          "draw": -0.001496,
+          "away_win": -0.004227
+        }
+      }
+    },
+    {
+      "fixture_id": 1442684,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.159,
+          "draw": 3.073,
+          "away_win": 3.033
+        },
+        "odds_implied": {
+          "home_win": 0.325783,
+          "draw": 0.3349,
+          "away_win": 0.339317
+        },
+        "odds_margin": -0.028323
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.004217,
+        "deltas": {
+          "home_win": 0.004217,
+          "draw": -0.0049,
+          "away_win": 0.000683
+        }
+      }
+    },
+    {
+      "fixture_id": 1442685,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.971,
+          "draw": 3.176,
+          "away_win": 3.011
+        },
+        "odds_implied": {
+          "home_win": 0.342212,
+          "draw": 0.320123,
+          "away_win": 0.337665
+        },
+        "odds_margin": -0.016436
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.009877,
+        "deltas": {
+          "home_win": -0.012212,
+          "draw": 0.009877,
+          "away_win": 0.002335
+        }
+      }
+    },
+    {
+      "fixture_id": 1443142,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.106,
+          "draw": 2.948,
+          "away_win": 3.036
+        },
+        "odds_implied": {
+          "home_win": 0.325029,
+          "draw": 0.342449,
+          "away_win": 0.332523
+        },
+        "odds_margin": -0.009449
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.007477,
+        "deltas": {
+          "home_win": 0.004971,
+          "draw": -0.012449,
+          "away_win": 0.007477
+        }
+      }
+    },
+    {
+      "fixture_id": 1443143,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.905,
+          "draw": 3.224,
+          "away_win": 3.012
+        },
+        "odds_implied": {
+          "home_win": 0.348976,
+          "draw": 0.314446,
+          "away_win": 0.336578
+        },
+        "odds_margin": -0.013587
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.015554,
+        "deltas": {
+          "home_win": -0.018976,
+          "draw": 0.015554,
+          "away_win": 0.003422
+        }
+      }
+    },
+    {
+      "fixture_id": 1443144,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.147,
+          "draw": 3.079,
+          "away_win": 2.913
+        },
+        "odds_implied": {
+          "home_win": 0.32233,
+          "draw": 0.329448,
+          "away_win": 0.348222
+        },
+        "odds_margin": -0.014168
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.00767,
+        "deltas": {
+          "home_win": 0.00767,
+          "draw": 0.000552,
+          "away_win": -0.008222
+        }
+      }
+    },
+    {
+      "fixture_id": 1443145,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.919,
+          "draw": 3.132,
+          "away_win": 2.836
+        },
+        "odds_implied": {
+          "home_win": 0.337694,
+          "draw": 0.314728,
+          "away_win": 0.347577
+        },
+        "odds_margin": 0.014477
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.015272,
+        "deltas": {
+          "home_win": -0.007694,
+          "draw": 0.015272,
+          "away_win": -0.007577
+        }
+      }
+    },
+    {
+      "fixture_id": 1443146,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.069,
+          "draw": 2.875,
+          "away_win": 2.883
+        },
+        "odds_implied": {
+          "home_win": 0.319285,
+          "draw": 0.34083,
+          "away_win": 0.339884
+        },
+        "odds_margin": 0.020526
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.010715,
+        "deltas": {
+          "home_win": 0.010715,
+          "draw": -0.01083,
+          "away_win": 0.000116
+        }
+      }
+    },
+    {
+      "fixture_id": 1443147,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.913,
+          "draw": 2.94,
+          "away_win": 2.839
+        },
+        "odds_implied": {
+          "home_win": 0.331468,
+          "draw": 0.328424,
+          "away_win": 0.340108
+        },
+        "odds_margin": 0.035661
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.001576,
+        "deltas": {
+          "home_win": -0.001468,
+          "draw": 0.001576,
+          "away_win": -0.000108
+        }
+      }
+    },
+    {
+      "fixture_id": 1443148,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.117,
+          "draw": 3.009,
+          "away_win": 2.836
+        },
+        "odds_implied": {
+          "home_win": 0.318982,
+          "draw": 0.330431,
+          "away_win": 0.350587
+        },
+        "odds_margin": 0.005767
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.011018,
+        "deltas": {
+          "home_win": 0.011018,
+          "draw": -0.000431,
+          "away_win": -0.010587
+        }
+      }
+    },
+    {
+      "fixture_id": 1443649,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.099,
+          "draw": 3.062,
+          "away_win": 2.815
+        },
+        "odds_implied": {
+          "home_win": 0.321236,
+          "draw": 0.325118,
+          "away_win": 0.353645
+        },
+        "odds_margin": 0.004508
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.008764,
+        "deltas": {
+          "home_win": 0.008764,
+          "draw": 0.004882,
+          "away_win": -0.013645
+        }
+      }
+    },
+    {
+      "fixture_id": 1443650,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.979,
+          "draw": 3.14,
+          "away_win": 3.047
+        },
+        "odds_implied": {
+          "home_win": 0.341716,
+          "draw": 0.324195,
+          "away_win": 0.33409
+        },
+        "odds_margin": -0.017654
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.00591,
+        "deltas": {
+          "home_win": -0.011716,
+          "draw": 0.005805,
+          "away_win": 0.00591
+        }
+      }
+    },
+    {
+      "fixture_id": 1443651,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.164,
+          "draw": 3.223,
+          "away_win": 2.91
+        },
+        "odds_implied": {
+          "home_win": 0.325841,
+          "draw": 0.319876,
+          "away_win": 0.354282
+        },
+        "odds_margin": -0.030032
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.010124,
+        "deltas": {
+          "home_win": 0.004159,
+          "draw": 0.010124,
+          "away_win": -0.014282
+        }
+      }
+    },
+    {
+      "fixture_id": 1443652,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.094,
+          "draw": 2.876,
+          "away_win": 2.825
+        },
+        "odds_implied": {
+          "home_win": 0.315356,
+          "draw": 0.33926,
+          "away_win": 0.345384
+        },
+        "odds_margin": 0.024894
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.014644,
+        "deltas": {
+          "home_win": 0.014644,
+          "draw": -0.00926,
+          "away_win": -0.005384
+        }
+      }
+    },
+    {
+      "fixture_id": 1443653,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.217,
+          "draw": 3.116,
+          "away_win": 3.11
+        },
+        "odds_implied": {
+          "home_win": 0.326071,
+          "draw": 0.33664,
+          "away_win": 0.337289
+        },
+        "odds_margin": -0.046684
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.003929,
+        "deltas": {
+          "home_win": 0.003929,
+          "draw": -0.00664,
+          "away_win": 0.002711
+        }
+      }
+    },
+    {
+      "fixture_id": 1443654,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.171,
+          "draw": 3.18,
+          "away_win": 2.968
+        },
+        "odds_implied": {
+          "home_win": 0.326204,
+          "draw": 0.325281,
+          "away_win": 0.348515
+        },
+        "odds_margin": -0.033249
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.004719,
+        "deltas": {
+          "home_win": 0.003796,
+          "draw": 0.004719,
+          "away_win": -0.008515
+        }
+      }
+    },
+    {
+      "fixture_id": 1444091,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.956,
+          "draw": 2.896,
+          "away_win": 2.945
+        },
+        "odds_implied": {
+          "home_win": 0.330638,
+          "draw": 0.337488,
+          "away_win": 0.331873
+        },
+        "odds_margin": 0.023157
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.008127,
+        "deltas": {
+          "home_win": -0.000638,
+          "draw": -0.007488,
+          "away_win": 0.008127
+        }
+      }
+    },
+    {
+      "fixture_id": 1444092,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.128,
+          "draw": 3.101,
+          "away_win": 3.031
+        },
+        "odds_implied": {
+          "home_win": 0.328871,
+          "draw": 0.331734,
+          "away_win": 0.339395
+        },
+        "odds_margin": -0.027906
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.001129,
+        "deltas": {
+          "home_win": 0.001129,
+          "draw": -0.001734,
+          "away_win": 0.000605
+        }
+      }
+    },
+    {
+      "fixture_id": 1444093,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.136,
+          "draw": 3.116,
+          "away_win": 2.827
+        },
+        "odds_implied": {
+          "home_win": 0.320953,
+          "draw": 0.323013,
+          "away_win": 0.356034
+        },
+        "odds_margin": -0.006466
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.009047,
+        "deltas": {
+          "home_win": 0.009047,
+          "draw": 0.006987,
+          "away_win": -0.016034
+        }
+      }
+    },
+    {
+      "fixture_id": 1444094,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.039,
+          "draw": 3.112,
+          "away_win": 3.11
+        },
+        "odds_implied": {
+          "home_win": 0.338557,
+          "draw": 0.330615,
+          "away_win": 0.330828
+        },
+        "odds_margin": -0.028064
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.009172,
+        "deltas": {
+          "home_win": -0.008557,
+          "draw": -0.000615,
+          "away_win": 0.009172
+        }
+      }
+    },
+    {
+      "fixture_id": 1444095,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.102,
+          "draw": 3.065,
+          "away_win": 2.799
+        },
+        "odds_implied": {
+          "home_win": 0.320479,
+          "draw": 0.324348,
+          "away_win": 0.355172
+        },
+        "odds_margin": 0.005907
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.009521,
+        "deltas": {
+          "home_win": 0.009521,
+          "draw": 0.005652,
+          "away_win": -0.015172
+        }
+      }
+    },
+    {
+      "fixture_id": 1444096,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.217,
+          "draw": 3.11,
+          "away_win": 3.045
+        },
+        "odds_implied": {
+          "home_win": 0.323531,
+          "draw": 0.334662,
+          "away_win": 0.341806
+        },
+        "odds_margin": -0.039201
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.006469,
+        "deltas": {
+          "home_win": 0.006469,
+          "draw": -0.004662,
+          "away_win": -0.001806
+        }
+      }
+    },
+    {
+      "fixture_id": 1444097,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.886,
+          "draw": 2.87,
+          "away_win": 2.932
+        },
+        "odds_implied": {
+          "home_win": 0.334461,
+          "draw": 0.336326,
+          "away_win": 0.329214
+        },
+        "odds_margin": 0.035997
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.010786,
+        "deltas": {
+          "home_win": -0.004461,
+          "draw": -0.006326,
+          "away_win": 0.010786
+        }
+      }
+    },
+    {
+      "fixture_id": 1444098,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.923,
+          "draw": 2.894,
+          "away_win": 2.804
+        },
+        "odds_implied": {
+          "home_win": 0.327605,
+          "draw": 0.330887,
+          "away_win": 0.341508
+        },
+        "odds_margin": 0.04429
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.002395,
+        "deltas": {
+          "home_win": 0.002395,
+          "draw": -0.000887,
+          "away_win": -0.001508
+        }
+      }
+    },
+    {
+      "fixture_id": 1444099,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.95,
+          "draw": 2.927,
+          "away_win": 2.927
+        },
+        "odds_implied": {
+          "home_win": 0.331596,
+          "draw": 0.334202,
+          "away_win": 0.334202
+        },
+        "odds_margin": 0.022277
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.005798,
+        "deltas": {
+          "home_win": -0.001596,
+          "draw": -0.004202,
+          "away_win": 0.005798
+        }
+      }
+    },
+    {
+      "fixture_id": 1444411,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.909,
+          "draw": 3.047,
+          "away_win": 3.074
+        },
+        "odds_implied": {
+          "home_win": 0.344705,
+          "draw": 0.329093,
+          "away_win": 0.326202
+        },
+        "odds_margin": -0.002739
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.013798,
+        "deltas": {
+          "home_win": -0.014705,
+          "draw": 0.000907,
+          "away_win": 0.013798
+        }
+      }
+    },
+    {
+      "fixture_id": 1444491,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.967,
+          "draw": 2.973,
+          "away_win": 2.884
+        },
+        "odds_implied": {
+          "home_win": 0.330386,
+          "draw": 0.329719,
+          "away_win": 0.339894
+        },
+        "odds_margin": 0.020142
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.000281,
+        "deltas": {
+          "home_win": -0.000386,
+          "draw": 0.000281,
+          "away_win": 0.000106
+        }
+      }
+    },
+    {
+      "fixture_id": 1473066,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.175,
+          "draw": 3.041,
+          "away_win": 2.93
+        },
+        "odds_implied": {
+          "home_win": 0.319726,
+          "draw": 0.333814,
+          "away_win": 0.34646
+        },
+        "odds_margin": -0.014903
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.010274,
+        "deltas": {
+          "home_win": 0.010274,
+          "draw": -0.003814,
+          "away_win": -0.00646
+        }
+      }
+    },
+    {
+      "fixture_id": 1473067,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.887,
+          "draw": 2.965,
+          "away_win": 2.956
+        },
+        "odds_implied": {
+          "home_win": 0.338943,
+          "draw": 0.330026,
+          "away_win": 0.331031
+        },
+        "odds_margin": 0.021943
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.008969,
+        "deltas": {
+          "home_win": -0.008943,
+          "draw": -2.6e-05,
+          "away_win": 0.008969
+        }
+      }
+    },
+    {
+      "fixture_id": 1473068,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.204,
+          "draw": 3.084,
+          "away_win": 2.961
+        },
+        "odds_implied": {
+          "home_win": 0.320412,
+          "draw": 0.33288,
+          "away_win": 0.346708
+        },
+        "odds_margin": -0.025912
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.009588,
+        "deltas": {
+          "home_win": 0.009588,
+          "draw": -0.00288,
+          "away_win": -0.006708
+        }
+      }
+    },
+    {
+      "fixture_id": 1473069,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.869,
+          "draw": 2.885,
+          "away_win": 2.873
+        },
+        "odds_implied": {
+          "home_win": 0.334106,
+          "draw": 0.332253,
+          "away_win": 0.333641
+        },
+        "odds_margin": 0.043242
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.006359,
+        "deltas": {
+          "home_win": -0.004106,
+          "draw": -0.002253,
+          "away_win": 0.006359
+        }
+      }
+    },
+    {
+      "fixture_id": 1473070,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.964,
+          "draw": 3.033,
+          "away_win": 2.788
+        },
+        "odds_implied": {
+          "home_win": 0.328906,
+          "draw": 0.321424,
+          "away_win": 0.34967
+        },
+        "odds_margin": 0.025769
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.008576,
+        "deltas": {
+          "home_win": 0.001094,
+          "draw": 0.008576,
+          "away_win": -0.00967
+        }
+      }
+    },
+    {
+      "fixture_id": 1473071,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.99,
+          "draw": 2.894,
+          "away_win": 3.018
+        },
+        "odds_implied": {
+          "home_win": 0.330699,
+          "draw": 0.341669,
+          "away_win": 0.327631
+        },
+        "odds_margin": 0.011336
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.012369,
+        "deltas": {
+          "home_win": -0.000699,
+          "draw": -0.011669,
+          "away_win": 0.012369
+        }
+      }
+    },
+    {
+      "fixture_id": 1473072,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.933,
+          "draw": 3.19,
+          "away_win": 3.025
+        },
+        "odds_implied": {
+          "home_win": 0.346138,
+          "draw": 0.318251,
+          "away_win": 0.335611
+        },
+        "odds_margin": -0.014994
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.011749,
+        "deltas": {
+          "home_win": -0.016138,
+          "draw": 0.011749,
+          "away_win": 0.004389
+        }
+      }
+    },
+    {
+      "fixture_id": 1473073,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.912,
+          "draw": 2.921,
+          "away_win": 2.91
+        },
+        "odds_implied": {
+          "home_win": 0.3336,
+          "draw": 0.332572,
+          "away_win": 0.333829
+        },
+        "odds_margin": 0.029398
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.006171,
+        "deltas": {
+          "home_win": -0.0036,
+          "draw": -0.002572,
+          "away_win": 0.006171
+        }
+      }
+    },
+    {
+      "fixture_id": 1473074,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.986,
+          "draw": 3.21,
+          "away_win": 3.04
+        },
+        "odds_implied": {
+          "home_win": 0.343353,
+          "draw": 0.319393,
+          "away_win": 0.337254
+        },
+        "odds_margin": -0.02463
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.010607,
+        "deltas": {
+          "home_win": -0.013353,
+          "draw": 0.010607,
+          "away_win": 0.002746
+        }
+      }
+    },
+    {
+      "fixture_id": 1476084,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.992,
+          "draw": 2.921,
+          "away_win": 3.007
+        },
+        "odds_implied": {
+          "home_win": 0.331201,
+          "draw": 0.339251,
+          "away_win": 0.329548
+        },
+        "odds_margin": 0.00913
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.010452,
+        "deltas": {
+          "home_win": -0.001201,
+          "draw": -0.009251,
+          "away_win": 0.010452
+        }
+      }
+    },
+    {
+      "fixture_id": 1476085,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.994,
+          "draw": 3.203,
+          "away_win": 2.872
+        },
+        "odds_implied": {
+          "home_win": 0.335883,
+          "draw": 0.313966,
+          "away_win": 0.350151
+        },
+        "odds_margin": -0.005602
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.016034,
+        "deltas": {
+          "home_win": -0.005883,
+          "draw": 0.016034,
+          "away_win": -0.010151
+        }
+      }
+    },
+    {
+      "fixture_id": 1476086,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.9,
+          "draw": 3.103,
+          "away_win": 3.039
+        },
+        "odds_implied": {
+          "home_win": 0.34616,
+          "draw": 0.323514,
+          "away_win": 0.330327
+        },
+        "odds_margin": -0.003848
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.009673,
+        "deltas": {
+          "home_win": -0.01616,
+          "draw": 0.006486,
+          "away_win": 0.009673
+        }
+      }
+    },
+    {
+      "fixture_id": 1476087,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.146,
+          "draw": 3.04,
+          "away_win": 2.816
+        },
+        "odds_implied": {
+          "home_win": 0.317253,
+          "draw": 0.328315,
+          "away_win": 0.354431
+        },
+        "odds_margin": 0.001925
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.012747,
+        "deltas": {
+          "home_win": 0.012747,
+          "draw": 0.001685,
+          "away_win": -0.014431
+        }
+      }
+    },
+    {
+      "fixture_id": 1476088,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.936,
+          "draw": 3.05,
+          "away_win": 2.918
+        },
+        "odds_implied": {
+          "home_win": 0.336837,
+          "draw": 0.324247,
+          "away_win": 0.338915
+        },
+        "odds_margin": 0.011169
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.005753,
+        "deltas": {
+          "home_win": -0.006837,
+          "draw": 0.005753,
+          "away_win": 0.001085
+        }
+      }
+    },
+    {
+      "fixture_id": 1476089,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.944,
+          "draw": 3.18,
+          "away_win": 3.032
+        },
+        "odds_implied": {
+          "home_win": 0.345213,
+          "draw": 0.319593,
+          "away_win": 0.335194
+        },
+        "odds_margin": -0.016045
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.010407,
+        "deltas": {
+          "home_win": -0.015213,
+          "draw": 0.010407,
+          "away_win": 0.004806
+        }
+      }
+    },
+    {
+      "fixture_id": 1476090,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.157,
+          "draw": 3.098,
+          "away_win": 3.048
+        },
+        "odds_implied": {
+          "home_win": 0.327353,
+          "draw": 0.333587,
+          "away_win": 0.33906
+        },
+        "odds_margin": -0.032371
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.002647,
+        "deltas": {
+          "home_win": 0.002647,
+          "draw": -0.003587,
+          "away_win": 0.00094
+        }
+      }
+    },
+    {
+      "fixture_id": 1476091,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.916,
+          "draw": 3.0,
+          "away_win": 2.845
+        },
+        "odds_implied": {
+          "home_win": 0.333672,
+          "draw": 0.324329,
+          "away_win": 0.341999
+        },
+        "odds_margin": 0.027763
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.005671,
+        "deltas": {
+          "home_win": -0.003672,
+          "draw": 0.005671,
+          "away_win": -0.001999
+        }
+      }
+    },
+    {
+      "fixture_id": 1476092,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.058,
+          "draw": 2.995,
+          "away_win": 3.089
+        },
+        "odds_implied": {
+          "home_win": 0.332116,
+          "draw": 0.339102,
+          "away_win": 0.328783
+        },
+        "odds_margin": -0.01537
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.011217,
+        "deltas": {
+          "home_win": -0.002116,
+          "draw": -0.009102,
+          "away_win": 0.011217
+        }
+      }
+    },
+    {
+      "fixture_id": 1479255,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.007,
+          "draw": 3.044,
+          "away_win": 3.101
+        },
+        "odds_implied": {
+          "home_win": 0.33812,
+          "draw": 0.33401,
+          "away_win": 0.32787
+        },
+        "odds_margin": -0.016451
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.01213,
+        "deltas": {
+          "home_win": -0.00812,
+          "draw": -0.00401,
+          "away_win": 0.01213
+        }
+      }
+    },
+    {
+      "fixture_id": 1481502,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.101,
+          "draw": 2.878,
+          "away_win": 2.916
+        },
+        "odds_implied": {
+          "home_win": 0.318377,
+          "draw": 0.343047,
+          "away_win": 0.338576
+        },
+        "odds_margin": 0.012876
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.011623,
+        "deltas": {
+          "home_win": 0.011623,
+          "draw": -0.013047,
+          "away_win": 0.001424
+        }
+      }
+    },
+    {
+      "fixture_id": 1481503,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.013,
+          "draw": 3.094,
+          "away_win": 2.961
+        },
+        "odds_implied": {
+          "home_win": 0.334294,
+          "draw": 0.325542,
+          "away_win": 0.340164
+        },
+        "odds_margin": -0.007175
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.004458,
+        "deltas": {
+          "home_win": -0.004294,
+          "draw": 0.004458,
+          "away_win": -0.000164
+        }
+      }
+    },
+    {
+      "fixture_id": 1481504,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.947,
+          "draw": 3.159,
+          "away_win": 2.78
+        },
+        "odds_implied": {
+          "home_win": 0.334117,
+          "draw": 0.311695,
+          "away_win": 0.354188
+        },
+        "odds_margin": 0.015596
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.018305,
+        "deltas": {
+          "home_win": -0.004117,
+          "draw": 0.018305,
+          "away_win": -0.014188
+        }
+      }
+    },
+    {
+      "fixture_id": 1481505,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.866,
+          "draw": 3.146,
+          "away_win": 3.09
+        },
+        "odds_implied": {
+          "home_win": 0.352298,
+          "draw": 0.320943,
+          "away_win": 0.326759
+        },
+        "odds_margin": -0.009593
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.013241,
+        "deltas": {
+          "home_win": -0.022298,
+          "draw": 0.009057,
+          "away_win": 0.013241
+        }
+      }
+    },
+    {
+      "fixture_id": 1481506,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.899,
+          "draw": 3.005,
+          "away_win": 3.01
+        },
+        "odds_implied": {
+          "home_win": 0.341548,
+          "draw": 0.3295,
+          "away_win": 0.328952
+        },
+        "odds_margin": 0.009951
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.011048,
+        "deltas": {
+          "home_win": -0.011548,
+          "draw": 0.0005,
+          "away_win": 0.011048
+        }
+      }
+    },
+    {
+      "fixture_id": 1481507,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.88,
+          "draw": 2.94,
+          "away_win": 3.097
+        },
+        "odds_implied": {
+          "home_win": 0.343699,
+          "draw": 0.336685,
+          "away_win": 0.319617
+        },
+        "odds_margin": 0.010251
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.020383,
+        "deltas": {
+          "home_win": -0.013699,
+          "draw": -0.006685,
+          "away_win": 0.020383
+        }
+      }
+    },
+    {
+      "fixture_id": 1481508,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.914,
+          "draw": 2.925,
+          "away_win": 3.021
+        },
+        "odds_implied": {
+          "home_win": 0.337744,
+          "draw": 0.336474,
+          "away_win": 0.325782
+        },
+        "odds_margin": 0.016067
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.014218,
+        "deltas": {
+          "home_win": -0.007744,
+          "draw": -0.006474,
+          "away_win": 0.014218
+        }
+      }
+    },
+    {
+      "fixture_id": 1434839,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.993,
+          "draw": 2.916,
+          "away_win": 2.941
+        },
+        "odds_implied": {
+          "home_win": 0.328506,
+          "draw": 0.33718,
+          "away_win": 0.334314
+        },
+        "odds_margin": 0.017069
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.005686,
+        "deltas": {
+          "home_win": 0.001494,
+          "draw": -0.00718,
+          "away_win": 0.005686
+        }
+      }
+    },
+    {
+      "fixture_id": 1126092,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.053,
+          "draw": 3.037,
+          "away_win": 2.816
+        },
+        "odds_implied": {
+          "home_win": 0.323684,
+          "draw": 0.32539,
+          "away_win": 0.350926
+        },
+        "odds_margin": 0.011933
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.006316,
+        "deltas": {
+          "home_win": 0.006316,
+          "draw": 0.00461,
+          "away_win": -0.010926
+        }
+      }
+    },
+    {
+      "fixture_id": 1126094,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.912,
+          "draw": 2.973,
+          "away_win": 2.899
+        },
+        "odds_implied": {
+          "home_win": 0.335124,
+          "draw": 0.328248,
+          "away_win": 0.336627
+        },
+        "odds_margin": 0.024714
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.003373,
+        "deltas": {
+          "home_win": -0.005124,
+          "draw": 0.001752,
+          "away_win": 0.003373
+        }
+      }
+    },
+    {
+      "fixture_id": 1126103,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.04,
+          "draw": 2.911,
+          "away_win": 2.812
+        },
+        "odds_implied": {
+          "home_win": 0.319959,
+          "draw": 0.334138,
+          "away_win": 0.345902
+        },
+        "odds_margin": 0.028091
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.010041,
+        "deltas": {
+          "home_win": 0.010041,
+          "draw": -0.004138,
+          "away_win": -0.005902
+        }
+      }
+    },
+    {
+      "fixture_id": 1126104,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.076,
+          "draw": 3.138,
+          "away_win": 2.986
+        },
+        "odds_implied": {
+          "home_win": 0.332184,
+          "draw": 0.32562,
+          "away_win": 0.342196
+        },
+        "odds_margin": -0.021332
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.00438,
+        "deltas": {
+          "home_win": -0.002184,
+          "draw": 0.00438,
+          "away_win": -0.002196
+        }
+      }
+    },
+    {
+      "fixture_id": 1126106,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.966,
+          "draw": 3.164,
+          "away_win": 3.104
+        },
+        "odds_implied": {
+          "home_win": 0.345666,
+          "draw": 0.324035,
+          "away_win": 0.330299
+        },
+        "odds_margin": -0.024625
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.009701,
+        "deltas": {
+          "home_win": -0.015666,
+          "draw": 0.005965,
+          "away_win": 0.009701
+        }
+      }
+    },
+    {
+      "fixture_id": 1481121,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.136,
+          "draw": 3.198,
+          "away_win": 2.925
+        },
+        "odds_implied": {
+          "home_win": 0.327574,
+          "draw": 0.321223,
+          "away_win": 0.351204
+        },
+        "odds_margin": -0.026547
+      },
+      "value": {
+        "active": false,
+        "value_side": "draw",
+        "value_edge": 0.008777,
+        "deltas": {
+          "home_win": 0.002426,
+          "draw": 0.008777,
+          "away_win": -0.011204
+        }
+      }
+    },
+    {
+      "fixture_id": 1353928,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.087,
+          "draw": 3.045,
+          "away_win": 2.836
+        },
+        "odds_implied": {
+          "home_win": 0.322342,
+          "draw": 0.326788,
+          "away_win": 0.350871
+        },
+        "odds_margin": 0.004956
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.007658,
+        "deltas": {
+          "home_win": 0.007658,
+          "draw": 0.003212,
+          "away_win": -0.010871
+        }
+      }
+    },
+    {
+      "fixture_id": 1353573,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.018,
+          "draw": 2.93,
+          "away_win": 3.065
+        },
+        "odds_implied": {
+          "home_win": 0.331708,
+          "draw": 0.341671,
+          "away_win": 0.326621
+        },
+        "odds_margin": -0.001094
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.013379,
+        "deltas": {
+          "home_win": -0.001708,
+          "draw": -0.011671,
+          "away_win": 0.013379
+        }
+      }
+    },
+    {
+      "fixture_id": 1353574,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.939,
+          "draw": 3.146,
+          "away_win": 3.082
+        },
+        "odds_implied": {
+          "home_win": 0.346284,
+          "draw": 0.323499,
+          "away_win": 0.330217
+        },
+        "odds_margin": -0.01742
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.009783,
+        "deltas": {
+          "home_win": -0.016284,
+          "draw": 0.006501,
+          "away_win": 0.009783
+        }
+      }
+    },
+    {
+      "fixture_id": 1446015,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.011,
+          "draw": 2.871,
+          "away_win": 3.016
+        },
+        "odds_implied": {
+          "home_win": 0.32818,
+          "draw": 0.344184,
+          "away_win": 0.327636
+        },
+        "odds_margin": 0.011991
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.012364,
+        "deltas": {
+          "home_win": 0.00182,
+          "draw": -0.014184,
+          "away_win": 0.012364
+        }
+      }
+    },
+    {
+      "fixture_id": 1446144,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 3.062,
+          "draw": 2.877,
+          "away_win": 2.919
+        },
+        "odds_implied": {
+          "home_win": 0.321203,
+          "draw": 0.341858,
+          "away_win": 0.336939
+        },
+        "odds_margin": 0.016751
+      },
+      "value": {
+        "active": false,
+        "value_side": "home_win",
+        "value_edge": 0.008797,
+        "deltas": {
+          "home_win": 0.008797,
+          "draw": -0.011858,
+          "away_win": 0.003061
+        }
+      }
+    },
+    {
+      "fixture_id": 1479788,
+      "prob": {
+        "home_win": 0.33,
+        "draw": 0.33,
+        "away_win": 0.34
+      },
+      "model_version": "baseline-v1",
+      "odds": {
+        "odds_original": {
+          "home_win": 2.921,
+          "draw": 3.111,
+          "away_win": 3.031
+        },
+        "odds_implied": {
+          "home_win": 0.344515,
+          "draw": 0.323474,
+          "away_win": 0.332012
+        },
+        "odds_margin": -0.006287
+      },
+      "value": {
+        "active": false,
+        "value_side": "away_win",
+        "value_edge": 0.007988,
+        "deltas": {
+          "home_win": -0.014515,
+          "draw": 0.006526,
+          "away_win": 0.007988
+        }
+      }
+    }
+  ]
 }

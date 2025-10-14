@@ -1,9 +1,9 @@
 {
   "summary": {
-    "added": 0,
+    "added": 226,
     "removed": 0,
     "modified": 0,
-    "total_new": 0
+    "total_new": 226
   },
   "change_breakdown": {
     "score_change": 0,
@@ -14,8 +14,8 @@
   "fetch_stats": {
     "attempts": 1,
     "retries": 0,
-    "latency_ms": 151.52,
+    "latency_ms": 188.88,
     "last_status": 200
   },
-  "total_fixtures": 0
+  "total_fixtures": 226
 }

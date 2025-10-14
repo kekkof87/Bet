@@ -1,0 +1,142 @@
+{
+  "count": 10,
+  "threshold_edge": 0.05,
+  "effective_threshold": 0.05,
+  "dynamic_enabled": false,
+  "dynamic_factor": 1.0,
+  "merged_enabled": false,
+  "merged_policy": null,
+  "dedup_merged": false,
+  "alerts": [
+    {
+      "source": "prediction",
+      "value_type": "prediction_value",
+      "fixture_id": 1397460,
+      "value_side": "home_win",
+      "value_edge": 0.077756,
+      "deltas": {
+        "home_win": 0.077756,
+        "draw": -0.013136,
+        "away_win": -0.064619
+      },
+      "model_version": "baseline-v1"
+    },
+    {
+      "source": "prediction",
+      "value_type": "prediction_value",
+      "fixture_id": 1400493,
+      "value_side": "home_win",
+      "value_edge": 0.067066,
+      "deltas": {
+        "home_win": 0.067066,
+        "draw": -0.007617,
+        "away_win": -0.059449
+      },
+      "model_version": "baseline-v1"
+    },
+    {
+      "source": "prediction",
+      "value_type": "prediction_value",
+      "fixture_id": 1430830,
+      "value_side": "home_win",
+      "value_edge": 0.059151,
+      "deltas": {
+        "home_win": 0.059151,
+        "draw": -0.009268,
+        "away_win": -0.049883
+      },
+      "model_version": "baseline-v1"
+    },
+    {
+      "source": "prediction",
+      "value_type": "prediction_value",
+      "fixture_id": 1366915,
+      "value_side": "away_win",
+      "value_edge": 0.051944,
+      "deltas": {
+        "home_win": -0.067001,
+        "draw": 0.015057,
+        "away_win": 0.051944
+      },
+      "model_version": "baseline-v1"
+    },
+    {
+      "source": "prediction",
+      "value_type": "prediction_value",
+      "fixture_id": 1320895,
+      "value_side": "away_win",
+      "value_edge": 0.063289,
+      "deltas": {
+        "home_win": -0.047233,
+        "draw": -0.016056,
+        "away_win": 0.063289
+      },
+      "model_version": "baseline-v1"
+    },
+    {
+      "source": "prediction",
+      "value_type": "prediction_value",
+      "fixture_id": 1321338,
+      "value_side": "away_win",
+      "value_edge": 0.102149,
+      "deltas": {
+        "home_win": -0.113351,
+        "draw": 0.011202,
+        "away_win": 0.102149
+      },
+      "model_version": "baseline-v1"
+    },
+    {
+      "source": "prediction",
+      "value_type": "prediction_value",
+      "fixture_id": 1321340,
+      "value_side": "away_win",
+      "value_edge": 0.07788,
+      "deltas": {
+        "home_win": -0.070053,
+        "draw": -0.007827,
+        "away_win": 0.07788
+      },
+      "model_version": "baseline-v1"
+    },
+    {
+      "source": "prediction",
+      "value_type": "prediction_value",
+      "fixture_id": 1449845,
+      "value_side": "home_win",
+      "value_edge": 0.051064,
+      "deltas": {
+        "home_win": 0.051064,
+        "draw": -0.000442,
+        "away_win": -0.050622
+      },
+      "model_version": "baseline-v1"
+    },
+    {
+      "source": "prediction",
+      "value_type": "prediction_value",
+      "fixture_id": 1479833,
+      "value_side": "away_win",
+      "value_edge": 0.136449,
+      "deltas": {
+        "home_win": -0.082908,
+        "draw": -0.053541,
+        "away_win": 0.136449
+      },
+      "model_version": "baseline-v1"
+    },
+    {
+      "source": "prediction",
+      "value_type": "prediction_value",
+      "fixture_id": 1479834,
+      "value_side": "away_win",
+      "value_edge": 0.102219,
+      "deltas": {
+        "home_win": -0.02095,
+        "draw": -0.081269,
+        "away_win": 0.102219
+      },
+      "model_version": "baseline-v1"
+    }
+  ]
+}
