@@ -47,7 +47,7 @@ jobs:
           elif [ -f requirements.txt ]; then
             python -m pip install -r requirements.txt
             python -m pip install pytest httpx prometheus-client
-          else:
+          else
             python -m pip install fastapi uvicorn pydantic requests prometheus-client pytest httpx
           fi
           python -m pip install --upgrade pytest httpx prometheus-client
@@ -57,25 +57,21 @@ jobs:
 
       - name: Show selected provider scope
         run: |
+          echo "PROVIDER_SOURCE=${{ vars.PROVIDER_SOURCE }}"
+          echo "FOOTBALL_DATA_LEAGUES=${{ vars.FOOTBALL_DATA_LEAGUES }}"
+          echo "UPCOMING_DAYS=${{ vars.UPCOMING_DAYS }}"
           echo "API_FOOTBALL_DEFAULT_LEAGUE_ID=${{ vars.API_FOOTBALL_DEFAULT_LEAGUE_ID }}"
           echo "API_FOOTBALL_DEFAULT_SEASON=${{ vars.API_FOOTBALL_DEFAULT_SEASON }}"
           echo "BET_DATA_DIR=${{ vars.BET_DATA_DIR }}"
 
-      - name: Quick API probe (next 7 days)
+      - name: Quick API probe (optional)
         env:
-          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
         run: |
           python - <<'PY'
-          from datetime import datetime, timezone, timedelta
-          from providers.api_football.http_client import APIFootballHttpClient
-          client = APIFootballHttpClient()
-          today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-          days = [today] + [(datetime.now(timezone.utc)+timedelta(days=i)).strftime("%Y-%m-%d") for i in range(1,8)]
-          for d in days:
-              data = client.api_get("/fixtures", params={"date": d})
-              resp = data.get("response", [])
-              errors = data.get("errors", {})
-              print(f"[probe] date={d} count={len(resp)} errors={errors or 'none'} status={client.get_stats().get('last_status')}")
+          import os, sys
+          key = os.getenv("FOOTBALL_DATA_API_KEY")
+          print("FOOTBALL_DATA_API_KEY set? ->", bool(key))
           PY
 
       - name: Run tests
@@ -86,6 +82,12 @@ jobs:
       - name: Run fetch pipeline
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
+          # Provider selection
+          PROVIDER_SOURCE: ${{ vars.PROVIDER_SOURCE }}
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          FOOTBALL_DATA_LEAGUES: ${{ vars.FOOTBALL_DATA_LEAGUES }}
+          UPCOMING_DAYS: ${{ vars.UPCOMING_DAYS }}
+          # Legacy vars (restano per compatibilità)
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
           API_FOOTBALL_DEFAULT_LEAGUE_ID: ${{ vars.API_FOOTBALL_DEFAULT_LEAGUE_ID }}
           API_FOOTBALL_DEFAULT_SEASON: ${{ vars.API_FOOTBALL_DEFAULT_SEASON }}
