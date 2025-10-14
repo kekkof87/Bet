@@ -66,21 +66,28 @@ def main() -> None:
     live_ids: set[int] = set()
 
     if provider_src == "api":
-        # Comportamento legacy: oggi per lega/season o ALL se non specificati
         api = ApiFootballFixturesProvider()
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        fixtures = cast(
-            FixtureDataset,
-            api.fetch_fixtures(date=today, league_id=settings.default_league_id, season=settings.default_season),
-        )
-        if not fixtures:
-            if settings.fetch_abort_on_empty:
+
+        league_id = settings.default_league_id
+        season = settings.default_season
+        has_specific_scope = (league_id is not None) or (season is not None)
+
+        if has_specific_scope:
+            # Fetch specifico per lega/stagione; NO fallback ad ALL se vuoto
+            fixtures = cast(
+                FixtureDataset,
+                api.fetch_fixtures(date=today, league_id=league_id, season=season),
+            )
+            if not fixtures:
                 log.info(
-                    "No fixtures found for today with league/season; FETCH_ABORT_ON_EMPTY=1 -> no fallback to ALL LEAGUES"
+                    "No fixtures for specified league/season today; skipping ALL-LEAGUES fallback "
+                    "(set PROVIDER_SOURCE=fd for the free provider or adjust defaults)."
                 )
-            else:
-                fixtures = cast(FixtureDataset, api.fetch_fixtures(date=today, league_id=None, season=None))
-        # Nota: provider api_football normalizza già i record
+        else:
+            # Nessuna lega/stagione specifica -> è lecito usare ALL LEAGUES
+            fixtures = cast(FixtureDataset, api.fetch_fixtures(date=today, league_id=None, season=None))
+
         live_ids = {int(f.get("fixture_id")) for f in fixtures if f.get("status") in ("1H", "2H", "HT")}
     else:
         # Provider gratuito: football-data.org
@@ -101,7 +108,7 @@ def main() -> None:
     scoreboard = _build_scoreboard(fixtures, live_ids)
     _write_json_atomic(base / "scoreboard.json", scoreboard)
 
-    # Last run metrics (compat con repo)
+    # Last run metrics (compat)
     last_run = {
         "summary": {"added": len(fixtures), "removed": 0, "modified": 0, "total_new": len(fixtures)},
         "change_breakdown": {"score_change": 0, "status_change": 0, "both": 0, "other": 0},
