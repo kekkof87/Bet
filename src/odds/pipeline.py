@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Protocol
 
 from core.config import get_settings
 from core.logging import get_logger
@@ -11,6 +11,11 @@ from providers.odds.odds_provider_stub import StubOddsProvider
 from providers.odds.odds_provider_model import ModelOddsProvider  # nuovo provider
 
 logger = get_logger("odds.pipeline")
+
+
+class OddsProviderProtocol(Protocol):
+    def fetch_odds(self, fixtures: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        ...
 
 
 def run_odds_pipeline(fixtures: List[Dict[str, Any]], provider_name: Optional[str] = None) -> Optional[Path]:
@@ -32,6 +37,7 @@ def run_odds_pipeline(fixtures: List[Dict[str, Any]], provider_name: Optional[st
         or "model"
     )
 
+    provider: OddsProviderProtocol
     if p_name == "stub":
         provider = StubOddsProvider()
     elif p_name == "model":
