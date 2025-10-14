@@ -85,8 +85,14 @@ def main() -> None:
                     "(set PROVIDER_SOURCE=fd for the free provider or adjust defaults)."
                 )
         else:
-            # Nessuna lega/stagione specifica -> è lecito usare ALL LEAGUES
-            fixtures = cast(FixtureDataset, api.fetch_fixtures(date=today, league_id=None, season=None))
+            # Nessuna lega/stagione specifica:
+            # - se FETCH_ABORT_ON_EMPTY=1 (settings.fetch_abort_on_empty): non fare fallback
+            # - altrimenti, consenti ALL LEAGUES come in legacy
+            if settings.fetch_abort_on_empty:
+                log.info("No league/season defaults and FETCH_ABORT_ON_EMPTY=1 -> skipping ALL-LEAGUES fetch.")
+                fixtures = cast(FixtureDataset, [])
+            else:
+                fixtures = cast(FixtureDataset, api.fetch_fixtures(date=today, league_id=None, season=None))
 
         live_ids = {int(f.get("fixture_id")) for f in fixtures if f.get("status") in ("1H", "2H", "HT")}
     else:
