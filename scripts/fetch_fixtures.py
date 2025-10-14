@@ -54,6 +54,13 @@ def _write_json_atomic(path: Path, data: Any) -> None:
     os.replace(tmp, path)
 
 
+def _is_truthy(val: str | None) -> bool:
+    if not val:
+        return False
+    v = val.strip().lower()
+    return v in {"1", "true", "yes", "y", "on"}
+
+
 def main() -> None:
     settings = get_settings()
     base = Path(settings.bet_data_dir or "data")
@@ -61,6 +68,9 @@ def main() -> None:
 
     provider_src = (os.getenv("PROVIDER_SOURCE") or "fd").lower().strip()
     upcoming_days = int(os.getenv("UPCOMING_DAYS") or "2")
+
+    # Nuovo flag per il fallback esplicito: default OFF (sicuro per i test)
+    allow_all_leagues_fallback = _is_truthy(os.getenv("ALLOW_ALL_LEAGUES_FALLBACK"))
 
     fixtures: FixtureDataset = []
     live_ids: set[int] = set()
@@ -82,17 +92,22 @@ def main() -> None:
             if not fixtures:
                 log.info(
                     "No fixtures for specified league/season today; skipping ALL-LEAGUES fallback "
-                    "(set PROVIDER_SOURCE=fd for the free provider or adjust defaults)."
+                    "(set PROVIDER_SOURCE=fd or adjust defaults)."
                 )
         else:
             # Nessuna lega/stagione specifica:
-            # - se FETCH_ABORT_ON_EMPTY=1 (settings.fetch_abort_on_empty): non fare fallback
-            # - altrimenti, consenti ALL LEAGUES come in legacy
+            # - se fetch_abort_on_empty=1 -> non fare fallback
+            # - se ALLOW_ALL_LEAGUES_FALLBACK=1 -> consenti ALL LEAGUES
+            # - altrimenti, NON fare fallback (nuovo default sicuro)
             if settings.fetch_abort_on_empty:
-                log.info("No league/season defaults and FETCH_ABORT_ON_EMPTY=1 -> skipping ALL-LEAGUES fetch.")
+                log.info("FETCH_ABORT_ON_EMPTY=1 -> skipping ALL-LEAGUES fetch (no defaults).")
                 fixtures = cast(FixtureDataset, [])
-            else:
+            elif allow_all_leagues_fallback:
+                log.info("ALLOW_ALL_LEAGUES_FALLBACK=1 -> performing ALL-LEAGUES fetch for today.")
                 fixtures = cast(FixtureDataset, api.fetch_fixtures(date=today, league_id=None, season=None))
+            else:
+                log.info("No league/season defaults and fallback disabled -> no ALL-LEAGUES fetch.")
+                fixtures = cast(FixtureDataset, [])
 
         live_ids = {int(f.get("fixture_id")) for f in fixtures if f.get("status") in ("1H", "2H", "HT")}
     else:
