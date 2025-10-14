@@ -43,26 +43,26 @@ def _iso_today_utc() -> str:
 
 def _collect_with_fallbacks(provider: ApiFootballFixturesProvider, settings) -> List[Dict[str, Any]]:
     """
-    Strategia di raccolta robusta:
-    1) league+season (tutta la stagione corrente della lega)
+    Strategia robusta:
+    1) league+season (intera stagione)
     2) oggi tutte le leghe
     3) prossimi 7 giorni tutte le leghe (aggregazione e dedup)
-    4) se c'è la lega, prova lega senza season (lascia decidere al provider)
+    4) solo lega (senza season)
     """
-    # 1) Lega + stagione (nessuna data -> intera stagione)
+    # 1) Lega + stagione
     data: List[Dict[str, Any]] = provider.fetch_fixtures(
         league_id=settings.default_league_id, season=settings.default_season, date=None
     )
     if data:
         return data
 
-    # 2) Oggi, tutte le leghe
+    # 2) Oggi tutte le leghe
     today = _iso_today_utc()
     data = provider.fetch_fixtures(date=today, league_id=None, season=None)
     if data:
         return data
 
-    # 3) Prossimi 7 giorni, tutte le leghe (aggregazione)
+    # 3) Prossimi 7 giorni tutte le leghe
     agg: Dict[int, Dict[str, Any]] = {}
     for d in range(1, 8):
         day = (datetime.now(timezone.utc) + timedelta(days=d)).strftime("%Y-%m-%d")
@@ -74,7 +74,7 @@ def _collect_with_fallbacks(provider: ApiFootballFixturesProvider, settings) -> 
     if agg:
         return list(agg.values())
 
-    # 4) Ultimo tentativo: solo lega (senza season)
+    # 4) Solo lega (senza season)
     if settings.default_league_id:
         data = provider.fetch_fixtures(league_id=settings.default_league_id, season=None, date=None)
         if data:
