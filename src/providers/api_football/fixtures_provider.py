@@ -108,6 +108,9 @@ class ApiFootballFixturesProvider:
     def get_last_stats(self) -> Dict[str, Any]:
         return self._client.get_stats()
 
+    def get_last_raw(self) -> Dict[str, Any]:
+        return self._last_raw or {}
+
 
 __all__ = [
     "APIFootballFixturesProvider",  # legacy (tests persistence)
