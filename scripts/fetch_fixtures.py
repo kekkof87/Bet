@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 from datetime import datetime, timezone
 
 from core.config import get_settings
@@ -21,7 +21,7 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _build_scoreboard(fixtures: List[Dict[str, Any]], live_ids: set[int]) -> Dict[str, Any]:
+def _build_scoreboard(fixtures: FixtureDataset, live_ids: set[int]) -> Dict[str, Any]:
     now = _now_iso()
     total = len(fixtures)
     live_count = len(live_ids)
@@ -69,9 +69,12 @@ def main() -> None:
         # Comportamento legacy: oggi per lega/season o ALL se non specificati
         api = ApiFootballFixturesProvider()
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        fixtures = api.fetch_fixtures(date=today, league_id=settings.default_league_id, season=settings.default_season)
+        fixtures = cast(
+            FixtureDataset,
+            api.fetch_fixtures(date=today, league_id=settings.default_league_id, season=settings.default_season),
+        )
         if not fixtures:
-            fixtures = api.fetch_fixtures(date=today, league_id=None, season=None)
+            fixtures = cast(FixtureDataset, api.fetch_fixtures(date=today, league_id=None, season=None))
         # Nota: provider api_football normalizza già i record
         live_ids = {int(f.get("fixture_id")) for f in fixtures if f.get("status") in ("1H", "2H", "HT")}
     else:
@@ -83,7 +86,7 @@ def main() -> None:
         for f in upcoming + live:
             fid = int(f.get("fixture_id"))
             by_id[fid] = f
-        fixtures = list(by_id.values())
+        fixtures = cast(FixtureDataset, list(by_id.values()))
         live_ids = {int(f.get("fixture_id")) for f in live}
 
     # Persist fixtures_latest
