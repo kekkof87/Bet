@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, cast
 from datetime import datetime, timezone
 
 from core.config import get_settings
@@ -74,7 +74,12 @@ def main() -> None:
             api.fetch_fixtures(date=today, league_id=settings.default_league_id, season=settings.default_season),
         )
         if not fixtures:
-            fixtures = cast(FixtureDataset, api.fetch_fixtures(date=today, league_id=None, season=None))
+            if settings.fetch_abort_on_empty:
+                log.info(
+                    "No fixtures found for today with league/season; FETCH_ABORT_ON_EMPTY=1 -> no fallback to ALL LEAGUES"
+                )
+            else:
+                fixtures = cast(FixtureDataset, api.fetch_fixtures(date=today, league_id=None, season=None))
         # Nota: provider api_football normalizza già i record
         live_ids = {int(f.get("fixture_id")) for f in fixtures if f.get("status") in ("1H", "2H", "HT")}
     else:
