@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta, timezone
 
@@ -110,8 +111,8 @@ class FootballDataFixturesProvider:
         # ritorna mappa team_name -> rating (z-score sui PPG)
         data = self.client.get(f"/competitions/{competition_code}/standings")
         standings = data.get("standings") or []
-        total = next((s for s in standings if s.get("type") == "TOTAL"), {})
-        table = total.get("table") or []
+        total_blk: Dict[str, Any] = next((s for s in standings if s.get("type") == "TOTAL"), {})  # type: ignore[assignment]
+        table = total_blk.get("table") or []
         ppg_items: List[Dict[str, Any]] = []
         for row in table:
             played = int(row.get("playedGames") or 0)
