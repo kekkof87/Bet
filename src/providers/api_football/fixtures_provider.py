@@ -36,6 +36,7 @@ class APIFootballFixturesProvider:
         params: Dict[str, Any] = {}
         if date:
             params["date"] = date
+        # Legacy mantiene i default sempre (comportamento test vecchi)
         if league_id or self._settings.default_league_id:
             params["league"] = league_id or self._settings.default_league_id
         if season or self._settings.default_season:
@@ -84,18 +85,23 @@ class ApiFootballFixturesProvider:
         season: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         settings = get_settings()
-        if league_id is None:
-            league_id = settings.default_league_id
-        if season is None:
-            season = settings.default_season
 
+        # Costruzione parametri:
+        # - Se la data è specificata: NON forzare default league/season -> consenti ALL LEAGUES.
+        # - Se la data NON è specificata: usa i default (lega/stagione) se presenti.
         params: Dict[str, Any] = {}
         if date:
             params["date"] = date
+
         if league_id is not None:
             params["league"] = league_id
+        elif not date and settings.default_league_id is not None:
+            params["league"] = settings.default_league_id
+
         if season is not None:
             params["season"] = season
+        elif not date and settings.default_season is not None:
+            params["season"] = settings.default_season
 
         raw = self._client.api_get("/fixtures", params=params or None)
         self._last_raw = raw
@@ -113,6 +119,6 @@ class ApiFootballFixturesProvider:
 
 
 __all__ = [
-    "APIFootballFixturesProvider",  # legacy (tests persistence)
-    "ApiFootballFixturesProvider",  # normalizzato
+    "APIFootballFixturesProvider",
+    "ApiFootballFixturesProvider",
 ]
