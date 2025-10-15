@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta, timezone
 
@@ -10,7 +11,7 @@ from .http_client import FootballDataClient
 FD_STATUS_MAP = {
     "SCHEDULED": "NS",
     "TIMED": "NS",
-    "IN_PLAY": "1H",  # senza minuto distinto assumiamo 1H
+    "IN_PLAY": "1H",
     "PAUSED": "HT",
     "FINISHED": "FT",
     "POSTPONED": "PST",
@@ -30,7 +31,6 @@ def _map_status(fd_status: Optional[str], minute: Optional[int]) -> str:
 
 def _extract_score(m: Dict[str, Any]) -> Dict[str, Optional[int]]:
     score = (m.get("score") or {})
-    # preferisci regularTime > fullTime > halfTime
     for key in ("regularTime", "fullTime", "halfTime"):
         blk = score.get(key)
         if isinstance(blk, dict):
@@ -45,7 +45,6 @@ def _extract_score(m: Dict[str, Any]) -> Dict[str, Optional[int]]:
 
 def _to_int_season(m: Dict[str, Any]) -> int:
     season = m.get("season") or {}
-    # es: {"startDate": "2024-08-01", "endDate": "..."}
     start = season.get("startDate")
     if isinstance(start, str) and len(start) >= 4 and start[:4].isdigit():
         return int(start[:4])
@@ -60,8 +59,8 @@ def _normalize(m: Dict[str, Any]) -> Dict[str, Any]:
     home = m.get("homeTeam") or {}
     away = m.get("awayTeam") or {}
     return {
-        "fixture_id": int(m.get("id")),  # FD usa int id
-        "league_id": comp.get("code") or "",  # string code (PL, SA, ...)
+        "fixture_id": int(m.get("id")),
+        "league_id": comp.get("code") or "",
         "league_name": comp.get("name") or "",
         "season": _to_int_season(m),
         "date_utc": m.get("utcDate"),
@@ -80,11 +79,26 @@ class FootballDataFixturesProvider:
 
     @staticmethod
     def _competitions_csv() -> str:
-        # default: PL, BL1, SA, PD, FL1, CL, EL, ECL
-        csv = (os.getenv("FOOTBALL_DATA_LEAGUES") or "").strip()
-        if not csv:
-            csv = "PL,BL1,SA,PD,FL1,CL,EL,ECL"
-        return csv
+        """
+        Legge FOOTBALL_DATA_LEAGUES e restituisce un CSV “pulito”.
+        - Filtra token vuoti
+        - Scarta token con '=' (variabili incollate per errore)
+        - Accetta solo [A-Za-z0-9]{2,6}
+        - Normalizza in UPPERCASE
+        """
+        raw = (os.getenv("FOOTBALL_DATA_LEAGUES") or "").strip()
+        default = "PL,BL1,SA,PD,FL1,CL,EL,ECL"
+        if not raw:
+            return default
+        tokens = [t.strip() for t in raw.split(",")]
+        good: List[str] = []
+        for t in tokens:
+            if not t or "=" in t:
+                continue
+            if not re.fullmatch(r"[A-Za-z0-9]{2,6}", t):
+                continue
+            good.append(t.upper())
+        return ",".join(good) if good else default
 
     def fetch_live(self) -> List[Dict[str, Any]]:
         params = {"status": "LIVE", "competitions": self._competitions_csv()}
@@ -108,7 +122,6 @@ class FootballDataFixturesProvider:
         return self.fetch_upcoming_range(now.isoformat(), end.isoformat())
 
     def get_standings_map(self, competition_code: str) -> Dict[str, float]:
-        # ritorna mappa team_name -> rating (z-score sui PPG)
         data = self.client.get(f"/competitions/{competition_code}/standings")
         standings = data.get("standings") or []
         total_blk: Dict[str, Any] = next((s for s in standings if s.get("type") == "TOTAL"), {})
