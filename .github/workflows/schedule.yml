@@ -1,0 +1,75 @@
+name: Data pipeline (scheduled)
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # ogni 30 minuti
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # necessario solo se abilitiamo il commit
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f backend/api/requirements.txt ]; then pip install -r backend/api/requirements.txt; fi
+
+      - name: Fetch data (optional if script exists)
+        env:
+          PYTHONPATH: src
+        run: |
+          . .venv/bin/activate
+          if [ -f scripts/fetch_fixtures.py ]; then python scripts/fetch_fixtures.py || true; else echo "fetch script not present, skipping"; fi
+
+      - name: Consensus merge
+        env:
+          PYTHONPATH: .
+        run: |
+          . .venv/bin/activate
+          python scripts/consensus_merge.py \
+            --sources-dir data/predictions/sources \
+            --odds-file data/odds_latest.json \
+            --out data/latest_predictions.json \
+            --weights consensus/config.yml \
+            --min-models 1
+
+      - name: Upload data artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-snapshot
+          path: |
+            data/latest_predictions.json
+            data/value_alerts.json
+            data/odds_latest.json
+            data/last_delta.json
+            data/scoreboard.json
+            data/roi_*.json*
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Commit updated data (optional via repo variable COMMIT_DATA=true)
+        if: ${{ vars.COMMIT_DATA == 'true' }}
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/*.json data/*.jsonl || true
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(data): scheduled update"
+            git push
+          else
+            echo "No data changes to commit."
+          fi
