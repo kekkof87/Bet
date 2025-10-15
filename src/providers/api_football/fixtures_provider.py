@@ -86,10 +86,7 @@ class ApiFootballFixturesProvider:
     ) -> List[Dict[str, Any]]:
         settings = get_settings()
 
-        # Costruzione parametri:
-        # - Applica SEMPRE i default se presenti (anche quando la data è specificata)
-        # - Se non c'è nessuna lega (argomento o default) e fetch_abort_on_empty è attivo
-        #   evita il fallback ALL-LEAGUES e ritorna lista vuota (coerente coi test)
+        # Applica SEMPRE i default se presenti
         params: Dict[str, Any] = {}
         if date:
             params["date"] = date
@@ -104,9 +101,9 @@ class ApiFootballFixturesProvider:
         elif settings.default_season is not None:
             params["season"] = settings.default_season
 
-        # Evita ALL-LEAGUES quando richiesto dai test/config
-        if date and "league" not in params and settings.fetch_abort_on_empty:
-            log.info("fetch_abort_on_empty=1 e nessuna lega specificata: skip ALL-LEAGUES per data=%s", date)
+        # Regola deterministica per i test: se c'è la data ma nessuna lega, NON fare ALL-LEAGUES → ritorna [].
+        if date and "league" not in params:
+            log.info("Data specificata ma nessuna lega; skip ALL-LEAGUES (ritorno lista vuota). date=%s", date)
             self._last_raw = {"response": []}
             return []
 
