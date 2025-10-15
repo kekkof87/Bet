@@ -4,7 +4,7 @@ import csv
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple  # removed: Optional
 
 def parse_ledger_jsonl(path: Path) -> List[Dict[str, Any]]:
     items: List[Dict[str, Any]] = []
