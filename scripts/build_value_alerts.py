@@ -6,11 +6,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
-from core.config import get_settings
-from core.logging import get_logger
-
-log = get_logger("scripts.build_value_alerts")
-
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -33,27 +28,41 @@ def _save_json_atomic(path: Path, payload: Any) -> None:
     os.replace(tmp, path)
 
 
+def _float_env(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
 def main() -> None:
-    s = get_settings()
-    if not s.enable_value_alerts:
-        log.info("Value alerts disabilitati (ENABLE_VALUE_ALERTS=0).")
+    # Non importiamo get_settings per evitare dipendenze da chiavi API non necessarie
+    bet_data_dir = Path(os.getenv("BET_DATA_DIR", "data"))
+    predictions_dir = os.getenv("PREDICTIONS_DIR", "predictions")
+    value_alerts_dir = os.getenv("VALUE_ALERTS_DIR", "value_alerts")
+
+    enable_value_alerts = os.getenv("ENABLE_VALUE_ALERTS", "1").strip().lower() in {"1", "true", "yes", "y", "on"}
+    if not enable_value_alerts:
+        print("Value alerts disabilitati (ENABLE_VALUE_ALERTS=0).")
         return
 
-    base = Path(s.bet_data_dir or "data")
-    pred_path = base / s.predictions_dir / "latest_predictions.json"
-    out_dir = base / s.value_alerts_dir
+    pred_path = bet_data_dir / predictions_dir / "latest_predictions.json"
+    out_dir = bet_data_dir / value_alerts_dir
     out_path = out_dir / "value_alerts.json"
 
     raw = _load_json(pred_path)
     if not raw or not isinstance(raw, dict):
-        log.info("Predictions non trovate o non valide: %s", pred_path)
+        print(f"Predictions non trovate o non valide: {pred_path}")
         return
     preds = raw.get("predictions")
     if not isinstance(preds, list):
-        log.info("Predictions vuote.")
+        print("Predictions vuote.")
         return
 
-    threshold = float(os.getenv("VALUE_ALERT_MIN_EDGE", s.value_alert_min_edge))
+    threshold = _float_env("VALUE_ALERT_MIN_EDGE", 0.05)
     alerts: List[Dict[str, Any]] = []
 
     for p in preds:
@@ -63,33 +72,26 @@ def main() -> None:
         if fid is None:
             continue
         v = p.get("value")
-        # Ci aspettiamo una struttura con edge per lato oppure un best_side con edge
-        # Strategia robusta:
         sides = ["home_win", "draw", "away_win"]
         candidates: List[tuple[str, float]] = []
         if isinstance(v, dict):
-            # caso 1: best_side/value_edge
             bs = v.get("best_side")
             be = v.get("value_edge")
             if isinstance(bs, str) and isinstance(be, (int, float)):
                 candidates.append((bs, float(be)))
-            # caso 2: edges per lato
             for k in sides:
                 ev = v.get(f"edge_{k}") or v.get(k)
                 if isinstance(ev, (int, float)):
                     candidates.append((k, float(ev)))
-        # se non abbiamo 'value', prova a derivare da prob vs odds_implied
         if not candidates:
             prob = p.get("prob_adjusted") or p.get("prob")
-            odds_block = (p.get("odds") or {}).get("odds_implied")
+            odds_block = (p.get("odds") or {}).get("odds_implied") if isinstance(p.get("odds"), dict) else None
             if isinstance(prob, dict) and isinstance(odds_block, dict):
                 for k in sides:
                     pr = prob.get(k)
                     im = odds_block.get(k)
                     if isinstance(pr, (int, float)) and isinstance(im, (int, float)):
                         candidates.append((k, float(pr - im)))
-
-        # filtra per soglia
         for side, edge in candidates:
             if edge >= threshold:
                 alerts.append(
@@ -108,7 +110,7 @@ def main() -> None:
         "alerts": alerts,
     }
     _save_json_atomic(out_path, payload)
-    log.info("Value alerts generate: %s (count=%d, threshold=%.4f)", out_path, len(alerts), threshold)
+    print(f"Value alerts generate: {out_path} (count={len(alerts)}, threshold={threshold:.4f})")
 
 
 if __name__ == "__main__":
