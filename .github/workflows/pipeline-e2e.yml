@@ -1,9 +1,9 @@
-name: Pipeline E2E (fixtures → odds → predictions → ROI)
+name: Pipeline E2E (fixtures → odds → predictions → alerts → ROI)
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "7 * * * *"
+    - cron: "7 * * * *"  # ogni ora al minuto 7 UTC
 
 concurrency:
   group: pipeline-e2e
@@ -44,19 +44,26 @@ jobs:
             python -m pip install -r requirements-dev.txt
           elif [ -f requirements.txt ]; then
             python -m pip install -r requirements.txt
-          else
-            python -m pip install fastapi uvicorn pydantic requests prometheus-client pytest httpx
+          else:
+            python -m pip install fastapi uvicorn pydantic requests prometheus-client pytest httpx streamlit
           fi
 
       - name: Export PYTHONPATH
         run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
 
-      - name: Tests (quick)
-        env:
-          PYTHONPATH: ${{ env.PYTHONPATH }}
-          BET_DATA_DIR: ${{ runner.temp }}/data-ci
-          FETCH_ABORT_ON_EMPTY: 1
-        run: pytest -q
+      - name: Show selected provider scope
+        run: |
+          echo "PROVIDER_SOURCE=${{ vars.PROVIDER_SOURCE }}"
+          echo "FOOTBALL_DATA_LEAGUES=${{ vars.FOOTBALL_DATA_LEAGUES }}"
+          echo "UPCOMING_DAYS=${{ vars.UPCOMING_DAYS }}"
+          echo "BET_DATA_DIR=${{ vars.BET_DATA_DIR }}"
+          echo "ODDS_PROVIDER=${{ vars.ODDS_PROVIDER }}"
+          echo "ENABLE_ODDS_INGESTION=${{ vars.ENABLE_ODDS_INGESTION }}"
+          echo "ENABLE_PREDICTIONS=${{ vars.ENABLE_PREDICTIONS }}"
+          echo "ENABLE_PREDICTIONS_USE_ODDS=${{ vars.ENABLE_PREDICTIONS_USE_ODDS }}"
+          echo "ENABLE_VALUE_DETECTION=${{ vars.ENABLE_VALUE_DETECTION }}"
+          echo "ENABLE_VALUE_ALERTS=${{ vars.ENABLE_VALUE_ALERTS }}"
+          echo "ENABLE_ROI_TRACKING=${{ vars.ENABLE_ROI_TRACKING }}"
 
       - name: Fetch fixtures
         env:
@@ -74,12 +81,12 @@ jobs:
         run: |
           python scripts/fetch_fixtures.py
 
-      - name: Fetch odds
+      - name: Fetch odds (model)
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
           BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
-          ENABLE_ODDS_INGESTION: 1
-          ODDS_PROVIDER: ${{ vars.ODDS_PROVIDER }}
+          ENABLE_ODDS_INGESTION: ${{ vars.ENABLE_ODDS_INGESTION || 1 }}
+          ODDS_PROVIDER: ${{ vars.ODDS_PROVIDER || 'model' }}
         run: |
           python scripts/fetch_odds.py
 
@@ -87,27 +94,57 @@ jobs:
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
           BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
-          ENABLE_PREDICTIONS: 1
-          ENABLE_PREDICTIONS_USE_ODDS: 1
-          ENABLE_VALUE_DETECTION: 1
-          ENABLE_MODEL_ADJUST: ${{ vars.ENABLE_MODEL_ADJUST }}
-          MODEL_ADJUST_WEIGHT: ${{ vars.MODEL_ADJUST_WEIGHT }}
+          ENABLE_PREDICTIONS: ${{ vars.ENABLE_PREDICTIONS || 1 }}
+          ENABLE_PREDICTIONS_USE_ODDS: ${{ vars.ENABLE_PREDICTIONS_USE_ODDS || 1 }}
+          ENABLE_VALUE_DETECTION: ${{ vars.ENABLE_VALUE_DETECTION || 1 }}
+          ENABLE_MODEL_ADJUST: ${{ vars.ENABLE_MODEL_ADJUST || 0 }}
+          MODEL_ADJUST_WEIGHT: ${{ vars.MODEL_ADJUST_WEIGHT || 0.7 }}
         run: |
           python scripts/run_predictions.py
+
+      - name: Build value alerts
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+          BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
+          ENABLE_VALUE_ALERTS: ${{ vars.ENABLE_VALUE_ALERTS || 1 }}
+          VALUE_ALERT_MIN_EDGE: ${{ vars.VALUE_ALERT_MIN_EDGE || 0.05 }}
+        run: |
+          python scripts/build_value_alerts.py
+
+      - name: Dispatch alerts (optional)
+        if: ${{ vars.ENABLE_ALERT_DISPATCH == '1' }}
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+          BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
+          ENABLE_ALERT_DISPATCH: ${{ vars.ENABLE_ALERT_DISPATCH }}
+          ALERT_DISPATCH_MODE: ${{ vars.ALERT_DISPATCH_MODE || 'stdout' }}
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          ALERT_TELEGRAM_BOT_TOKEN: ${{ secrets.ALERT_TELEGRAM_BOT_TOKEN }}
+          ALERT_TELEGRAM_CHAT_ID: ${{ secrets.ALERT_TELEGRAM_CHAT_ID }}
+        run: |
+          python scripts/dispatch_alerts.py
 
       - name: Update ROI
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
           BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
-          ENABLE_ROI_TRACKING: 1
-          ROI_MIN_EDGE: ${{ vars.ROI_MIN_EDGE }}
-          ROI_INCLUDE_CONSENSUS: ${{ vars.ROI_INCLUDE_CONSENSUS }}
-          ENABLE_KELLY_STAKING: ${{ vars.ENABLE_KELLY_STAKING }}
-          KELLY_BASE_UNITS: ${{ vars.KELLY_BASE_UNITS }}
-          KELLY_MAX_UNITS: ${{ vars.KELLY_MAX_UNITS }}
-          KELLY_EDGE_CAP: ${{ vars.KELLY_EDGE_CAP }}
+          ENABLE_ROI_TRACKING: ${{ vars.ENABLE_ROI_TRACKING || 1 }}
+          ROI_MIN_EDGE: ${{ vars.ROI_MIN_EDGE || 0.05 }}
+          ROI_INCLUDE_CONSENSUS: ${{ vars.ROI_INCLUDE_CONSENSUS || 0 }}
+          ENABLE_KELLY_STAKING: ${{ vars.ENABLE_KELLY_STAKING || 0 }}
+          KELLY_BASE_UNITS: ${{ vars.KELLY_BASE_UNITS || 1.0 }}
+          KELLY_MAX_UNITS: ${{ vars.KELLY_MAX_UNITS || 3.0 }}
+          KELLY_EDGE_CAP: ${{ vars.KELLY_EDGE_CAP || 0.5 }}
         run: |
           python scripts/update_roi.py
+
+      - name: Cleanup data (retention)
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+          BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
+          DATA_RETENTION_HISTORY_MAX: ${{ vars.DATA_RETENTION_HISTORY_MAX || 30 }}
+        run: |
+          python scripts/cleanup_data.py
 
       - name: Show outputs
         if: always()
@@ -116,11 +153,12 @@ jobs:
             data/fixtures_latest.json \
             data/odds/odds_latest.json \
             data/predictions/latest_predictions.json \
+            data/value_alerts/value_alerts.json \
             data/roi/roi_metrics.json; do
             if [ -f "$f" ]; then
               echo "----- $f -----"
               head -n 120 "$f"
-            else
+            else:
               echo "MISSING: $f"
             fi
           done
