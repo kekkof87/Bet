@@ -1,0 +1,20 @@
+groups:
+  - name: betting-api-alerts
+    interval: 30s
+    rules:
+      - alert: FileStale
+        expr: max without (instance) (file_age_seconds) > 3600
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "File stantii"
+          description: "Uno o più file hanno età superiore a 1h. Controlla la pipeline di aggiornamento."
+      - alert: HighErrorRate
+        expr: (sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Alto tasso di errori 5xx"
+          description: "Tasso di errori 5xx > 5% negli ultimi 5 minuti."
