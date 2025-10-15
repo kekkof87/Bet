@@ -26,6 +26,7 @@ jobs:
           pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f backend/api/requirements.txt ]; then pip install -r backend/api/requirements.txt; fi
+          if [ -f frontend/gui/requirements.txt ]; then pip install -r frontend/gui/requirements.txt; fi
 
       - name: Fetch data (optional if script exists)
         env:
@@ -46,6 +47,16 @@ jobs:
             --weights consensus/config.yml \
             --min-models 1
 
+      - name: Fixtures snapshot
+        run: |
+          . .venv/bin/activate
+          python scripts/fixtures_snapshot.py --delta-file data/last_delta.json --out data/fixtures.json || true
+
+      - name: ROI compute
+        run: |
+          . .venv/bin/activate
+          python scripts/roi_compute.py --ledger data/ledger.jsonl --out-metrics data/roi_metrics.json --out-daily data/roi_daily.json --out-history data/roi_history.jsonl --append-history
+
       - name: Upload data artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -55,8 +66,11 @@ jobs:
             data/value_alerts.json
             data/odds_latest.json
             data/last_delta.json
+            data/fixtures.json
             data/scoreboard.json
-            data/roi_*.json*
+            data/roi_metrics.json
+            data/roi_daily.json
+            data/roi_history.jsonl
           if-no-files-found: warn
           retention-days: 7
 
@@ -70,6 +84,6 @@ jobs:
           if ! git diff --cached --quiet; then
             git commit -m "chore(data): scheduled update"
             git push
-          else
+          else:
             echo "No data changes to commit."
           fi
