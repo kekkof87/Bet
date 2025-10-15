@@ -437,3 +437,72 @@ Workflow `.github/workflows/schedule.yml`:
 ## Monitoring
 - Prometheus scrapa l’API su `/metrics`.
 - Grafana preconfigurata con datasource Prometheus e dashboard "API Overview" (RPS, p95 latency, error rate).
+
+
+# Piattaforma Betting — ROI v1, Polishing, Alerting
+
+Questa PR introduce:
+- ROI pipeline v1 (script `scripts/roi_compute.py`, output `data/roi_*.json*`, integrazione GUI)
+- Polishing API/GUI (status=NS di default per `/predictions`, `fixtures.json` dedicato, export CSV in GUI)
+- Alerting base (metrica `file_age_seconds`, regole Prometheus, dashboard Grafana aggiornata)
+
+## Novità
+
+### ROI pipeline v1
+- Script: `scripts/roi_compute.py`
+  - Input: `data/ledger.jsonl` (supporta anche `.json` e `.csv`)
+  - Output:
+    - `data/roi_metrics.json` (totali: profit, yield, hit rate, ecc.)
+    - `data/roi_daily.json` (per giorno con `roi` e `cum_profit`)
+    - `data/roi_history.jsonl` (append snapshot `--append-history`)
+- Makefile:
+  - `make roi.run`
+
+### Polishing API/GUI
+- API:
+  - `/predictions`: default `status=NS` se non specificato
+  - `/fixtures`: legge `data/fixtures.json` se presente, fallback a `last_delta.json`
+  - Esposizione metrica `file_age_seconds{file=...}` su `/metrics`
+- GUI (Streamlit):
+  - Default filtro status=NS in “Predictions”
+  - Pulsante “Download CSV” su Alerts, Predictions, Fixtures, ROI (metrics/daily/history)
+
+### Alerting base
+- Prometheus:
+  - `monitoring/prometheus.yml` con `rule_files: /etc/prometheus/alerts.yml`
+  - `monitoring/alerts.yml`:
+    - `FileStale`: `file_age_seconds > 3600` (5m)
+    - `HighErrorRate`: error rate 5xx > 5% (5m)
+- Grafana:
+  - Dashboard aggiornata “API Overview” con pannello “File age (seconds) by file”
+
+## Utilizzo
+
+### ROI
+```bash
+make roi.run
+```
+
+### Fixtures snapshot
+```bash
+make fixtures.snapshot
+```
+
+### Stack Docker
+```bash
+docker compose up --build
+# API:       http://localhost:8000
+# GUI:       http://localhost:8501
+# Prometheus http://localhost:9090
+# Grafana:   http://localhost:3000 (admin/admin se .env non modificato)
+```
+
+## Scheduler (GitHub Actions)
+Workflow aggiornato `.github/workflows/schedule.yml`:
+- Esegue (se presenti) fetch, consensus, fixtures snapshot, ROI compute
+- Pubblica artifact dei file `data/`
+- Commit dati opzionale con `COMMIT_DATA=true` (Repository Variables)
+
+## Note
+- La GUI effettua export CSV localmente (nessuna dipendenza API).
+- I file monitorati per `file_age_seconds` sono configurabili con env `FILES_TO_WATCH` (default: principali file in `data/`).

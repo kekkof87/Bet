@@ -1,0 +1,59 @@
+{
+  "annotations": { "list": [ { "builtIn": 1, "datasource": "-- Grafana --", "enable": true, "hide": true, "iconColor": "rgba(0, 211, 255, 1)", "name": "Annotations & Alerts", "type": "dashboard" } ] },
+  "description": "Overview metrics for FastAPI service instrumented by prometheus-fastapi-instrumentator",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "iteration": 1700000000000,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "Requests per second (by status)",
+      "type": "timeseries",
+      "id": 1,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [ { "refId": "A", "expr": "sum by (status) (rate(http_requests_total[5m]))", "legendFormat": "{{status}}" } ]
+    },
+    {
+      "title": "Latency p95 (seconds)",
+      "type": "timeseries",
+      "id": 2,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [ { "refId": "A", "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95" } ]
+    },
+    {
+      "title": "Error rate (5xx / all)",
+      "type": "timeseries",
+      "id": 3,
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [ { "refId": "A", "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))", "legendFormat": "error_rate" } ]
+    },
+    {
+      "title": "Requests per method and path",
+      "type": "timeseries",
+      "id": 4,
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [ { "refId": "A", "expr": "sum by (method, path) (rate(http_requests_total[5m]))", "legendFormat": "{{method}} {{path}}" } ]
+    },
+    {
+      "title": "File age (seconds) by file",
+      "type": "timeseries",
+      "id": 5,
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "targets": [ { "refId": "A", "expr": "file_age_seconds", "legendFormat": "{{file}}" } ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["api", "fastapi", "prometheus"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "API Overview",
+  "version": 2,
+  "weekStart": ""
+}
