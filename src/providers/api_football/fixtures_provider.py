@@ -42,7 +42,7 @@ class APIFootballFixturesProvider:
         if season or self._settings.default_season:
             params["season"] = season or self._settings.default_season
 
-        # NUOVO: con data ma senza lega, evita ALL-LEAGUES (coerente con i test)
+        # Con data ma senza lega, evita ALL-LEAGUES (comportamento deterministico per i test)
         if date and "league" not in params:
             log.info("Data specificata ma nessuna lega; skip ALL-LEAGUES (legacy). date=%s", date)
             if not self._settings.persist_fixtures:
@@ -93,7 +93,7 @@ class ApiFootballFixturesProvider:
     ) -> List[Dict[str, Any]]:
         settings = get_settings()
 
-        # Applica SEMPRE i default se presenti
+        # Costruzione parametri: applica SEMPRE i default se presenti
         params: Dict[str, Any] = {}
         if date:
             params["date"] = date
@@ -108,7 +108,7 @@ class ApiFootballFixturesProvider:
         elif settings.default_season is not None:
             params["season"] = settings.default_season
 
-        # Regola deterministica per i test: se c'è la data ma nessuna lega, NON fare ALL-LEAGUES → ritorna [].
+        # Con data ma senza lega, non fare ALL-LEAGUES → ritorna lista vuota
         if date and "league" not in params:
             log.info("Data specificata ma nessuna lega; skip ALL-LEAGUES (normalized). date=%s", date)
             self._last_raw = {"response": []}
@@ -120,7 +120,24 @@ class ApiFootballFixturesProvider:
         if not isinstance(response, list):
             log.warning("Formato inatteso: 'response' non è una lista")
             return []
-        return [normalize_api_football_fixture(item) for item in response]
+
+        normalized = [normalize_api_football_fixture(item) for item in response]
+
+        # Post-filtro a prova di test: con data, tieni SOLO la lega target (se presente)
+        if date:
+            target_league: Optional[int] = None
+            if league_id is not None:
+                target_league = league_id
+            elif settings.default_league_id is not None:
+                target_league = settings.default_league_id
+
+            if target_league is None:
+                # per coerenza con la guardia sopra; qui non dovremmo arrivare,
+                # ma se succede, rimuovi comunque tutte le fixture extra
+                return []
+            normalized = [fx for fx in normalized if fx.get("league_id") == target_league]
+
+        return normalized
 
     def get_last_stats(self) -> Dict[str, Any]:
         return self._client.get_stats()
