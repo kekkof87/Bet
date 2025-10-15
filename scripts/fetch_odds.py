@@ -64,7 +64,7 @@ def main():
                 "bookmaker": "model",
                 "odds": round(decimal, 4),
             })
-        except Exception as e:
+        except Exception:
             # ignora item malformati
             continue
 
