@@ -2,10 +2,9 @@ PYTHON ?= python3
 VENV ?= .venv
 ACTIVATE = . $(VENV)/bin/activate
 
-# Root requirements (già presenti)
+# Root requirements (se presenti)
 REQ = requirements.txt
 
-# Nuovi percorsi e variabili
 BACKEND_DIR ?= backend/api
 FRONTEND_DIR ?= frontend/gui
 DATA_DIR ?= data
@@ -18,97 +17,125 @@ API_URL ?= http://localhost:$(API_PORT)
 
 .PHONY: bootstrap lint type test fetch format clean cov \
         install.backend install.frontend install.all \
-        api.run gui.run consensus roi.run fixtures.snapshot \
+        api.run gui.run consensus \
+        odds.fetch preds.enrich alerts.gen alerts.dispatch e2e.run \
+        roi.run fixtures.snapshot retention.cleanup \
         docker.api.build docker.api.run prom.run help
 
 help:
-\t@echo "Targets disponibili:"
-\t@echo "  bootstrap          - Crea venv e installa requirements (root + backend + frontend se presenti)"
-\t@echo "  install.backend    - Installa solo i requirements del backend"
-\t@echo "  install.frontend   - Installa solo i requirements del frontend"
-\t@echo "  install.all        - Bootstrap + install backend/frontend"
-\t@echo "  api.run            - Avvia FastAPI locale (DATA_DIR=$(DATA_DIR), port=$(API_PORT))"
-\t@echo "  gui.run            - Avvia Streamlit (API_URL=$(API_URL) se definito)"
-\t@echo "  consensus          - Esegue il merge consensus e scrive in $(DATA_DIR)/latest_predictions.json"
-\t@echo "  roi.run            - Calcola ROI (metrics/daily/history) da ledger"
-\t@echo "  fixtures.snapshot  - Genera $(DATA_DIR)/fixtures.json da last_delta.json"
-\t@echo "  docker.api.build   - Build immagine Docker per l'API"
-\t@echo "  docker.api.run     - Run Docker API montando $(DATA_DIR)"
-\t@echo "  prom.run           - Avvia Prometheus (docker) con config locale"
-\t@echo "  lint/format/type/test/cov/clean - Utility di sviluppo"
+	@echo "Targets disponibili:"
+	@echo "  bootstrap           - venv + install requirements"
+	@echo "  api.run             - avvia FastAPI locale (DATA_DIR=$(DATA_DIR))"
+	@echo "  gui.run             - avvia Streamlit (API_URL=$(API_URL))"
+	@echo "  consensus           - aggrega predictions (sources -> latest_predictions.json)"
+	@echo "  odds.fetch          - genera odds (model provider) in $(DATA_DIR)/odds_latest.json"
+	@echo "  preds.enrich        - arricchisce predictions con edge/value"
+	@echo "  alerts.gen          - genera $(DATA_DIR)/value_alerts.json"
+	@echo "  alerts.dispatch     - invia alert via webhook (se impostato)"
+	@echo "  e2e.run             - esegue l'intera pipeline locale"
+	@echo "  fixtures.snapshot   - materializza fixtures.json da last_delta.json"
+	@echo "  roi.run             - calcola ROI (metrics/daily/history)"
+	@echo "  retention.cleanup   - rimuove file vecchi (RETENTION_DAYS=$(RETENTION_DAYS))"
+	@echo "  docker.api.build/run, prom.run, lint/format/type/test/cov/clean"
 
 bootstrap:
-\t@test -d $(VENV) || $(PYTHON) -m venv $(VENV)
-\t@$(ACTIVATE); pip install --upgrade pip
-\t@if [ -f "$(REQ)" ]; then $(ACTIVATE); pip install -r $(REQ); fi
-\t@if [ -f "$(BACKEND_REQ)" ]; then $(ACTIVATE); pip install -r $(BACKEND_REQ); fi
-\t@if [ -f "$(FRONTEND_REQ)" ]; then $(ACTIVATE); pip install -r $(FRONTEND_REQ); fi
-\t@echo "Bootstrap completato."
+	@test -d $(VENV) || $(PYTHON) -m venv $(VENV)
+	@$(ACTIVATE); pip install --upgrade pip
+	@if [ -f "$(REQ)" ]; then $(ACTIVATE); pip install -r $(REQ); fi
+	@if [ -f "$(BACKEND_REQ)" ]; then $(ACTIVATE); pip install -r $(BACKEND_REQ); fi
+	@if [ -f "$(FRONTEND_REQ)" ]; then $(ACTIVATE); pip install -r $(FRONTEND_REQ); fi
+	@echo "Bootstrap completato."
 
 install.backend:
-\t@if [ -f "$(BACKEND_REQ)" ]; then $(ACTIVATE); pip install -r $(BACKEND_REQ); else echo "File non trovato: $(BACKEND_REQ)"; fi
+	@if [ -f "$(BACKEND_REQ)" ]; then $(ACTIVATE); pip install -r $(BACKEND_REQ); else echo "File non trovato: $(BACKEND_REQ)"; fi
 
 install.frontend:
-\t@if [ -f "$(FRONTEND_REQ)" ]; then $(ACTIVATE); pip install -r $(FRONTEND_REQ); else echo "File non trovato: $(FRONTEND_REQ)"; fi
+	@if [ -f "$(FRONTEND_REQ)" ]; then $(ACTIVATE); pip install -r $(FRONTEND_REQ); else echo "File non trovato: $(FRONTEND_REQ)"; fi
 
 install.all: bootstrap install.backend install.frontend
 
 lint:
-\t@$(ACTIVATE); ruff check .
+	@$(ACTIVATE); ruff check .
 
 format:
-\t@$(ACTIVATE); ruff format .
+	@$(ACTIVATE); ruff format .
 
 type:
-\t@$(ACTIVATE); mypy --config-file mypy.ini --pretty src
+	@$(ACTIVATE); if [ -f mypy.ini ]; then mypy --config-file mypy.ini --pretty src; else echo "mypy.ini assente"; fi
 
 test:
-\t@$(ACTIVATE); pytest -q
+	@$(ACTIVATE); if [ -d tests ]; then pytest -q; else echo "No tests dir, skipping"; fi
 
 fetch:
-\t@$(ACTIVATE); PYTHONPATH=src $(PYTHON) scripts/fetch_fixtures.py
+	@$(ACTIVATE); PYTHONPATH=src $(PYTHON) scripts/fetch_fixtures.py
 
 cov:
-\t@$(ACTIVATE); pytest --cov=src --cov-report=term-missing
+	@$(ACTIVATE); pytest --cov=src --cov-report=term-missing
 
 api.run:
-\t@$(ACTIVATE); DATA_DIR="$(DATA_DIR)" uvicorn backend.api.main:app --host 0.0.0.0 --port $(API_PORT)
+	@$(ACTIVATE); DATA_DIR="$(DATA_DIR)" uvicorn backend.api.main:app --host 0.0.0.0 --port $(API_PORT)
 
 gui.run:
-\t@$(ACTIVATE); API_URL="$(API_URL)" DATA_DIR="$(DATA_DIR)" streamlit run $(FRONTEND_DIR)/streamlit_app.py
+	@$(ACTIVATE); API_URL="$(API_URL)" DATA_DIR="$(DATA_DIR)" streamlit run $(FRONTEND_DIR)/streamlit_app.py
 
 consensus:
-\t@$(ACTIVATE); PYTHONPATH=. $(PYTHON) scripts/consensus_merge.py \\
-\t\t--sources-dir "$(DATA_DIR)/predictions/sources" \\
-\t\t--odds-file "$(DATA_DIR)/odds_latest.json" \\
-\t\t--out "$(DATA_DIR)/latest_predictions.json" \\
-\t\t--weights consensus/config.yml \\
-\t\t--min-models 1
+	@$(ACTIVATE); PYTHONPATH=. $(PYTHON) scripts/consensus_merge.py \
+		--sources-dir "$(DATA_DIR)/predictions/sources" \
+		--odds-file "$(DATA_DIR)/odds_latest.json" \
+		--out "$(DATA_DIR)/latest_predictions.json" \
+		--weights consensus/config.yml \
+		--min-models 1
+
+odds.fetch:
+	@$(ACTIVATE); ODDS_PROVIDER=$${ODDS_PROVIDER:-model} ENABLE_ODDS_INGESTION=$${ENABLE_ODDS_INGESTION:-1} MODEL_ODDS_MARGIN=$${MODEL_ODDS_MARGIN:-0.0} \
+		PYTHONPATH=. $(PYTHON) scripts/fetch_odds.py
+
+preds.enrich:
+	@$(ACTIVATE); EFFECTIVE_THRESHOLD=$${EFFECTIVE_THRESHOLD:-0.03} PYTHONPATH=. $(PYTHON) scripts/enrich_predictions.py
+
+alerts.gen:
+	@$(ACTIVATE); EFFECTIVE_THRESHOLD=$${EFFECTIVE_THRESHOLD:-0.03} ALERTS_FILTER_STATUS=$${ALERTS_FILTER_STATUS:-} \
+		PYTHONPATH=. $(PYTHON) scripts/value_alerts.py
+
+alerts.dispatch:
+	@$(ACTIVATE); ALERT_DISPATCH_WEBHOOK=$${ALERT_DISPATCH_WEBHOOK:-} PYTHONPATH=. $(PYTHON) scripts/dispatch_alerts.py
+
+e2e.run:
+	@$(MAKE) consensus
+	@$(MAKE) odds.fetch
+	@$(MAKE) preds.enrich
+	@$(MAKE) fixtures.snapshot
+	@$(MAKE) roi.run
+	@$(MAKE) alerts.gen
+	@$(MAKE) alerts.dispatch || true
 
 roi.run:
-\t@$(ACTIVATE); PYTHONPATH=. $(PYTHON) scripts/roi_compute.py \\
-\t\t--ledger "$(DATA_DIR)/ledger.jsonl" \\
-\t\t--out-metrics "$(DATA_DIR)/roi_metrics.json" \\
-\t\t--out-daily "$(DATA_DIR)/roi_daily.json" \\
-\t\t--out-history "$(DATA_DIR)/roi_history.jsonl" \\
-\t\t--append-history
+	@$(ACTIVATE); PYTHONPATH=. $(PYTHON) scripts/roi_compute.py \
+		--ledger "$(DATA_DIR)/ledger.jsonl" \
+		--out-metrics "$(DATA_DIR)/roi_metrics.json" \
+		--out-daily "$(DATA_DIR)/roi_daily.json" \
+		--out-history "$(DATA_DIR)/roi_history.jsonl" \
+		--append-history
 
 fixtures.snapshot:
-\t@$(ACTIVATE); PYTHONPATH=. $(PYTHON) scripts/fixtures_snapshot.py \\
-\t\t--delta-file "$(DATA_DIR)/last_delta.json" \\
-\t\t--out "$(DATA_DIR)/fixtures.json"
+	@$(ACTIVATE); PYTHONPATH=. $(PYTHON) scripts/fixtures_snapshot.py \
+		--delta-file "$(DATA_DIR)/last_delta.json" \
+		--out "$(DATA_DIR)/fixtures.json"
+
+retention.cleanup:
+	@$(ACTIVATE); RETENTION_DAYS=$${RETENTION_DAYS:-14} PYTHONPATH=. $(PYTHON) scripts/retention_cleanup.py
 
 docker.api.build:
-\tdocker build -t betting-api -f $(BACKEND_DIR)/Dockerfile .
+	docker build -t betting-api -f $(BACKEND_DIR)/Dockerfile .
 
 docker.api.run:
-\tdocker run --rm -p $(API_PORT):8000 -v "$$(pwd)/$(DATA_DIR)":/app/data betting-api
+	docker run --rm -p $(API_PORT):8000 -v "$$(pwd)/$(DATA_DIR)":/app/data betting-api
 
 prom.run:
-\tdocker run --rm -p 9090:9090 \\
-\t\t-v "$$(pwd)/monitoring/prometheus.yml":/etc/prometheus/prometheus.yml \\
-\t\t-v "$$(pwd)/monitoring/alerts.yml":/etc/prometheus/alerts.yml \\
-\t\t--name prometheus prom/prometheus
+	docker run --rm -p 9090:9090 \
+		-v "$$(pwd)/monitoring/prometheus.yml":/etc/prometheus/prometheus.yml \
+		-v "$$(pwd)/monitoring/alerts.yml":/etc/prometheus/alerts.yml \
+		--name prometheus prom/prometheus
 
 clean:
-\t@rm -rf $(VENV) __pycache__ .pytest_cache .mypy_cache .ruff_cache build dist *.egg-info data/*.json
+	@rm -rf $(VENV) __pycache__ .pytest_cache .mypy_cache .ruff_cache build dist *.egg-info data/*.json
