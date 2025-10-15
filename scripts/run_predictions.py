@@ -15,7 +15,7 @@ logger = get_logger("scripts.run_predictions")
 
 def main() -> None:
     try:
-        s = get_settings()
+        get_settings()
     except ValueError as e:
         logger.error("Configurazione non valida: %s", e)
         return
