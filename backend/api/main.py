@@ -2,7 +2,7 @@ import os
 import asyncio
 import time
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Optional, List  # removed: Dict
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
