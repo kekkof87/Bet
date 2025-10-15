@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any, Dict, List, cast, TYPE_CHECKING
 
 from core.config import get_settings
@@ -26,12 +27,12 @@ def main() -> None:
         logger.error("fixtures_latest non disponibile o formattata male.")
         return
 
-    # Non tipizziamo rigidamente: ci basta trattarli come dict serializzati
     fixtures = loaded  # type: ignore[assignment]
-    logger.info("Caricate %d fixtures per odds.", len(fixtures))
+    provider_name = os.getenv("ODDS_PROVIDER")  # forza override da env
+    logger.info("Caricate %d fixtures per odds. provider=%s", len(fixtures), provider_name or "(auto)")
 
     try:
-        run_odds_pipeline(cast(List[Dict[str, Any]], fixtures))
+        run_odds_pipeline(cast(List[Dict[str, Any]], fixtures), provider_name=provider_name)
     except Exception as exc:  # pragma: no cover
         logger.error("Errore esecuzione odds pipeline: %s", exc)
 
