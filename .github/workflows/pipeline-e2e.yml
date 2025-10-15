@@ -52,12 +52,13 @@ jobs:
         run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
 
       - name: Show selected provider scope
+        shell: bash
         run: |
           echo "PROVIDER_SOURCE=${{ vars.PROVIDER_SOURCE }}"
           echo "FOOTBALL_DATA_LEAGUES=${{ vars.FOOTBALL_DATA_LEAGUES }}"
           echo "UPCOMING_DAYS=${{ vars.UPCOMING_DAYS }}"
           echo "BET_DATA_DIR=${{ vars.BET_DATA_DIR }}"
-          echo "ODDS_PROVIDER (forced to model in this workflow step)"
+          echo "ODDS_PROVIDER=FORCED(model)"
           echo "ENABLE_ODDS_INGESTION=${{ vars.ENABLE_ODDS_INGESTION || 1 }}"
           echo "ENABLE_PREDICTIONS=${{ vars.ENABLE_PREDICTIONS || 1 }}"
           echo "ENABLE_PREDICTIONS_USE_ODDS=${{ vars.ENABLE_PREDICTIONS_USE_ODDS || 1 }}"
@@ -149,7 +150,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           for f in \
             data/fixtures_latest.json \
             data/odds/odds_latest.json \
