@@ -89,12 +89,24 @@ def _load_json_list(path: Path) -> FixtureDataset:
 
 def load_latest_fixtures() -> FixtureDataset:
     """
-    Carica prima dal path dinamico (BET_DATA_DIR); se non esiste, fallback al path statico legacy.
+    Carica le fixtures più recenti.
+    - Se esiste il file nel path dinamico (BET_DATA_DIR), usa quello.
+    - Se NON esiste:
+        - Esegui fallback al path statico legacy (data/fixtures_latest.json) SOLO
+          se BET_DATA_DIR non è impostata o è "data".
+        - Se BET_DATA_DIR è impostata ad un path diverso, NON fare fallback e ritorna [].
+      Questo evita leakage tra test che ridefiniscono BET_DATA_DIR.
     """
     dyn = _latest_dynamic_path()
     if dyn.exists():
         return _load_json_list(dyn)
-    return _load_json_list(LATEST_FIXTURES_FILE)
+
+    bet_dir_env = os.getenv("BET_DATA_DIR")
+    if bet_dir_env is None or bet_dir_env.strip() in ("", "data", "./data", "./data/"):
+        return _load_json_list(LATEST_FIXTURES_FILE)
+
+    # BET_DATA_DIR è impostata a una directory diversa: no fallback legacy
+    return []
 
 
 def save_latest_fixtures(fixtures: FixtureDataset) -> None:
