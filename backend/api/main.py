@@ -2,12 +2,18 @@ import os
 import asyncio
 import time
 from pathlib import Path
-from typing import Optional, List  # removed: Dict
+from typing import Optional, List
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
-from prometheus_fastapi_instrumentator import Instrumentator
+
+# Tolleranza: se la libreria Prometheus non è installata, non blocchiamo l'avvio
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator  # type: ignore
+except Exception:
+    Instrumentator = None  # type: ignore
+
 from prometheus_client import Gauge
 
 from .utils.file_io import load_json, load_jsonl, filter_by_status, filter_predictions
@@ -38,7 +44,6 @@ def get_watch_files() -> List[Path]:
         files = [Path(x.strip()) for x in env.split(",") if x.strip()]
     else:
         files = [Path(x) for x in WATCH_DEFAULTS]
-    # Risolvi in DATA_DIR se path relativo
     resolved: List[Path] = []
     for p in files:
         if p.is_absolute():
@@ -56,16 +61,13 @@ def update_file_age_metrics():
             age = max(0.0, now - stat.st_mtime)
             FILE_AGE_GAUGE.labels(file=label).set(age)
         except FileNotFoundError:
-            # Se il file manca, imposta età a NaN -> scegliamo un valore alto per evidenziare (es. 1e12)
             FILE_AGE_GAUGE.labels(file=label).set(float("nan"))
 
 async def _file_age_refresher():
-    # Aggiorna periodicamente le metriche di età dei file
     while True:
         try:
             update_file_age_metrics()
         except Exception:
-            # Non bloccare il loop su errore
             pass
         await asyncio.sleep(30)
 
@@ -80,10 +82,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Instrumentazione Prometheus: deve avvenire PRIMA dello startup
+if Instrumentator:
+    try:
+        Instrumentator().instrument(app).expose(app, include_in_schema=False)
+    except Exception as e:
+        print(f"[metrics] Instrumentator init error: {e}")
+else:
+    print("[metrics] prometheus_fastapi_instrumentator non installato: /metrics disabilitato")
+
 @app.on_event("startup")
 async def _startup():
-    Instrumentator().instrument(app).expose(app, include_in_schema=False)
-    # Primo aggiornamento immediato e task periodico
+    # Primo aggiornamento e task periodico per file_age_seconds
     update_file_age_metrics()
     asyncio.create_task(_file_age_refresher())
 
