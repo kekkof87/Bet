@@ -1,0 +1,176 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Bootstrap (venv + deps)",
+      "type": "shell",
+      "command": "if (!(Test-Path ./.venv)) { python -m venv .venv }; $py='./.venv/Scripts/python.exe'; & $py -m pip install --upgrade pip; if (Test-Path ./requirements.txt) { & $py -m pip install -r requirements.txt }; if (Test-Path ./backend/api/requirements.txt) { & $py -m pip install -r backend/api/requirements.txt }; if (Test-Path ./frontend/gui/requirements.txt) { & $py -m pip install -r frontend/gui/requirements.txt }",
+      "options": {
+        "shell": {
+          "executable": "powershell.exe"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "API: Run FastAPI",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe -m uvicorn backend.api.main:app --host 0.0.0.0 --port 8000",
+      "options": {
+        "shell": {
+          "executable": "powershell.exe"
+        }
+      },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "isBackground": false,
+      "env": {
+        "DATA_DIR": "${workspaceFolder}/data"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "GUI: Run Streamlit",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe -m streamlit run frontend/gui/streamlit_app.py --server.port=8501 --server.address=0.0.0.0",
+      "options": {
+        "shell": {
+          "executable": "powershell.exe"
+        }
+      },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "isBackground": false,
+      "env": {
+        "API_URL": "http://localhost:8000",
+        "DATA_DIR": "${workspaceFolder}/data"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Docker Compose: Up",
+      "type": "shell",
+      "command": "docker compose up --build",
+      "options": {
+        "shell": {
+          "executable": "powershell.exe"
+        }
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Docker Compose: Down",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": {
+        "shell": {
+          "executable": "powershell.exe"
+        }
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+
+    // Pipeline step-by-step (E2E)
+    {
+      "label": "Pipeline: Consensus",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/consensus_merge.py --sources-dir data/predictions/sources --odds-file data/odds_latest.json --out data/latest_predictions.json --weights consensus/config.yml --min-models 1",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": []
+    },
+    {
+      "label": "Pipeline: Fetch Model Odds",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/fetch_odds.py",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "env": {
+        "ODDS_PROVIDER": "model",
+        "ENABLE_ODDS_INGESTION": "1",
+        "MODEL_ODDS_MARGIN": "0.0"
+      }
+    },
+    {
+      "label": "Pipeline: Enrich Predictions",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/enrich_predictions.py",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "env": {
+        "EFFECTIVE_THRESHOLD": "0.03"
+      }
+    },
+    {
+      "label": "Pipeline: Fixtures Snapshot",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/fixtures_snapshot.py --delta-file data/last_delta.json --out data/fixtures.json",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": []
+    },
+    {
+      "label": "Pipeline: ROI Compute",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/roi_compute.py --ledger data/ledger.jsonl --out-metrics data/roi_metrics.json --out-daily data/roi_daily.json --out-history data/roi_history.jsonl --append-history",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": []
+    },
+    {
+      "label": "Pipeline: Generate Alerts",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/value_alerts.py",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "env": {
+        "EFFECTIVE_THRESHOLD": "0.03",
+        "ALERTS_FILTER_STATUS": "NS"
+      }
+    },
+    {
+      "label": "Pipeline: Dispatch Alerts",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/dispatch_alerts.py",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "env": {
+        "ALERT_DISPATCH_WEBHOOK": ""
+      }
+    },
+    {
+      "label": "Pipeline: E2E (all steps)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Pipeline: Consensus",
+        "Pipeline: Fetch Model Odds",
+        "Pipeline: Enrich Predictions",
+        "Pipeline: Fixtures Snapshot",
+        "Pipeline: ROI Compute",
+        "Pipeline: Generate Alerts",
+        "Pipeline: Dispatch Alerts"
+      ]
+    }
+  ]
+}
