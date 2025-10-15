@@ -1,0 +1,5 @@
+# Pesi per sorgente modello (1.0 = neutro)
+sources:
+  model_a: 1.0
+  model_b: 0.8
+  model_c: 1.2
