@@ -44,7 +44,7 @@ jobs:
             python -m pip install -r requirements-dev.txt
           elif [ -f requirements.txt ]; then
             python -m pip install -r requirements.txt
-          else:
+          else
             python -m pip install fastapi uvicorn pydantic requests prometheus-client pytest httpx streamlit
           fi
 
@@ -57,13 +57,13 @@ jobs:
           echo "FOOTBALL_DATA_LEAGUES=${{ vars.FOOTBALL_DATA_LEAGUES }}"
           echo "UPCOMING_DAYS=${{ vars.UPCOMING_DAYS }}"
           echo "BET_DATA_DIR=${{ vars.BET_DATA_DIR }}"
-          echo "ODDS_PROVIDER=${{ vars.ODDS_PROVIDER }}"
-          echo "ENABLE_ODDS_INGESTION=${{ vars.ENABLE_ODDS_INGESTION }}"
-          echo "ENABLE_PREDICTIONS=${{ vars.ENABLE_PREDICTIONS }}"
-          echo "ENABLE_PREDICTIONS_USE_ODDS=${{ vars.ENABLE_PREDICTIONS_USE_ODDS }}"
-          echo "ENABLE_VALUE_DETECTION=${{ vars.ENABLE_VALUE_DETECTION }}"
-          echo "ENABLE_VALUE_ALERTS=${{ vars.ENABLE_VALUE_ALERTS }}"
-          echo "ENABLE_ROI_TRACKING=${{ vars.ENABLE_ROI_TRACKING }}"
+          echo "ODDS_PROVIDER (forced to model in this workflow step)"
+          echo "ENABLE_ODDS_INGESTION=${{ vars.ENABLE_ODDS_INGESTION || 1 }}"
+          echo "ENABLE_PREDICTIONS=${{ vars.ENABLE_PREDICTIONS || 1 }}"
+          echo "ENABLE_PREDICTIONS_USE_ODDS=${{ vars.ENABLE_PREDICTIONS_USE_ODDS || 1 }}"
+          echo "ENABLE_VALUE_DETECTION=${{ vars.ENABLE_VALUE_DETECTION || 1 }}"
+          echo "ENABLE_VALUE_ALERTS=${{ vars.ENABLE_VALUE_ALERTS || 1 }}"
+          echo "ENABLE_ROI_TRACKING=${{ vars.ENABLE_ROI_TRACKING || 1 }}"
 
       - name: Fetch fixtures
         env:
@@ -81,12 +81,12 @@ jobs:
         run: |
           python scripts/fetch_fixtures.py
 
-      - name: Fetch odds (model)
+      - name: Fetch odds (force model)
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
           BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
-          ENABLE_ODDS_INGESTION: ${{ vars.ENABLE_ODDS_INGESTION || 1 }}
-          ODDS_PROVIDER: ${{ vars.ODDS_PROVIDER || 'model' }}
+          ENABLE_ODDS_INGESTION: 1
+          ODDS_PROVIDER: model
         run: |
           python scripts/fetch_odds.py
 
@@ -104,7 +104,6 @@ jobs:
 
       - name: Build value alerts
         env:
-          PYTHONPATH: ${{ env.PYTHONPATH }}
           BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
           ENABLE_VALUE_ALERTS: ${{ vars.ENABLE_VALUE_ALERTS || 1 }}
           VALUE_ALERT_MIN_EDGE: ${{ vars.VALUE_ALERT_MIN_EDGE || 0.05 }}
@@ -148,7 +147,9 @@ jobs:
 
       - name: Show outputs
         if: always()
+        shell: bash
         run: |
+          set -e
           for f in \
             data/fixtures_latest.json \
             data/odds/odds_latest.json \
@@ -158,7 +159,7 @@ jobs:
             if [ -f "$f" ]; then
               echo "----- $f -----"
               head -n 120 "$f"
-            else:
+            else
               echo "MISSING: $f"
             fi
           done
