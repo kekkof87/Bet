@@ -29,11 +29,11 @@ def run_odds_pipeline(fixtures: List[Dict[str, Any]], provider_name: Optional[st
     o_dir.mkdir(parents=True, exist_ok=True)
     target = o_dir / "odds_latest.json"
 
-    # Selezione provider: param > settings > env > default "model"
+    # Ordine priorità: parametro > ENV > settings > default "model"
     p_name = (
         provider_name
-        or getattr(settings, "odds_provider", None)
         or os.getenv("ODDS_PROVIDER")
+        or getattr(settings, "odds_provider", None)
         or "model"
     )
 
