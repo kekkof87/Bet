@@ -1,0 +1,134 @@
+name: Pipeline E2E (fixtures → odds → predictions → ROI)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "7 * * * *"
+
+concurrency:
+  group: pipeline-e2e
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements*.txt', 'pyproject.toml', 'setup.cfg') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          set -e
+          if [ -f requirements-dev.txt ]; then
+            python -m pip install -r requirements-dev.txt
+          elif [ -f requirements.txt ]; then
+            python -m pip install -r requirements.txt
+          else
+            python -m pip install fastapi uvicorn pydantic requests prometheus-client pytest httpx
+          fi
+
+      - name: Export PYTHONPATH
+        run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+
+      - name: Tests (quick)
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+          BET_DATA_DIR: ${{ runner.temp }}/data-ci
+          FETCH_ABORT_ON_EMPTY: 1
+        run: pytest -q
+
+      - name: Fetch fixtures
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+          BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
+          PROVIDER_SOURCE: ${{ vars.PROVIDER_SOURCE }}
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          FOOTBALL_DATA_LEAGUES: ${{ vars.FOOTBALL_DATA_LEAGUES }}
+          UPCOMING_DAYS: ${{ vars.UPCOMING_DAYS }}
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          API_FOOTBALL_DEFAULT_LEAGUE_ID: ${{ vars.API_FOOTBALL_DEFAULT_LEAGUE_ID }}
+          API_FOOTBALL_DEFAULT_SEASON: ${{ vars.API_FOOTBALL_DEFAULT_SEASON }}
+          FETCH_ABORT_ON_EMPTY: ${{ vars.FETCH_ABORT_ON_EMPTY }}
+          ALLOW_ALL_LEAGUES_FALLBACK: ${{ vars.ALLOW_ALL_LEAGUES_FALLBACK }}
+        run: |
+          python scripts/fetch_fixtures.py
+
+      - name: Fetch odds
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+          BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
+          ENABLE_ODDS_INGESTION: 1
+          ODDS_PROVIDER: ${{ vars.ODDS_PROVIDER }}
+        run: |
+          python scripts/fetch_odds.py
+
+      - name: Run predictions
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+          BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
+          ENABLE_PREDICTIONS: 1
+          ENABLE_PREDICTIONS_USE_ODDS: 1
+          ENABLE_VALUE_DETECTION: 1
+          ENABLE_MODEL_ADJUST: ${{ vars.ENABLE_MODEL_ADJUST }}
+          MODEL_ADJUST_WEIGHT: ${{ vars.MODEL_ADJUST_WEIGHT }}
+        run: |
+          python scripts/run_predictions.py
+
+      - name: Update ROI
+        env:
+          PYTHONPATH: ${{ env.PYTHONPATH }}
+          BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
+          ENABLE_ROI_TRACKING: 1
+          ROI_MIN_EDGE: ${{ vars.ROI_MIN_EDGE }}
+          ROI_INCLUDE_CONSENSUS: ${{ vars.ROI_INCLUDE_CONSENSUS }}
+          ENABLE_KELLY_STAKING: ${{ vars.ENABLE_KELLY_STAKING }}
+          KELLY_BASE_UNITS: ${{ vars.KELLY_BASE_UNITS }}
+          KELLY_MAX_UNITS: ${{ vars.KELLY_MAX_UNITS }}
+          KELLY_EDGE_CAP: ${{ vars.KELLY_EDGE_CAP }}
+        run: |
+          python scripts/update_roi.py
+
+      - name: Show outputs
+        if: always()
+        run: |
+          for f in \
+            data/fixtures_latest.json \
+            data/odds/odds_latest.json \
+            data/predictions/latest_predictions.json \
+            data/roi/roi_metrics.json; do
+            if [ -f "$f" ]; then
+              echo "----- $f -----"
+              head -n 120 "$f"
+            else
+              echo "MISSING: $f"
+            fi
+          done
+
+      - name: Upload data artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-e2e-data
+          path: data
+          retention-days: 7
