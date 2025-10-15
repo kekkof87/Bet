@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Bootstrap
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f backend/api/requirements.txt ]; then pip install -r backend/api/requirements.txt; fi
+          if [ -f frontend/gui/requirements.txt ]; then pip install -r frontend/gui/requirements.txt; fi
+
+      - name: Lint (ruff) if present
+        run: |
+          . .venv/bin/activate
+          if command -v ruff >/dev/null 2>&1; then ruff check . || true; else echo "ruff not installed"; fi
+
+      - name: Type check (mypy) if present
+        run: |
+          . .venv/bin/activate
+          if [ -f mypy.ini ]; then mypy --config-file mypy.ini --pretty src || true; else echo "mypy config not found"; fi
+
+      - name: Tests (pytest) if present
+        run: |
+          . .venv/bin/activate
+          if [ -d tests ]; then pytest -q; else echo "No tests dir, skipping"; fi
+
+  docker-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: build-test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build -t betting-api -f backend/api/Dockerfile .
+
+  docker-publish:
+    runs-on: ubuntu-latest
+    if: ${{ vars.GHCR_PUBLISH == 'true' }}
+    needs: docker-api
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push image
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/betting-api
+          docker build -t $IMAGE:sha-${{ github.sha }} -f backend/api/Dockerfile .
+          docker push $IMAGE:sha-${{ github.sha }}
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            docker tag $IMAGE:sha-${{ github.sha }} $IMAGE:latest
+            docker push $IMAGE:latest
+          fi

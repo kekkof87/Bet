@@ -1,0 +1,59 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/api/Dockerfile
+    environment:
+      - DATA_DIR=/app/data
+    volumes:
+      - ./data:/app/data:ro
+    ports:
+      - "${API_PORT-8000}:8000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "-", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  gui:
+    image: python:3.11-slim
+    working_dir: /app
+    environment:
+      - API_URL=http://api:8000
+      - DATA_DIR=/app/data
+    volumes:
+      - ./frontend/gui:/app/frontend/gui:ro
+      - ./data:/app/data:ro
+    command: bash -lc "pip install --no-cache-dir -r frontend/gui/requirements.txt && streamlit run frontend/gui/streamlit_app.py --server.port=8501 --server.address=0.0.0.0"
+    ports:
+      - "8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD-admin}
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus

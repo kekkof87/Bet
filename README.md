@@ -372,3 +372,68 @@ docker run --rm -p 8000:8000 -v $(pwd)/data:/app/data betting-api
 Note:
 - `/fixtures` legge da `last_delta.json` (chiave `added`) finché non esiste un `fixtures.json` dedicato.
 - Il consensus richiede file in `data/predictions/sources/*.json` con campi almeno: `fixture_id`, `market`, `selection` e una probabilità (`prob`/`pred_prob`/`predicted_prob` o `probs[selection]`). Si può adattare in follow-up.
+
+
+# MVP Piattaforma Betting
+
+## Struttura
+- backend/api: FastAPI read-only su `data/`
+- frontend/gui: Streamlit GUI v0 (usa API se `API_URL` è settata, altrimenti file)
+- scripts/consensus_merge.py: pipeline consensus/merge
+- monitoring/: Prometheus + Grafana provisioning e dashboard
+- .github/workflows: CI, scheduler
+
+## Avvio rapido (sviluppo)
+
+### Make
+```bash
+# API
+make api.run
+# GUI (usa API se API_URL è definita)
+make gui.run
+# Consensus (aggregazione previsioni multiple)
+make consensus
+```
+
+### Docker Compose (stack completo)
+```bash
+cp .env.example .env  # opzionale per credenziali Grafana/porta API
+docker compose up --build
+# Servizi:
+# API:       http://localhost:8000
+# GUI:       http://localhost:8501
+# Prometheus http://localhost:9090
+# Grafana:   http://localhost:3000 (admin/admin se .env non modificato)
+```
+
+## Endpoints API
+- GET /health
+- GET /predictions?min_edge=0.03&active_only=true&status=NS
+- GET /odds
+- GET /alerts
+- GET /fixtures?status=NS
+- GET /roi/metrics
+- GET /roi/daily
+- GET /roi/history
+- GET /scoreboard
+- GET /delta
+- GET /metrics (Prometheus)
+
+Note:
+- `/fixtures` legge da `last_delta.json` (chiave `added`) finché non esiste un `fixtures.json` dedicato.
+- Il consensus richiede file in `data/predictions/sources/*.json` con campi almeno: `fixture_id`, `market`, `selection` e una probabilità (`prob`/`pred_prob`/`predicted_prob` o `probs[selection]`).
+
+## CI
+Workflow `.github/workflows/ci.yml`:
+- Lint (ruff), type-check (mypy) e test (pytest) se presenti.
+- Build immagine Docker API.
+- Publish opzionale su GHCR se `GHCR_PUBLISH=true` tra le repository variables.
+
+## Scheduler dati
+Workflow `.github/workflows/schedule.yml`:
+- Ogni 30 minuti: esegue eventuale fetch, fa il consensus merge e pubblica gli artifact dei file in `data/`.
+- Commit dei dati opzionale se `COMMIT_DATA=true` tra le repository variables.
+
+## Monitoring
+- Prometheus scrapa l’API su `/metrics`.
+- Grafana preconfigurata con datasource Prometheus e dashboard "API Overview" (RPS, p95 latency, error rate).
