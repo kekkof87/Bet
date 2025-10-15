@@ -56,8 +56,9 @@ jobs:
 
       - name: Show selected provider scope
         run: |
-          echo "API_FOOTBALL_DEFAULT_LEAGUE_ID=${{ vars.API_FOOTBALL_DEFAULT_LEAGUE_ID }}"
-          echo "API_FOOTBALL_DEFAULT_SEASON=${{ vars.API_FOOTBALL_DEFAULT_SEASON }}"
+          echo "PROVIDER_SOURCE=${{ vars.PROVIDER_SOURCE }}"
+          echo "FOOTBALL_DATA_LEAGUES=${{ vars.FOOTBALL_DATA_LEAGUES }}"
+          echo "UPCOMING_DAYS=${{ vars.UPCOMING_DAYS }}"
           echo "BET_DATA_DIR=${{ vars.BET_DATA_DIR }}"
 
       - name: Tests
@@ -68,9 +69,10 @@ jobs:
       - name: Run fetch pipeline
         env:
           PYTHONPATH: ${{ env.PYTHONPATH }}
-          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
-          API_FOOTBALL_DEFAULT_LEAGUE_ID: ${{ vars.API_FOOTBALL_DEFAULT_LEAGUE_ID }}
-          API_FOOTBALL_DEFAULT_SEASON: ${{ vars.API_FOOTBALL_DEFAULT_SEASON }}
+          PROVIDER_SOURCE: ${{ vars.PROVIDER_SOURCE }}
+          FOOTBALL_DATA_API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          FOOTBALL_DATA_LEAGUES: ${{ vars.FOOTBALL_DATA_LEAGUES }}
+          UPCOMING_DAYS: ${{ vars.UPCOMING_DAYS }}
           BET_DATA_DIR: ${{ vars.BET_DATA_DIR }}
           ENABLE_ODDS_INGESTION: ${{ vars.ENABLE_ODDS_INGESTION }}
           ENABLE_PREDICTIONS: ${{ vars.ENABLE_PREDICTIONS }}

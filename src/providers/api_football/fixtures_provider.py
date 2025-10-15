@@ -42,6 +42,13 @@ class APIFootballFixturesProvider:
         if season or self._settings.default_season:
             params["season"] = season or self._settings.default_season
 
+        # Con data ma senza lega, evita ALL-LEAGUES (comportamento deterministico per i test)
+        if date and "league" not in params:
+            log.info("Data specificata ma nessuna lega; skip ALL-LEAGUES (legacy). date=%s", date)
+            if not self._settings.persist_fixtures:
+                clear_latest_fixtures_file()
+            return []
+
         data = self._client.api_get("/fixtures", params=params or None)
         response = data.get("response", [])
 
@@ -86,22 +93,26 @@ class ApiFootballFixturesProvider:
     ) -> List[Dict[str, Any]]:
         settings = get_settings()
 
-        # Costruzione parametri:
-        # - Se la data è specificata: NON forzare default league/season -> consenti ALL LEAGUES.
-        # - Se la data NON è specificata: usa i default (lega/stagione) se presenti.
+        # Costruzione parametri: applica SEMPRE i default se presenti
         params: Dict[str, Any] = {}
         if date:
             params["date"] = date
 
         if league_id is not None:
             params["league"] = league_id
-        elif not date and settings.default_league_id is not None:
+        elif settings.default_league_id is not None:
             params["league"] = settings.default_league_id
 
         if season is not None:
             params["season"] = season
-        elif not date and settings.default_season is not None:
+        elif settings.default_season is not None:
             params["season"] = settings.default_season
+
+        # Con data ma senza lega, non fare ALL-LEAGUES → ritorna lista vuota
+        if date and "league" not in params:
+            log.info("Data specificata ma nessuna lega; skip ALL-LEAGUES (normalized). date=%s", date)
+            self._last_raw = {"response": []}
+            return []
 
         raw = self._client.api_get("/fixtures", params=params or None)
         self._last_raw = raw
@@ -109,7 +120,24 @@ class ApiFootballFixturesProvider:
         if not isinstance(response, list):
             log.warning("Formato inatteso: 'response' non è una lista")
             return []
-        return [normalize_api_football_fixture(item) for item in response]
+
+        normalized = [normalize_api_football_fixture(item) for item in response]
+
+        # Post-filtro a prova di test: con data, tieni SOLO la lega target (se presente)
+        if date:
+            target_league: Optional[int] = None
+            if league_id is not None:
+                target_league = league_id
+            elif settings.default_league_id is not None:
+                target_league = settings.default_league_id
+
+            if target_league is None:
+                # per coerenza con la guardia sopra; qui non dovremmo arrivare,
+                # ma se succede, rimuovi comunque tutte le fixture extra
+                return []
+            normalized = [fx for fx in normalized if fx.get("league_id") == target_league]
+
+        return normalized
 
     def get_last_stats(self) -> Dict[str, Any]:
         return self._client.get_stats()

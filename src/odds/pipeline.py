@@ -3,13 +3,19 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Protocol
 
 from core.config import get_settings
 from core.logging import get_logger
 from providers.odds.odds_provider_stub import StubOddsProvider
+from providers.odds.odds_provider_model import ModelOddsProvider  # nuovo provider
 
 logger = get_logger("odds.pipeline")
+
+
+class OddsProviderProtocol(Protocol):
+    def fetch_odds(self, fixtures: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        ...
 
 
 def run_odds_pipeline(fixtures: List[Dict[str, Any]], provider_name: Optional[str] = None) -> Optional[Path]:
@@ -23,12 +29,22 @@ def run_odds_pipeline(fixtures: List[Dict[str, Any]], provider_name: Optional[st
     o_dir.mkdir(parents=True, exist_ok=True)
     target = o_dir / "odds_latest.json"
 
-    p_name = provider_name or settings.odds_provider
+    # Selezione provider: param > settings > env > default "model"
+    p_name = (
+        provider_name
+        or getattr(settings, "odds_provider", None)
+        or os.getenv("ODDS_PROVIDER")
+        or "model"
+    )
+
+    provider: OddsProviderProtocol
     if p_name == "stub":
         provider = StubOddsProvider()
+    elif p_name == "model":
+        provider = ModelOddsProvider()
     else:
-        logger.warning("Provider odds '%s' non supportato, fallback stub.", p_name)
-        provider = StubOddsProvider()
+        logger.warning("Provider odds '%s' non supportato, fallback 'model'.", p_name)
+        provider = ModelOddsProvider()
 
     odds_entries = provider.fetch_odds(fixtures)
     payload = {
