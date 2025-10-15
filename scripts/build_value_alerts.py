@@ -39,7 +39,7 @@ def _float_env(name: str, default: float) -> float:
 
 
 def main() -> None:
-    # Non importiamo get_settings per evitare dipendenze da chiavi API non necessarie
+    # Nessuna dipendenza da get_settings: evita richieste a chiavi API non necessarie
     bet_data_dir = Path(os.getenv("BET_DATA_DIR", "data"))
     predictions_dir = os.getenv("PREDICTIONS_DIR", "predictions")
     value_alerts_dir = os.getenv("VALUE_ALERTS_DIR", "value_alerts")
