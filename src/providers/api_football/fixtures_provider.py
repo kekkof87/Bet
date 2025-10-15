@@ -42,6 +42,13 @@ class APIFootballFixturesProvider:
         if season or self._settings.default_season:
             params["season"] = season or self._settings.default_season
 
+        # NUOVO: con data ma senza lega, evita ALL-LEAGUES (coerente con i test)
+        if date and "league" not in params:
+            log.info("Data specificata ma nessuna lega; skip ALL-LEAGUES (legacy). date=%s", date)
+            if not self._settings.persist_fixtures:
+                clear_latest_fixtures_file()
+            return []
+
         data = self._client.api_get("/fixtures", params=params or None)
         response = data.get("response", [])
 
@@ -103,7 +110,7 @@ class ApiFootballFixturesProvider:
 
         # Regola deterministica per i test: se c'è la data ma nessuna lega, NON fare ALL-LEAGUES → ritorna [].
         if date and "league" not in params:
-            log.info("Data specificata ma nessuna lega; skip ALL-LEAGUES (ritorno lista vuota). date=%s", date)
+            log.info("Data specificata ma nessuna lega; skip ALL-LEAGUES (normalized). date=%s", date)
             self._last_raw = {"response": []}
             return []
 
