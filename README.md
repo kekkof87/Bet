@@ -321,3 +321,54 @@ TBD (imposta ad esempio MIT se appropriato).
 Il progetto nasce come “Bet Ingestion Foundation” con un loop schedulato mock; evoluto ora in una pipeline strutturata basata su file JSON + API read‑only, per iterare rapidamente prima dell’introduzione di un data store relazionale o colonnare.
 
 ---
+
+
+
+# MVP Piattaforma Betting
+
+## Requisiti
+- Python 3.11+
+- (opzionale) Docker
+
+## Struttura
+- backend/api: FastAPI read-only su `data/`
+- frontend/gui: Streamlit GUI v0 (usa API se `API_URL` è settata, altrimenti file)
+- scripts/consensus_merge.py: pipeline consensus/merge
+- monitoring/prometheus.yml: scrape config di esempio
+
+## Avvio rapido
+```bash
+# API
+make api.run
+# GUI (usa API se API_URL è definita)
+make gui.run
+# Consensus (aggregazione previsioni multiple)
+make consensus
+```
+
+Variabili:
+- `DATA_DIR`: directory dei file (default: `data/`)
+- `API_URL`: per la GUI, es: `http://localhost:8000`
+
+## Docker API
+```bash
+docker build -t betting-api -f backend/api/Dockerfile .
+docker run --rm -p 8000:8000 -v $(pwd)/data:/app/data betting-api
+```
+
+## Endpoints
+- GET /health
+- GET /predictions?min_edge=0.03&active_only=true&status=NS
+- GET /odds
+- GET /alerts
+- GET /fixtures?status=NS
+- GET /roi/metrics
+- GET /roi/daily
+- GET /roi/history
+- GET /scoreboard
+- GET /delta
+- GET /metrics (Prometheus)
+
+Note:
+- `/fixtures` legge da `last_delta.json` (chiave `added`) finché non esiste un `fixtures.json` dedicato.
+- Il consensus richiede file in `data/predictions/sources/*.json` con campi almeno: `fixture_id`, `market`, `selection` e una probabilità (`prob`/`pred_prob`/`predicted_prob` o `probs[selection]`). Si può adattare in follow-up.
