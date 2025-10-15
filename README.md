@@ -506,3 +506,22 @@ Workflow aggiornato `.github/workflows/schedule.yml`:
 ## Note
 - La GUI effettua export CSV localmente (nessuna dipendenza API).
 - I file monitorati per `file_age_seconds` sono configurabili con env `FILES_TO_WATCH` (default: principali file in `data/`).
+
+
+# API/Grafana (Docker Compose)
+API_PORT=8000
+GF_SECURITY_ADMIN_USER=admin
+GF_SECURITY_ADMIN_PASSWORD=admin
+
+# Pipeline default
+ODDS_PROVIDER=model
+ENABLE_ODDS_INGESTION=1
+MODEL_ODDS_MARGIN=0.00
+
+# Value detection
+EFFECTIVE_THRESHOLD=0.03
+ALERTS_FILTER_STATUS=NS
+ALERT_DISPATCH_WEBHOOK=
+
+# Data retention (giorni)
+RETENTION_DAYS=14

@@ -36,40 +36,47 @@ def get_prob(item: Dict[str, Any]) -> float:
 def main():
     cfg = load_config()
     data_dir = Path(cfg.DATA_DIR)
-    out_file = data_dir / "odds_latest.json"
-
-    if cfg.ODDS_PROVIDER != "model" or not cfg.ENABLE_ODDS_INGESTION:
-        print("[odds] ODDS_PROVIDER != model o ingestion disabilitata. Nessuna azione.")
-        return
 
     pred_path = data_dir / "latest_predictions.json"
-    if not pred_path.exists():
-        print(f"[odds] {pred_path} non trovato. Esco.")
+    odds_path = data_dir / "odds_latest.json"
+    if not pred_path.exists() or not odds_path.exists():
+        print("[enrich] predictions o odds mancanti, niente da fare.")
         return
-    preds = load_json(pred_path)
-    items = preds if isinstance(preds, list) else preds.get("items", preds.get("predictions", []))
 
-    odds_items: List[Dict[str, Any]] = []
-    for it in items:
+    preds = load_json(pred_path)
+    items: List[Dict[str, Any]] = preds if isinstance(preds, list) else preds.get("items", preds.get("predictions", []))
+
+    odds = load_json(odds_path)
+    odds_items: List[Dict[str, Any]] = odds if isinstance(odds, list) else odds.get("items", odds)
+
+    odds_map: Dict[str, float] = {}
+    for oi in odds_items:
         try:
-            p = max(1e-6, min(1-1e-6, float(get_prob(it))))  # clamp
-            fair_odds = 1.0 / p
-            # Applica margine opzionale (riduce convenientemente le odds)
-            margin = max(0.0, float(cfg.MODEL_ODDS_MARGIN))
-            decimal = max(1.01, fair_odds * (1.0 - margin))
-            odds_items.append({
-                "fixture_id": it.get("fixture_id") or it.get("fixture", {}).get("id"),
-                "market": it.get("market") or it.get("market_code", "1X2"),
-                "selection": it.get("selection") or it.get("outcome") or it.get("pick"),
-                "bookmaker": "model",
-                "odds": round(decimal, 4),
-            })
+            k = key_of(oi)
+            odds_map[k] = float(oi.get("odds") or oi.get("price") or oi.get("decimal"))
         except Exception:
-            # ignora item malformati
             continue
 
-    save_json(out_file, odds_items)
-    print(f"[odds] Scritto {out_file} (items={len(odds_items)})")
+    enriched: List[Dict[str, Any]] = []
+    for it in items:
+        out = dict(it)
+        try:
+            k = key_of(it)
+            p = float(get_prob(it))
+            o = float(odds_map.get(k, 0))
+            if o > 0 and 0 <= p <= 1:
+                edge = p * o - 1.0
+                out["edge"] = edge
+                out.setdefault("value", {})
+                out["value"]["active"] = bool(edge >= cfg.EFFECTIVE_THRESHOLD)
+                out["value"]["threshold"] = cfg.EFFECTIVE_THRESHOLD
+        except Exception:
+            pass
+        enriched.append(out)
+
+    # Sovrascrive il file predictions con campi arricchiti (oppure scrivere un file _enriched separato)
+    save_json(pred_path, enriched)
+    print(f"[enrich] predictions arricchite con odds/edge/value (items={len(enriched)})")
 
 if __name__ == "__main__":
     main()

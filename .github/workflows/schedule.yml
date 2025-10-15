@@ -2,14 +2,14 @@ name: Data pipeline (scheduled)
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # ogni 30 minuti
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # necessario solo se abilitiamo il commit
+      contents: write
       actions: read
     steps:
       - uses: actions/checkout@v4
@@ -28,13 +28,6 @@ jobs:
           if [ -f backend/api/requirements.txt ]; then pip install -r backend/api/requirements.txt; fi
           if [ -f frontend/gui/requirements.txt ]; then pip install -r frontend/gui/requirements.txt; fi
 
-      - name: Fetch data (optional if script exists)
-        env:
-          PYTHONPATH: src
-        run: |
-          . .venv/bin/activate
-          if [ -f scripts/fetch_fixtures.py ]; then python scripts/fetch_fixtures.py || true; else echo "fetch script not present, skipping"; fi
-
       - name: Consensus merge
         env:
           PYTHONPATH: .
@@ -47,6 +40,20 @@ jobs:
             --weights consensus/config.yml \
             --min-models 1
 
+      - name: Fetch model odds (default)
+        run: |
+          . .venv/bin/activate
+          ODDS_PROVIDER=${{ vars.ODDS_PROVIDER || 'model' }} \
+          ENABLE_ODDS_INGESTION=${{ vars.ENABLE_ODDS_INGESTION || '1' }} \
+          MODEL_ODDS_MARGIN=${{ vars.MODEL_ODDS_MARGIN || '0.0' }} \
+          python scripts/fetch_odds.py
+
+      - name: Enrich predictions with odds/edge/value
+        run: |
+          . .venv/bin/activate
+          EFFECTIVE_THRESHOLD=${{ vars.EFFECTIVE_THRESHOLD || '0.03' }} \
+          python scripts/enrich_predictions.py
+
       - name: Fixtures snapshot
         run: |
           . .venv/bin/activate
@@ -56,6 +63,26 @@ jobs:
         run: |
           . .venv/bin/activate
           python scripts/roi_compute.py --ledger data/ledger.jsonl --out-metrics data/roi_metrics.json --out-daily data/roi_daily.json --out-history data/roi_history.jsonl --append-history
+
+      - name: Generate value alerts
+        run: |
+          . .venv/bin/activate
+          EFFECTIVE_THRESHOLD=${{ vars.EFFECTIVE_THRESHOLD || '0.03' }} \
+          ALERTS_FILTER_STATUS=${{ vars.ALERTS_FILTER_STATUS || '' }} \
+          python scripts/value_alerts.py
+
+      - name: Dispatch alerts (optional)
+        if: ${{ vars.ALERT_DISPATCH_WEBHOOK != '' }}
+        run: |
+          . .venv/bin/activate
+          ALERT_DISPATCH_WEBHOOK=${{ vars.ALERT_DISPATCH_WEBHOOK }} \
+          python scripts/dispatch_alerts.py
+
+      - name: Data retention cleanup
+        run: |
+          . .venv/bin/activate
+          RETENTION_DAYS=${{ vars.RETENTION_DAYS || '14' }} \
+          python scripts/retention_cleanup.py
 
       - name: Upload data artifacts
         uses: actions/upload-artifact@v4
