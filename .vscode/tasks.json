@@ -2,63 +2,51 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Recreate venv (3.11 clean)",
+      "type": "shell",
+      "command": "$ErrorActionPreference='Stop'; if (Test-Path ./.venv) { Remove-Item -Recurse -Force ./.venv }; if (Get-Command py -ErrorAction SilentlyContinue) { py -3.11 -m venv .venv } elseif (Test-Path \"$env:LOCALAPPDATA\\Programs\\Python\\Python311\\python.exe\") { & \"$env:LOCALAPPDATA\\Programs\\Python\\Python311\\python.exe\" -m venv .venv } elseif (Test-Path 'C:\\\\Program Files\\\\Python311\\\\python.exe') { & 'C:\\\\Program Files\\\\Python311\\\\python.exe' -m venv .venv } else { $cand = Get-ChildItem \"$env:LOCALAPPDATA\\Programs\\Python\" -Directory -Filter 'Python311*' -ErrorAction SilentlyContinue | Select-Object -First 1; if ($cand) { & (Join-Path $cand.FullName 'python.exe') -m venv .venv } else { throw 'Python 3.11 non trovato: installa Python 3.11 (64-bit) o il Python Launcher (py.exe) e riprova.' } }",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
       "label": "Bootstrap (venv + deps)",
       "type": "shell",
-      "command": "if (!(Test-Path ./.venv)) { python -m venv .venv }; $py='./.venv/Scripts/python.exe'; & $py -m pip install --upgrade pip; if (Test-Path ./requirements.txt) { & $py -m pip install -r requirements.txt }; if (Test-Path ./backend/api/requirements.txt) { & $py -m pip install -r backend/api/requirements.txt }; if (Test-Path ./frontend/gui/requirements.txt) { & $py -m pip install -r frontend/gui/requirements.txt }",
-      "options": {
-        "shell": {
-          "executable": "powershell.exe"
-        }
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      }
+      "command": "$ErrorActionPreference='Stop'; if (!(Test-Path ./.venv)) { if (Get-Command py -ErrorAction SilentlyContinue) { py -3.11 -m venv .venv } elseif (Test-Path \"$env:LOCALAPPDATA\\Programs\\Python\\Python311\\python.exe\") { & \"$env:LOCALAPPDATA\\Programs\\Python\\Python311\\python.exe\" -m venv .venv } elseif (Test-Path 'C:\\\\Program Files\\\\Python311\\\\python.exe') { & 'C:\\\\Program Files\\\\Python311\\\\python.exe' -m venv .venv } else { $cand = Get-ChildItem \"$env:LOCALAPPDATA\\Programs\\Python\" -Directory -Filter 'Python311*' -ErrorAction SilentlyContinue | Select-Object -First 1; if ($cand) { & (Join-Path $cand.FullName 'python.exe') -m venv .venv } else { throw 'Python 3.11 non trovato: installa Python 3.11 (64-bit) o il Python Launcher (py.exe) e riprova.' } } }; $py='./.venv/Scripts/python.exe'; & $py -m pip install --upgrade pip; if (Test-Path ./requirements.txt) { & $py -m pip install -r requirements.txt }; if (Test-Path ./backend/api/requirements.txt) { & $py -m pip install -r backend/api/requirements.txt }; if (Test-Path ./frontend/gui/requirements.txt) { & $py -m pip install -r frontend/gui/requirements.txt }",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "presentation": { "reveal": "always", "panel": "shared" }
     },
     {
       "label": "Install frontend deps (force)",
       "type": "shell",
       "command": "$py='./.venv/Scripts/python.exe'; if (Test-Path ./frontend/gui/requirements.txt) { & $py -m pip install -r frontend/gui/requirements.txt } else { echo 'frontend/gui/requirements.txt non trovato' }",
-      "options": {
-        "shell": {
-          "executable": "powershell.exe"
-        }
-      },
+      "options": { "shell": { "executable": "powershell.exe" } },
       "dependsOn": "Bootstrap (venv + deps)",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      }
+      "presentation": { "reveal": "always", "panel": "shared" }
     },
+    {
+      "label": "Venv: Show Python version",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe -c \"import sys, platform; print(sys.version); print(platform.architecture())\"",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+
     {
       "label": "API: Run FastAPI",
       "type": "shell",
       "command": "./.venv/Scripts/python.exe -m uvicorn backend.api.main:app --host 0.0.0.0 --port 8000",
-      "options": {
-        "shell": {
-          "executable": "powershell.exe"
-        }
-      },
+      "options": { "shell": { "executable": "powershell.exe" } },
       "dependsOn": "Bootstrap (venv + deps)",
       "problemMatcher": [],
       "isBackground": false,
-      "env": {
-        "DATA_DIR": "${workspaceFolder}/data"
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      }
+      "env": { "DATA_DIR": "${workspaceFolder}/data" },
+      "presentation": { "reveal": "always", "panel": "shared" }
     },
     {
       "label": "GUI: Run Streamlit",
       "type": "shell",
       "command": "./.venv/Scripts/python.exe -m streamlit run frontend/gui/streamlit_app.py --server.port=8501 --server.address=0.0.0.0",
-      "options": {
-        "shell": {
-          "executable": "powershell.exe"
-        }
-      },
+      "options": { "shell": { "executable": "powershell.exe" } },
       "dependsOn": "Bootstrap (venv + deps)",
       "problemMatcher": [],
       "isBackground": false,
@@ -66,40 +54,45 @@
         "API_URL": "http://localhost:8000",
         "DATA_DIR": "${workspaceFolder}/data"
       },
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      }
+      "presentation": { "reveal": "always", "panel": "shared" }
     },
+    {
+      "label": "Open GUI in browser",
+      "type": "shell",
+      "command": "Start-Process 'http://localhost:8501'",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "presentation": { "reveal": "never", "panel": "shared" }
+    },
+
+    {
+      "label": "Fetch fixtures (API-Football)",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/fetch_fixtures_apifootball.py",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "env": {
+        "APIFOOTBALL_API_KEY": "${input:apifootball}",
+        "DATA_DIR": "${workspaceFolder}/data"
+      },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+
     {
       "label": "Docker Compose: Up",
       "type": "shell",
       "command": "docker compose up --build",
-      "options": {
-        "shell": {
-          "executable": "powershell.exe"
-        }
-      },
+      "options": { "shell": { "executable": "powershell.exe" } },
       "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      }
+      "presentation": { "reveal": "always", "panel": "shared" }
     },
     {
       "label": "Docker Compose: Down",
       "type": "shell",
       "command": "docker compose down",
-      "options": {
-        "shell": {
-          "executable": "powershell.exe"
-        }
-      },
+      "options": { "shell": { "executable": "powershell.exe" } },
       "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      }
+      "presentation": { "reveal": "always", "panel": "shared" }
     },
 
     // Pipeline step-by-step (E2E)
@@ -118,11 +111,7 @@
       "options": { "shell": { "executable": "powershell.exe" } },
       "dependsOn": "Bootstrap (venv + deps)",
       "problemMatcher": [],
-      "env": {
-        "ODDS_PROVIDER": "model",
-        "ENABLE_ODDS_INGESTION": "1",
-        "MODEL_ODDS_MARGIN": "0.0"
-      }
+      "env": { "ODDS_PROVIDER": "model", "ENABLE_ODDS_INGESTION": "1", "MODEL_ODDS_MARGIN": "0.0" }
     },
     {
       "label": "Pipeline: Enrich Predictions",
@@ -131,9 +120,7 @@
       "options": { "shell": { "executable": "powershell.exe" } },
       "dependsOn": "Bootstrap (venv + deps)",
       "problemMatcher": [],
-      "env": {
-        "EFFECTIVE_THRESHOLD": "0.03"
-      }
+      "env": { "EFFECTIVE_THRESHOLD": "0.03" }
     },
     {
       "label": "Pipeline: Fixtures Snapshot",
@@ -158,10 +145,7 @@
       "options": { "shell": { "executable": "powershell.exe" } },
       "dependsOn": "Bootstrap (venv + deps)",
       "problemMatcher": [],
-      "env": {
-        "EFFECTIVE_THRESHOLD": "0.03",
-        "ALERTS_FILTER_STATUS": "NS"
-      }
+      "env": { "EFFECTIVE_THRESHOLD": "0.03", "ALERTS_FILTER_STATUS": "NS" }
     },
     {
       "label": "Pipeline: Dispatch Alerts",
@@ -170,9 +154,7 @@
       "options": { "shell": { "executable": "powershell.exe" } },
       "dependsOn": "Bootstrap (venv + deps)",
       "problemMatcher": [],
-      "env": {
-        "ALERT_DISPATCH_WEBHOOK": ""
-      }
+      "env": { "ALERT_DISPATCH_WEBHOOK": "" }
     },
     {
       "label": "Pipeline: E2E (all steps)",
@@ -186,6 +168,14 @@
         "Pipeline: Generate Alerts",
         "Pipeline: Dispatch Alerts"
       ]
-    ]
-  }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "apifootball",
+      "type": "promptString",
+      "description": "Inserisci la tua API key di API-Football",
+      "default": ""
+    }
+  ]
 }
