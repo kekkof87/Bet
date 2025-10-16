@@ -70,10 +70,8 @@ def main():
         except Exception:
             continue
 
-    # Scrivi sia last_delta.json che fixtures.json
     save_json(data_dir / "last_delta.json", {"added": items})
     save_json(data_dir / "fixtures.json", {"generated_from": "apifootball", "count": len(items), "items": items})
-
     print(f"[fixtures] Scritti {len(items)} fixtures in data/fixtures.json e data/last_delta.json")
 
 if __name__ == "__main__":
