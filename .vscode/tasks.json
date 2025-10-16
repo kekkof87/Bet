@@ -153,6 +153,26 @@
       "dependsOn": "Bootstrap (venv + deps)",
       "problemMatcher": []
     },
+{
+  "label": "Fetch fixtures (Football-Data.org)",
+  "type": "shell",
+  "command": "./.venv/Scripts/python.exe scripts/fetch_fixtures_football_data.py",
+  "options": { "shell": { "executable": "powershell.exe" } },
+  "dependsOn": "Bootstrap (venv + deps)",
+  "problemMatcher": [],
+  "env": { "DATA_DIR": "${workspaceFolder}/data", "FETCH_DAYS": "7" },
+  "presentation": { "reveal": "always", "panel": "shared" }
+},
+{
+  "label": "Fetch fixtures (FDO - prompt days/competitions)",
+  "type": "shell",
+  "command": "$ErrorActionPreference='Stop'; $days = Read-Host 'Quanti giorni vuoi scaricare? (es. 7)'; if (-not [int]::TryParse($days, [ref]0)) { throw 'Valore non numerico' }; $comps = Read-Host 'LEAGUE_CODES (es. PL,SA,PD - vuoto per tutte)'; if ($comps) { $env:LEAGUE_CODES = $comps }; $env:FETCH_DAYS = $days; ./.venv/Scripts/python.exe scripts/fetch_fixtures_football_data.py",
+  "options": { "shell": { "executable": "powershell.exe" } },
+  "dependsOn": "Bootstrap (venv + deps)",
+  "problemMatcher": [],
+  "env": { "DATA_DIR": "${workspaceFolder}/data" },
+  "presentation": { "reveal": "always", "panel": "shared" }
+},
     {
       "label": "Pipeline: ROI Compute",
       "type": "shell",
@@ -179,6 +199,26 @@
       "problemMatcher": [],
       "env": { "ALERT_DISPATCH_WEBHOOK": "" }
     },
+{
+  "label": "Fetch fixtures (Football-Data.org)",
+  "type": "shell",
+  "command": "./.venv/Scripts/python.exe scripts/fetch_fixtures_football_data.py",
+  "options": { "shell": { "executable": "powershell.exe" } },
+  "dependsOn": "Bootstrap (venv + deps)",
+  "problemMatcher": [],
+  "env": { "DATA_DIR": "${workspaceFolder}/data", "FETCH_DAYS": "7" },
+  "presentation": { "reveal": "always", "panel": "shared" }
+},
+{
+  "label": "Fetch fixtures (FDO - prompt days/competitions)",
+  "type": "shell",
+  "command": "$ErrorActionPreference='Stop'; $days = Read-Host 'Quanti giorni vuoi scaricare? (es. 7)'; if (-not [int]::TryParse($days, [ref]0)) { throw 'Valore non numerico' }; $comps = Read-Host 'LEAGUE_CODES (es. PL,SA,PD - vuoto per tutte)'; if ($comps) { $env:LEAGUE_CODES = $comps }; $env:FETCH_DAYS = $days; ./.venv/Scripts/python.exe scripts/fetch_fixtures_football_data.py",
+  "options": { "shell": { "executable": "powershell.exe" } },
+  "dependsOn": "Bootstrap (venv + deps)",
+  "problemMatcher": [],
+  "env": { "DATA_DIR": "${workspaceFolder}/data" },
+  "presentation": { "reveal": "always", "panel": "shared" }
+}
     {
       "label": "Pipeline: E2E (all steps)",
       "dependsOrder": "sequence",
