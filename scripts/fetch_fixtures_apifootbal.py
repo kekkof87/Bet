@@ -19,12 +19,17 @@ try:
 except Exception:
     pass
 
+def clean_key(k: str) -> str:
+    # rimuove spazi, apici, BOM e caratteri non stampabili
+    k = k.strip().strip("'\"").replace("\ufeff", "")
+    return k
+
 # Provider auto-detection:
-# - API-Sports diretto: usa APIFOOTBALL_API_KEY con header 'x-apisports-key' su v3.football.api-sports.io
-# - RapidAPI: usa RAPIDAPI_KEY con header 'X-RapidAPI-Key' e host api-football-v1.p.rapidapi.com
+# - API-Sports diretto: usa APIFOOTBALL_API_KEY su v3.football.api-sports.io
+# - RapidAPI: usa RAPIDAPI_KEY su api-football-v1.p.rapidapi.com
 PROVIDER = None
-API_SPORTS_KEY = os.environ.get("APIFOOTBALL_API_KEY", "").strip()
-RAPIDAPI_KEY = os.environ.get("RAPIDAPI_KEY", "").strip()
+API_SPORTS_KEY = clean_key(os.environ.get("APIFOOTBALL_API_KEY", ""))
+RAPIDAPI_KEY = clean_key(os.environ.get("RAPIDAPI_KEY", ""))
 
 if API_SPORTS_KEY:
     PROVIDER = "apisports"
@@ -40,8 +45,7 @@ def provider_config() -> Dict[str, Any]:
                 "Accept": "application/json",
                 "User-Agent": "betting-dashboard/1.0",
             },
-            "extra": {},
-            "label": "API-Sports direct"
+            "label": "API-Sports direct",
         }
     elif PROVIDER == "rapidapi":
         return {
@@ -52,16 +56,21 @@ def provider_config() -> Dict[str, Any]:
                 "Accept": "application/json",
                 "User-Agent": "betting-dashboard/1.0",
             },
-            "extra": {},
-            "label": "RapidAPI"
+            "label": "RapidAPI",
         }
     else:
         return {}
 
+def build_opener_disable_proxy() -> urllib.request.OpenerDirector:
+    # Disabilita qualsiasi proxy di sistema/ENV che potrebbe rimuovere header custom
+    return urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+OPENER = build_opener_disable_proxy()
+
 def http_get(url: str, headers: Dict[str, str], timeout: int = 25) -> Tuple[Dict[str, Any], Dict[str, str]]:
     req = urllib.request.Request(url, headers=headers)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with OPENER.open(req, timeout=timeout) as resp:
             body = resp.read().decode("utf-8")
             payload = json.loads(body)
             hdrs = {k.lower(): v for k, v in resp.headers.items()}
@@ -97,16 +106,14 @@ def normalize_items(resp: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             league = lg.get("name")
             if not fid or not home or not away:
                 continue
-            items.append(
-                {
-                    "fixture_id": fid,
-                    "home": home,
-                    "away": away,
-                    "league": league,
-                    "status": status,
-                    "kickoff": kickoff,
-                }
-            )
+            items.append({
+                "fixture_id": fid,
+                "home": home,
+                "away": away,
+                "league": league,
+                "status": status,
+                "kickoff": kickoff,
+            })
         except Exception:
             continue
     return items
@@ -129,6 +136,10 @@ def fetch_by_date(days: int, tz: str, headers: Dict[str, str], base: str, league
                     print(f"[fixtures] errors on date={d} league={lid}: {payload['errors']}", file=sys.stderr)
                 if "parameters" in payload:
                     print(f"[fixtures] parameters={payload['parameters']} results={payload.get('results')}", file=sys.stderr)
+                # prova a loggare headers di rate limit per capire se la chiave è stata accettata
+                rl = hdrs.get("x-ratelimit-requests-remaining")
+                if rl is not None:
+                    print(f"[fixtures] rate-limit remaining={rl}", file=sys.stderr)
                 items = normalize_items(payload.get("response", []))
                 for it in items:
                     if it["fixture_id"] not in seen_ids:
@@ -142,6 +153,9 @@ def fetch_by_date(days: int, tz: str, headers: Dict[str, str], base: str, league
                 print(f"[fixtures] errors on date={d}: {payload['errors']}", file=sys.stderr)
             if "parameters" in payload:
                 print(f"[fixtures] parameters={payload['parameters']} results={payload.get('results')}", file=sys.stderr)
+            rl = hdrs.get("x-ratelimit-requests-remaining")
+            if rl is not None:
+                print(f"[fixtures] rate-limit remaining={rl}", file=sys.stderr)
             items = normalize_items(payload.get("response", []))
             for it in items:
                 if it["fixture_id"] not in seen_ids:
@@ -160,6 +174,9 @@ def fetch_by_range(days: int, headers: Dict[str, str], base: str) -> List[Dict[s
         print(f"[fixtures] range errors: {payload['errors']}", file=sys.stderr)
     if "parameters" in payload:
         print(f"[fixtures] range parameters={payload['parameters']} results={payload.get('results')}", file=sys.stderr)
+    rl = hdrs.get("x-ratelimit-requests-remaining")
+    if rl is not None:
+        print(f"[fixtures] rate-limit remaining={rl}", file=sys.stderr)
     return normalize_items(payload.get("response", []))
 
 def main():
