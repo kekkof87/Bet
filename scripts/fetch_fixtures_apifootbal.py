@@ -6,11 +6,9 @@ import time
 from datetime import datetime, timedelta, timezone, date
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-import urllib.request
-import urllib.error
 import urllib.parse
 
-# Carica .env (override=True) cercandolo dalla cwd in su
+# .env override
 try:
     from dotenv import load_dotenv, find_dotenv
     dotenv_path = find_dotenv(usecwd=True)
@@ -19,14 +17,12 @@ try:
 except Exception:
     pass
 
-def clean_key(k: str) -> str:
-    # rimuove spazi, apici, BOM e caratteri non stampabili
-    k = k.strip().strip("'\"").replace("\ufeff", "")
-    return k
+import requests
 
-# Provider auto-detection:
-# - API-Sports diretto: usa APIFOOTBALL_API_KEY su v3.football.api-sports.io
-# - RapidAPI: usa RAPIDAPI_KEY su api-football-v1.p.rapidapi.com
+def clean_key(k: str) -> str:
+    return k.strip().strip("'\"").replace("\ufeff", "")
+
+# Provider auto
 PROVIDER = None
 API_SPORTS_KEY = clean_key(os.environ.get("APIFOOTBALL_API_KEY", ""))
 RAPIDAPI_KEY = clean_key(os.environ.get("RAPIDAPI_KEY", ""))
@@ -38,53 +34,49 @@ elif RAPIDAPI_KEY:
 
 def provider_config() -> Dict[str, Any]:
     if PROVIDER == "apisports":
-        return {
-            "base": "https://v3.football.api-sports.io",
-            "headers": {
-                "x-apisports-key": API_SPORTS_KEY,
-                "Accept": "application/json",
-                "User-Agent": "betting-dashboard/1.0",
-            },
-            "label": "API-Sports direct",
+        base = "https://v3.football.api-sports.io"
+        # doppio header per eventuali bug di case-sensitivity lungo la catena
+        headers = {
+            "x-apisports-key": API_SPORTS_KEY,
+            "X-APISports-Key": API_SPORTS_KEY,
+            "Accept": "application/json",
+            "User-Agent": "betting-dashboard/1.0",
+            "Connection": "close",
         }
+        return {"base": base, "headers": headers, "label": "API-Sports direct"}
     elif PROVIDER == "rapidapi":
-        return {
-            "base": "https://api-football-v1.p.rapidapi.com/v3",
-            "headers": {
-                "X-RapidAPI-Key": RAPIDAPI_KEY,
-                "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com",
-                "Accept": "application/json",
-                "User-Agent": "betting-dashboard/1.0",
-            },
-            "label": "RapidAPI",
+        base = "https://api-football-v1.p.rapidapi.com/v3"
+        headers = {
+            "X-RapidAPI-Key": RAPIDAPI_KEY,
+            "X-RapidAPI-Host": "api-football-v1.p.rapidapi.com",
+            "Accept": "application/json",
+            "User-Agent": "betting-dashboard/1.0",
+            "Connection": "close",
         }
-    else:
-        return {}
+        return {"base": base, "headers": headers, "label": "RapidAPI"}
+    return {}
 
-def build_opener_disable_proxy() -> urllib.request.OpenerDirector:
-    # Disabilita qualsiasi proxy di sistema/ENV che potrebbe rimuovere header custom
-    return urllib.request.build_opener(urllib.request.ProxyHandler({}))
+def new_session(headers: Dict[str, str]) -> requests.Session:
+    s = requests.Session()
+    # ignora variabili d’ambiente di proxy (trust_env=False)
+    s.trust_env = False
+    s.headers.update(headers)
+    s.max_redirects = 5
+    return s
 
-OPENER = build_opener_disable_proxy()
-
-def http_get(url: str, headers: Dict[str, str], timeout: int = 25) -> Tuple[Dict[str, Any], Dict[str, str]]:
-    req = urllib.request.Request(url, headers=headers)
+def http_get(session: requests.Session, url: str, timeout: int = 25) -> Tuple[Dict[str, Any], Dict[str, str], str]:
+    resp = session.get(url, timeout=timeout, allow_redirects=True)
+    final_url = str(resp.url)
+    text = resp.text
     try:
-        with OPENER.open(req, timeout=timeout) as resp:
-            body = resp.read().decode("utf-8")
-            payload = json.loads(body)
-            hdrs = {k.lower(): v for k, v in resp.headers.items()}
-            return payload, hdrs
-    except urllib.error.HTTPError as e:
-        try:
-            body = e.read().decode("utf-8")
-        except Exception:
-            body = ""
-        print(f"[fixtures] HTTPError {e.code}: {e.reason} url={url} body={body}", file=sys.stderr)
-        raise
-    except urllib.error.URLError as e:
-        print(f"[fixtures] URLError: {e.reason} url={url}", file=sys.stderr)
-        raise
+        payload = resp.json()
+    except Exception:
+        payload = {"raw": text}
+    if not resp.ok:
+        sys.stderr.write(f"[fixtures] HTTP {resp.status_code} url={final_url} body={text[:300]}\n")
+        resp.raise_for_status()
+    hdrs = {k.lower(): v for k, v in resp.headers.items()}
+    return payload, hdrs, final_url
 
 def save_json(path: Path, obj: Any):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -123,39 +115,27 @@ def iter_dates(days: int, start_utc: Optional[date] = None) -> List[date]:
         start_utc = datetime.now(timezone.utc).date()
     return [start_utc + timedelta(days=i) for i in range(days)]
 
-def fetch_by_date(days: int, tz: str, headers: Dict[str, str], base: str, league_ids: Optional[List[int]] = None, sleep_s: float = 0.25) -> List[Dict[str, Any]]:
+def fetch_by_date(session: requests.Session, days: int, tz: str, base: str, league_ids: Optional[List[int]] = None, sleep_s: float = 0.2) -> List[Dict[str, Any]]:
     collected: List[Dict[str, Any]] = []
     seen_ids: set[int] = set()
     tz_q = urllib.parse.quote(tz)
     for d in iter_dates(days):
         if league_ids:
-            for lid in league_ids:
-                url = f"{base}/fixtures?date={d.isoformat()}&timezone={tz_q}&league={lid}"
-                payload, hdrs = http_get(url, headers)
-                if "errors" in payload and payload["errors"]:
-                    print(f"[fixtures] errors on date={d} league={lid}: {payload['errors']}", file=sys.stderr)
-                if "parameters" in payload:
-                    print(f"[fixtures] parameters={payload['parameters']} results={payload.get('results')}", file=sys.stderr)
-                # prova a loggare headers di rate limit per capire se la chiave è stata accettata
-                rl = hdrs.get("x-ratelimit-requests-remaining")
-                if rl is not None:
-                    print(f"[fixtures] rate-limit remaining={rl}", file=sys.stderr)
-                items = normalize_items(payload.get("response", []))
-                for it in items:
-                    if it["fixture_id"] not in seen_ids:
-                        seen_ids.add(it["fixture_id"])
-                        collected.append(it)
-                time.sleep(sleep_s)
+            lids = league_ids
         else:
-            url = f"{base}/fixtures?date={d.isoformat()}&timezone={tz_q}"
-            payload, hdrs = http_get(url, headers)
-            if "errors" in payload and payload["errors"]:
-                print(f"[fixtures] errors on date={d}: {payload['errors']}", file=sys.stderr)
-            if "parameters" in payload:
-                print(f"[fixtures] parameters={payload['parameters']} results={payload.get('results')}", file=sys.stderr)
-            rl = hdrs.get("x-ratelimit-requests-remaining")
+            lids = [None]
+        for lid in lids:
+            url = f"{base}/fixtures?date={d.isoformat()}&timezone={tz_q}" + (f"&league={lid}" if lid else "")
+            payload, hdrs, final = http_get(session, url)
+            errs = payload.get("errors") or {}
+            if errs:
+                sys.stderr.write(f"[fixtures] errors on date={d}{' league='+str(lid) if lid else ''}: {errs}\n")
+            params = payload.get("parameters")
+            if params is not None:
+                sys.stderr.write(f"[fixtures] parameters={params} results={payload.get('results')}, final_url={final}\n")
+            rl = hdrs.get("x-ratelimit-requests-remaining") or hdrs.get("x-ratelimit-remaining")
             if rl is not None:
-                print(f"[fixtures] rate-limit remaining={rl}", file=sys.stderr)
+                sys.stderr.write(f"[fixtures] rate-limit remaining={rl}\n")
             items = normalize_items(payload.get("response", []))
             for it in items:
                 if it["fixture_id"] not in seen_ids:
@@ -164,38 +144,42 @@ def fetch_by_date(days: int, tz: str, headers: Dict[str, str], base: str, league
             time.sleep(sleep_s)
     return collected
 
-def fetch_by_range(days: int, headers: Dict[str, str], base: str) -> List[Dict[str, Any]]:
+def fetch_by_range(session: requests.Session, days: int, base: str) -> List[Dict[str, Any]]:
     today = datetime.now(timezone.utc).date()
     date_from = today
     date_to = today + timedelta(days=days)
     url = f"{base}/fixtures?from={date_from.isoformat()}&to={date_to.isoformat()}"
-    payload, hdrs = http_get(url, headers)
-    if "errors" in payload and payload["errors"]:
-        print(f"[fixtures] range errors: {payload['errors']}", file=sys.stderr)
-    if "parameters" in payload:
-        print(f"[fixtures] range parameters={payload['parameters']} results={payload.get('results')}", file=sys.stderr)
-    rl = hdrs.get("x-ratelimit-requests-remaining")
+    payload, hdrs, final = http_get(session, url)
+    errs = payload.get("errors") or {}
+    if errs:
+        sys.stderr.write(f"[fixtures] range errors: {errs}\n")
+    params = payload.get("parameters")
+    if params is not None:
+        sys.stderr.write(f"[fixtures] range parameters={params} results={payload.get('results')}, final_url={final}\n")
+    rl = hdrs.get("x-ratelimit-requests-remaining") or hdrs.get("x-ratelimit-remaining")
     if rl is not None:
-        print(f"[fixtures] rate-limit remaining={rl}", file=sys.stderr)
+        sys.stderr.write(f"[fixtures] rate-limit remaining={rl}\n")
     return normalize_items(payload.get("response", []))
 
 def main():
     cfg = provider_config()
     if not cfg:
-        print("[fixtures] Nessuna chiave trovata. Metti APIFOOTBALL_API_KEY (API-Sports) oppure RAPIDAPI_KEY (RapidAPI) nel file .env", file=sys.stderr)
+        sys.stderr.write("[fixtures] Nessuna chiave trovata. Metti APIFOOTBALL_API_KEY (API-Sports) oppure RAPIDAPI_KEY (RapidAPI) in .env\n")
         sys.exit(1)
 
     provider_label = cfg["label"]
     base = cfg["base"]
-    headers = cfg["headers"].copy()
+    headers = cfg["headers"]
 
-    # Debug minimo (mascherato)
     masked = "****"
     if PROVIDER == "apisports":
         masked = (API_SPORTS_KEY[:4] + "…") if API_SPORTS_KEY else "(vuota)"
     elif PROVIDER == "rapidapi":
         masked = (RAPIDAPI_KEY[:4] + "…") if RAPIDAPI_KEY else "(vuota)"
     print(f"[fixtures] Provider={provider_label}, base={base}, key={masked}")
+
+    # Session senza proxy
+    session = new_session(headers)
 
     data_dir = Path(os.environ.get("DATA_DIR", "data"))
     fetch_days = int(os.environ.get("FETCH_DAYS", "3"))
@@ -206,22 +190,22 @@ def main():
         try:
             league_ids = [int(x) for x in league_ids_env.replace(" ", "").split(",") if x]
         except Exception:
-            print(f"[fixtures] LEAGUE_IDS non valida: {league_ids_env}", file=sys.stderr)
+            sys.stderr.write(f"[fixtures] LEAGUE_IDS non valida: {league_ids_env}\n")
 
-    # 1) per-data con timezone (e filtri lega opzionali)
+    # 1) per-data
     try:
-        items = fetch_by_date(fetch_days, timezone_str, headers, base, league_ids=league_ids)
+        items = fetch_by_date(session, fetch_days, timezone_str, base, league_ids=league_ids)
     except Exception as e:
-        print(f"[fixtures] errore fetch_by_date: {e}", file=sys.stderr)
+        sys.stderr.write(f"[fixtures] errore fetch_by_date: {e}\n")
         items = []
 
-    # 2) fallback by-range UTC
+    # 2) fallback by-range
     if not items:
-        print("[fixtures] Nessun evento per-data, provo fallback by-range (UTC).", file=sys.stderr)
+        sys.stderr.write("[fixtures] Nessun evento per-data, provo fallback by-range (UTC).\n")
         try:
-            items = fetch_by_range(fetch_days, headers, base)
+            items = fetch_by_range(session, fetch_days, base)
         except Exception as e:
-            print(f"[fixtures] errore fetch_by_range: {e}", file=sys.stderr)
+            sys.stderr.write(f"[fixtures] errore fetch_by_range: {e}\n")
             items = []
 
     save_json(data_dir / "last_delta.json", {"added": items})
