@@ -78,8 +78,31 @@
       "options": { "shell": { "executable": "powershell.exe" } },
       "dependsOn": "Bootstrap (venv + deps)",
       "problemMatcher": [],
+      "env": { "DATA_DIR": "${workspaceFolder}/data" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Fetch fixtures (API-Football - 7 days)",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/fetch_fixtures_apifootball.py",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
       "env": {
-        "APIFOOTBALL_API_KEY": "${input:apifootball}",
+        "DATA_DIR": "${workspaceFolder}/data",
+        "FETCH_DAYS": "7",
+        "TIMEZONE": "Europe/Rome"
+      },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Fetch fixtures (API-Football - prompt days/tz/leagues)",
+      "type": "shell",
+      "command": "$ErrorActionPreference='Stop'; $days = Read-Host 'Quanti giorni vuoi scaricare? (es. 7)'; if (-not [int]::TryParse($days, [ref]0)) { throw 'Valore non numerico' }; $tz = Read-Host 'Timezone (es. Europe/Rome)'; if ([string]::IsNullOrWhiteSpace($tz)) { $tz = 'Europe/Rome' }; $leagues = Read-Host 'LEAGUE_IDS (opzionale, es. 135,140)'; if ($leagues) { $env:LEAGUE_IDS = $leagues }; $env:FETCH_DAYS = $days; $env:TIMEZONE = $tz; ./.venv/Scripts/python.exe scripts/fetch_fixtures_apifootball.py",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "env": {
         "DATA_DIR": "${workspaceFolder}/data"
       },
       "presentation": { "reveal": "always", "panel": "shared" }
@@ -174,14 +197,6 @@
         "Pipeline: Generate Alerts",
         "Pipeline: Dispatch Alerts"
       ]
-    }
-  ],
-  "inputs": [
-    {
-      "id": "apifootball",
-      "type": "promptString",
-      "description": "Inserisci la tua API key di API-Football",
-      "default": ""
     }
   ]
 }
