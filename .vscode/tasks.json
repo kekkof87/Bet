@@ -199,6 +199,121 @@
       "problemMatcher": [],
       "env": { "ALERT_DISPATCH_WEBHOOK": "" }
     },
+    {
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Kill venv processes",
+      "type": "shell",
+      "command": "$ErrorActionPreference='SilentlyContinue'; $venv=(Join-Path $PWD '.venv'); $venvLower=$venv.ToLower(); $procs=Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -and $_.ExecutablePath.ToLower().StartsWith($venvLower) }; foreach($p in $procs){ try{ Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue; Write-Output \"Killed $($p.Name) pid=$($p.ProcessId)\" }catch{} }; Get-Process ruff,python,uvicorn,streamlit -ErrorAction SilentlyContinue | ForEach-Object { try{ Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue }catch{} }; Write-Output 'Done'; exit 0",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Recreate venv (3.11 clean)",
+      "type": "shell",
+      "dependsOn": "Kill venv processes",
+      "command": "$ErrorActionPreference='Stop'; if (Test-Path ./.venv){ Remove-Item -Recurse -Force ./.venv }; $created=$false; if(Get-Command py -ErrorAction SilentlyContinue){ try{ py -3.11 -m venv .venv; $created=Test-Path ./.venv/Scripts/python.exe }catch{} }; if(-not $created -and (Test-Path \"$env:LOCALAPPDATA\\Programs\\Python\\Python311\\python.exe\")){ & \"$env:LOCALAPPDATA\\Programs\\Python\\Python311\\python.exe\" -m venv .venv; $created=Test-Path ./.venv/Scripts/python.exe }; if(-not $created -and (Test-Path 'C:\\\\Program Files\\\\Python311\\\\python.exe')){ & 'C:\\\\Program Files\\\\Python311\\\\python.exe' -m venv .venv; $created=Test-Path ./.venv/Scripts/python.exe }; if(-not $created){ $cand=Get-ChildItem \"$env:LOCALAPPDATA\\Programs\\Python\" -Directory -Filter 'Python311*' -ErrorAction SilentlyContinue | Select-Object -First 1; if($cand){ & (Join-Path $cand.FullName 'python.exe') -m venv .venv; $created=Test-Path ./.venv/Scripts/python.exe } }; if(-not $created){ throw 'Python 3.11 non trovato o venv non creata. Installa Python 3.11 (64-bit) e riprova.' }",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Bootstrap (venv + deps)",
+      "type": "shell",
+      "command": "$ErrorActionPreference='Stop'; if(!(Test-Path ./.venv/Scripts/python.exe)){ $created=$false; if(Get-Command py -ErrorAction SilentlyContinue){ try{ py -3.11 -m venv .venv; $created=Test-Path ./.venv/Scripts/python.exe }catch{} }; if(-not $created -and (Test-Path \"$env:LOCALAPPDATA\\Programs\\Python\\Python311\\python.exe\")){ & \"$env:LOCALAPPDATA\\Programs\\Python\\Python311\\python.exe\" -m venv .venv; $created=Test-Path ./.venv/Scripts/python.exe }; if(-not $created -and (Test-Path 'C:\\\\Program Files\\\\Python311\\\\python.exe')){ & 'C:\\\\Program Files\\\\Python311\\\\python.exe' -m venv .venv; $created=Test-Path ./.venv/Scripts/python.exe }; if(-not $created){ $cand=Get-ChildItem \"$env:LOCALAPPDATA\\Programs\\Python\" -Directory -Filter 'Python311*' -ErrorAction SilentlyContinue | Select-Object -First 1; if($cand){ & (Join-Path $cand.FullName 'python.exe') -m venv .venv; $created=Test-Path ./.venv/Scripts/python.exe } }; if(-not $created){ throw 'Python 3.11 non trovato o venv non creata. Installa Python 3.11 (64-bit) e riprova.' } }; $py='./.venv/Scripts/python.exe'; & $py -m pip install --upgrade pip; if(Test-Path ./requirements.txt){ & $py -m pip install -r requirements.txt }; if(Test-Path ./backend/api/requirements.txt){ & $py -m pip install -r backend/api/requirements.txt }; if(Test-Path ./frontend/gui/requirements.txt){ & $py -m pip install -r frontend/gui/requirements.txt }",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Install frontend deps (force)",
+      "type": "shell",
+      "command": "$py='./.venv/Scripts/python.exe'; if(Test-Path ./frontend/gui/requirements.txt){ & $py -m pip install -r frontend/gui/requirements.txt } else { echo 'frontend/gui/requirements.txt non trovato' }",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Venv: Show Python version",
+      "type": "process",
+      "command": "${workspaceFolder}/.venv/Scripts/python.exe",
+      "args": ["-c", "import sys, platform; print(sys.version); print(platform.architecture())"]
+    },
+
+    {
+      "label": "API: Run FastAPI",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe -m uvicorn backend.api.main:app --host 0.0.0.0 --port 8000",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "isBackground": false,
+      "env": { "DATA_DIR": "${workspaceFolder}/data" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "GUI: Run Streamlit",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe -m streamlit run frontend/gui/streamlit_app.py --server.port=8501 --server.address=0.0.0.0",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "isBackground": false,
+      "env": {
+        "API_URL": "http://localhost:8000",
+        "DATA_DIR": "${workspaceFolder}/data"
+      },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Open GUI in browser",
+      "type": "shell",
+      "command": "Start-Process 'http://localhost:8501'",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "presentation": { "reveal": "never", "panel": "shared" }
+    },
+
+    {
+      "label": "Fetch fixtures (Football-Data.org)",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/fetch_fixtures_football_data.py",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "env": { "DATA_DIR": "${workspaceFolder}/data", "FETCH_DAYS": "7" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Fetch results (FDO - 180 days)",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/fetch_results_football_data.py",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "env": { "DATA_DIR": "${workspaceFolder}/data", "FETCH_BACK_DAYS": "180" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Predictions: Elo (FDO)",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/predict_elo_fdo.py",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "env": { "DATA_DIR": "${workspaceFolder}/data" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "Fetch odds (The Odds API)",
+      "type": "shell",
+      "command": "./.venv/Scripts/python.exe scripts/fetch_odds_oddsapi.py",
+      "options": { "shell": { "executable": "powershell.exe" } },
+      "dependsOn": "Bootstrap (venv + deps)",
+      "problemMatcher": [],
+      "env": { "DATA_DIR": "${workspaceFolder}/data" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    }
+  ]
+},
 {
   "label": "Fetch fixtures (Football-Data.org)",
   "type": "shell",
