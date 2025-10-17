@@ -1,10 +1,12 @@
 import os
 import asyncio
 import time
+import json
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict, Any, Tuple
 
-from fastapi import FastAPI, HTTPException, Query
+from datetime import datetime, timedelta, timezone
+from fastapi import FastAPI, HTTPException, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 
@@ -16,7 +18,57 @@ except Exception:
 
 from prometheus_client import Gauge
 
-from .utils.file_io import load_json, load_jsonl, filter_by_status, filter_predictions
+# Utils locali (fallback con firme identiche per mypy)
+try:
+    from .utils.file_io import load_json, load_jsonl, filter_by_status, filter_predictions  # type: ignore
+except Exception:
+    def load_json(path: Path) -> Any:
+        with path.open("r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def load_jsonl(path: Path) -> List[Any]:
+        out: List[Any] = []
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    out.append(json.loads(line))
+        return out
+
+    def filter_by_status(items: List[Dict[Any, Any]], statuses: List[str]) -> List[Dict[Any, Any]]:
+        sset = {s.upper() for s in statuses}
+        out: List[Dict[Any, Any]] = []
+        for it in items:
+            st = str(it.get("status", "")).upper()
+            if st in sset:
+                out.append(it)
+        return out
+
+    def filter_predictions(
+        items: List[Dict[Any, Any]],
+        min_edge: Optional[float],
+        active_only: bool,
+        status: Optional[List[str]],
+    ) -> List[Dict[Any, Any]]:
+        out = items[:]
+        if status:
+            su = {s.upper() for s in status}
+            out = [it for it in out if str(it.get("status", "")).upper() in su]
+        if min_edge is not None:
+            def get_edge(x: Dict[Any, Any]) -> float:
+                try:
+                    return float(x.get("edge", 0.0))
+                except Exception:
+                    return -1.0
+            out = [it for it in out if get_edge(it) >= float(min_edge)]
+        return out
+
+# dotenv set_key per /settings
+try:
+    from dotenv import set_key, find_dotenv
+except Exception:
+    set_key = None  # type: ignore
+    find_dotenv = None  # type: ignore
 
 DATA_DIR = Path(os.environ.get("DATA_DIR", "data")).resolve()
 
@@ -82,7 +134,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Instrumentazione Prometheus: deve avvenire PRIMA dello startup
+# Instrumentazione Prometheus
 if Instrumentator:
     try:
         Instrumentator().instrument(app).expose(app, include_in_schema=False)
@@ -101,6 +153,9 @@ async def _startup():
 def health():
     return {"status": "ok", "data_dir": str(DATA_DIR)}
 
+# ---------------------
+# Endpoint esistenti
+# ---------------------
 @app.get("/predictions")
 def get_predictions(
     min_edge: Optional[float] = Query(default=None, ge=0.0, le=1.0),
@@ -114,7 +169,13 @@ def get_predictions(
     if not path.exists():
         raise HTTPException(status_code=404, detail="latest_predictions.json not found")
     data = load_json(path)
-    items = data if isinstance(data, list) else data.get("predictions", data)
+    # Accettiamo sia {items:[...]} che {"predictions":[...]} che lista pura
+    if isinstance(data, dict) and "items" in data:
+        items = data["items"]
+    elif isinstance(data, dict) and "predictions" in data:
+        items = data["predictions"]
+    else:
+        items = data
     items = filter_predictions(items, min_edge=min_edge, active_only=active_only, status=effective_status)
     return {"count": len(items), "items": items}
 
@@ -185,3 +246,304 @@ def get_last_delta():
     if not path.exists():
         raise HTTPException(status_code=404, detail="last_delta.json not found")
     return load_json(path)
+
+# ---------------------
+# Nuovi helper server-side
+# ---------------------
+def _normalize_name(name: str) -> str:
+    return "".join(ch for ch in (name or "").lower() if ch.isalnum() or ch.isspace()).strip()
+
+def _load_fixtures() -> List[Dict[str, Any]]:
+    fixtures_path = DATA_DIR / "fixtures.json"
+    if fixtures_path.exists():
+        obj = load_json(fixtures_path)
+        items = obj.get("items", obj) if isinstance(obj, dict) else obj
+        return items if isinstance(items, list) else []
+    delta_path = DATA_DIR / "last_delta.json"
+    if delta_path.exists():
+        obj = load_json(delta_path)
+        return obj.get("added", [])
+    return []
+
+def _load_odds_by_fixture() -> Dict[str, Dict[str, Any]]:
+    # Restituisce dizionario fixture_id -> record odds (best h2h se disponibile)
+    odds_path = DATA_DIR / "odds_latest.json"
+    if not odds_path.exists():
+        return {}
+    obj = load_json(odds_path)
+    items = obj.get("items", obj) if isinstance(obj, dict) else obj
+    out: Dict[str, Dict[str, Any]] = {}
+    for it in items if isinstance(items, list) else []:
+        fid = str(it.get("fixture_id") or it.get("fixture_key") or "")
+        if not fid:
+            continue
+        out[fid] = it
+    return out
+
+def _load_predictions_index() -> Dict[str, Dict[str, Any]]:
+    pred_path = DATA_DIR / "latest_predictions.json"
+    if not pred_path.exists():
+        return {}
+    obj = load_json(pred_path)
+    items = obj.get("items", obj.get("predictions", obj)) if isinstance(obj, dict) else obj
+    idx: Dict[str, Dict[str, Any]] = {}
+    for it in items if isinstance(items, list) else []:
+        fid = str(it.get("fixture_id") or "")
+        if fid:
+            idx[fid] = it
+    return idx
+
+def _compute_value_picks(edge_min: float = 0.03) -> Dict[str, Any]:
+    fixtures = _load_fixtures()
+    odds_idx = _load_odds_by_fixture()
+    preds_idx = _load_predictions_index()
+
+    out_items: List[Dict[str, Any]] = []
+    for fx in fixtures:
+        fid = str(fx.get("fixture_id") or "")
+        if not fid:
+            continue
+        pred = preds_idx.get(fid)
+        odds = odds_idx.get(fid)
+        if not pred or not odds:
+            continue
+
+        probs = pred.get("probabilities") or {}
+        ph = float(probs.get("home") or 0.0)
+        pd = float(probs.get("draw") or 0.0)
+        pa = float(probs.get("away") or 0.0)
+
+        best = odds.get("best", {})  # atteso: {"home": x, "draw": y, "away": z, "book": "..."}
+        oh = float(best.get("home") or 0.0)
+        od = float(best.get("draw") or 0.0)
+        oa = float(best.get("away") or 0.0)
+
+        picks: List[Tuple[str, float, float]] = [
+            ("home", ph, oh),
+            ("draw", pd, od),
+            ("away", pa, oa),
+        ]
+        for sel, p, o in picks:
+            if p <= 0.0 or o <= 1.0:
+                continue
+            fair = 1.0 / p
+            edge = (o - fair) / fair
+            if edge >= edge_min:
+                out_items.append({
+                    "fixture_id": fid,
+                    "home": fx.get("home"),
+                    "away": fx.get("away"),
+                    "league": fx.get("league"),
+                    "kickoff": fx.get("kickoff"),
+                    "status": fx.get("status"),
+                    "pick": sel,  # home/draw/away
+                    "prob": p,
+                    "fair_odds": fair,
+                    "best_odds": o,
+                    "edge": edge,
+                    "book": best.get("book"),
+                    "model": pred.get("model", "model"),
+                })
+
+    out: Dict[str, Any] = {"generated_at": datetime.now(timezone.utc).isoformat(), "items": out_items}
+    # scrive cache server-side
+    try:
+        (DATA_DIR / "value_picks.json").write_text(
+            json.dumps(out, ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
+    except Exception:
+        pass
+    return out
+
+def _suggest_betslip(target_odds: float, min_picks: int = 2, max_picks: int = 8, edge_min: float = 0.03) -> Dict[str, Any]:
+    vp = _compute_value_picks(edge_min=edge_min)["items"]
+    # Ordina per probabilità decrescente
+    vp_sorted = sorted(vp, key=lambda x: float(x.get("prob") or 0.0), reverse=True)
+
+    def combine_until_target(items: List[Dict[str, Any]]) -> Dict[str, Any]:
+        acc: List[Dict[str, Any]] = []
+        prod = 1.0
+        for it in items:
+            o = float(it.get("best_odds") or 1.0)
+            if o <= 1.0:
+                continue
+            if len(acc) < max_picks and prod * o <= target_odds * 1.05:  # tolleranza 5%
+                acc.append(it)
+                prod *= o
+                if len(acc) >= min_picks and prod >= target_odds:
+                    break
+        return {"combo": acc, "combo_odds": prod}
+
+    primary = combine_until_target(vp_sorted)
+    # Alternative 1: favorisci edge alto
+    alt1 = combine_until_target(sorted(vp, key=lambda x: float(x.get("edge") or 0.0), reverse=True))
+    # Alternative 2: mix leghe diverse (greedy semplice)
+    seen_leagues = set()
+    mixed: List[Dict[str, Any]] = []
+    prod2 = 1.0
+    for it in vp_sorted:
+        lg = it.get("league")
+        if lg not in seen_leagues and len(mixed) < max_picks:
+            o = float(it.get("best_odds") or 1.0)
+            if prod2 * o <= target_odds * 1.05:
+                mixed.append(it)
+                prod2 *= o
+                seen_leagues.add(lg)
+                if len(mixed) >= min_picks and prod2 >= target_odds:
+                    break
+    alt2 = {"combo": mixed, "combo_odds": prod2}
+
+    return {
+        "target_odds": target_odds,
+        "min_picks": min_picks,
+        "max_picks": max_picks,
+        "primary": primary,
+        "alternatives": [alt1, alt2],
+    }
+
+# ---------------------
+# Nuovi endpoint
+# ---------------------
+@app.get("/events")
+def events(range_days: int = Query(default=7, ge=1, le=14), league: Optional[str] = None):
+    fixtures = _load_fixtures()
+    # filtra per range
+    now = datetime.now(timezone.utc)
+    hi = now + timedelta(days=range_days)
+    out: List[Dict[str, Any]] = []
+    for fx in fixtures:
+        ko = fx.get("kickoff")
+        try:
+            ts = datetime.fromisoformat(str(ko).replace("Z", "+00:00"))
+        except Exception:
+            ts = None
+        if ts is None or not (now <= ts <= hi):
+            continue
+        if league and str(fx.get("league") or "").lower() != league.lower():
+            continue
+        out.append(fx)
+
+    # arricchisci con best odds se disponibili
+    odds_idx = _load_odds_by_fixture()
+    for it in out:
+        fid = str(it.get("fixture_id") or "")
+        odds = odds_idx.get(fid)
+        if odds and "best" in odds:
+            it["best_odds"] = odds["best"]
+
+    return {"count": len(out), "items": out}
+
+@app.get("/value-picks")
+def value_picks(edge_min: float = Query(default=0.03, ge=0.0, le=1.0)):
+    return _compute_value_picks(edge_min=edge_min)
+
+@app.post("/betslip/suggest")
+def betslip_suggest(
+    target_odds: float = Body(..., embed=True),
+    min_picks: int = Body(2, embed=True),
+    max_picks: int = Body(8, embed=True),
+    edge_min: float = Body(0.03, embed=True),
+):
+    if target_odds < 1.1:
+        raise HTTPException(status_code=400, detail="target_odds deve essere >= 1.1")
+    return _suggest_betslip(target_odds=target_odds, min_picks=min_picks, max_picks=max_picks, edge_min=edge_min)
+
+@app.get("/settings")
+def get_settings():
+    # Restituisci chiavi mascherate e parametri noti
+    def mask(v: Optional[str]) -> str:
+        if not v:
+            return "(none)"
+        v = str(v)
+        return v[:4] + "…" if len(v) > 4 else v
+    keys = {
+        "FOOTBALL_DATA_API_KEY": mask(os.environ.get("FOOTBALL_DATA_API_KEY")),
+        "ODDS_API_KEY": mask(os.environ.get("ODDS_API_KEY")),
+        "TELEGRAM_API_ID": mask(os.environ.get("TELEGRAM_API_ID")),
+        "TELEGRAM_API_HASH": mask(os.environ.get("TELEGRAM_API_HASH")),
+    }
+    params = {
+        "TIMEZONE": os.environ.get("TIMEZONE", "Europe/Rome"),
+        "FETCH_DAYS": os.environ.get("FETCH_DAYS", "7"),
+        "LEAGUE_CODES": os.environ.get("LEAGUE_CODES", ""),
+        "EFFECTIVE_THRESHOLD": os.environ.get("EFFECTIVE_THRESHOLD", "0.03"),
+    }
+    return {"keys": keys, "params": params, "data_dir": str(DATA_DIR)}
+
+@app.post("/settings")
+def set_settings(updates: Dict[str, str] = Body(...)):
+    # Aggiorna .env con set_key (se disponibile) e ambiente di processo
+    if not set_key or not find_dotenv:
+        raise HTTPException(status_code=500, detail="python-dotenv non disponibile sul server")
+    env_path = find_dotenv(usecwd=True)
+    if not env_path:
+        # crea un nuovo .env nella root progetto (due livelli sopra this file)
+        env_path = str((Path(__file__).resolve().parents[2] / ".env"))
+    changed: Dict[str, str] = {}
+    for k, v in updates.items():
+        if not isinstance(v, str):
+            continue
+        try:
+            set_key(env_path, k, v, quote_mode="never")  # type: ignore[arg-type]
+            os.environ[k] = v
+            changed[k] = "ok"
+        except Exception as e:
+            changed[k] = f"error: {e}"
+    return {"env": env_path, "changed": changed}
+
+@app.get("/tipsters")
+def get_tipsters():
+    path = DATA_DIR / "telegram" / "tipsters.json"
+    if not path.exists():
+        # fallback seed
+        seed_path = DATA_DIR / "telegram" / "tipsters_seed.json"
+        if seed_path.exists():
+            return load_json(seed_path)
+        return {"items": []}
+    return load_json(path)
+
+@app.get("/tipsters/leaderboard")
+def tipsters_leaderboard(range_days: int = Query(default=90, ge=1, le=365)):
+    picks_path = DATA_DIR / "telegram" / "picks.jsonl"
+    if not picks_path.exists():
+        return {"items": []}
+    items = load_jsonl(picks_path)
+    now = datetime.now(timezone.utc)
+    lo = now - timedelta(days=range_days)
+
+    # KPI base per canale
+    kpi: Dict[str, Dict[str, Any]] = {}
+    for p in items:
+        ch = str(p.get("channel") or "unknown")
+        ts = p.get("timestamp")
+        try:
+            dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+        except Exception:
+            continue
+        if dt < lo:
+            continue
+        res = str(p.get("result") or "").lower()  # win/loss/pending
+        odds = float(p.get("odds") or 0.0)
+        stake = float(p.get("stake") or 1.0)
+        if ch not in kpi:
+            kpi[ch] = {"channel": ch, "win": 0, "loss": 0, "pending": 0, "picks": 0, "profit": 0.0}
+        kpi[ch]["picks"] += 1
+        if res == "win":
+            kpi[ch]["win"] += 1
+            if odds > 1.0:
+                kpi[ch]["profit"] += (odds - 1.0) * stake
+        elif res == "loss":
+            kpi[ch]["loss"] += 1
+            kpi[ch]["profit"] -= stake
+        else:
+            kpi[ch]["pending"] += 1
+
+    out: List[Dict[str, Any]] = []
+    for ch, d in kpi.items():
+        picks = max(1, d["picks"])
+        hit_rate = d["win"] / picks
+        roi = d["profit"] / picks
+        out.append({"channel": ch, "picks": d["picks"], "win": d["win"], "loss": d["loss"], "pending": d["pending"], "hit_rate": hit_rate, "roi": roi, "profit": d["profit"]})
+    out_sorted = sorted(out, key=lambda x: (x["roi"], x["hit_rate"], x["picks"]), reverse=True)
+    return {"items": out_sorted}

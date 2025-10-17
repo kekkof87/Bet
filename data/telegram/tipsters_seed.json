@@ -1,0 +1,9 @@
+{
+  "items": [
+    { "channel": "@pronostici_calcio_italia", "name": "Pronostici Calcio Italia", "language": "it", "category": "calcio" },
+    { "channel": "@tipster_seriea", "name": "Tipster Serie A", "language": "it", "category": "calcio" },
+    { "channel": "@betting_italia_vip", "name": "Betting Italia VIP", "language": "it", "category": "calcio" },
+    { "channel": "@pronostici_gol_over", "name": "Gol & Over Italia", "language": "it", "category": "calcio" },
+    { "channel": "@scommessevalore_it", "name": "Scommesse di Valore IT", "language": "it", "category": "calcio" }
+  ]
+}

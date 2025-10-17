@@ -1,0 +1,9 @@
+{
+  "inter": ["inter milan", "fc internazionale", "internazionale"],
+  "manchester united": ["man utd", "manchester utd"],
+  "manchester city": ["man city"],
+  "bayern munich": ["bayern", "fc bayern"],
+  "psg": ["paris sg", "paris saint-germain", "paris st-germain"],
+  "real madrid": ["real"],
+  "atletico madrid": ["atlético madrid", "atletico de madrid"]
+}

@@ -9,11 +9,15 @@ import altair as alt
 import requests
 from datetime import datetime
 
+# Config di base
 API_URL = os.environ.get("API_URL")  # es: http://localhost:8000
 DATA_DIR = Path(os.environ.get("DATA_DIR", "data")).resolve()
 
 st.set_page_config(page_title="Betting Dashboard", layout="wide")
 
+# ---------------------------
+# Helper condivisi (cache/file/API)
+# ---------------------------
 @st.cache_data(ttl=10)
 def _load_file(path: Path) -> Any:
     if path.suffix == ".jsonl":
@@ -86,17 +90,92 @@ def add_live_badge(df: pd.DataFrame, status_col_candidates = ("status","fixture.
     out.insert(0, "state", out[status_col].apply(badge))
     return out
 
-# Sidebar: navigazione + auto-refresh
+def _switch_to(page_path: str):
+    # Naviga alla multipage se disponibile (Streamlit >=1.22 supporta st.switch_page)
+    try:
+        st.switch_page(page_path)
+    except Exception:
+        st.info(f"Pagina non trovata: {page_path}. Assicurati esista in frontend/gui/pages/.")
+
+# ---------------------------
+# Sidebar: navigazione + auto-refresh + link alle pagine
+# ---------------------------
 st.sidebar.title("Navigazione")
-page = st.sidebar.radio("Vai a", ["Alerts", "Predictions", "Fixtures", "Odds", "ROI"])
-refresh_s = st.sidebar.number_input("Auto-refresh (sec)", min_value=0, max_value=300, value=0, step=5, help="0 = disabilitato")
+page = st.sidebar.radio(
+    "Vai a",
+    [
+        "Home",
+        "Alerts",
+        "Predictions",
+        "Fixtures",
+        "Odds",
+        "ROI",
+        "➡️ Eventi (pagina)",
+        "➡️ Pronostici (pagina)",
+        "➡️ Crea Bolletta (pagina)",
+        "➡️ Telegram channel (pagina)",
+        "➡️ Classifica Tipster (pagina)",
+        "➡️ Settings (pagina)"
+    ],
+    index=0
+)
+refresh_s = st.sidebar.number_input(
+    "Auto-refresh (sec)", min_value=0, max_value=300, value=0, step=5, help="0 = disabilitato"
+)
 
 if refresh_s and refresh_s > 0:
     # Best-effort per invalidare cache/forzare refresh
     st.sidebar.write(f"Aggiorna ogni {refresh_s}s (se non vedi aggiornamenti, ricarica manualmente)")
     st.experimental_set_query_params(_ts=int(datetime.utcnow().timestamp()))
 
-if page == "Alerts":
+# ---------------------------
+# HOME: landing con stato e collegamenti rapidi
+# ---------------------------
+if page == "Home":
+    st.title("Betting Dashboard")
+    colA, colB, colC = st.columns(3)
+    with colA:
+        st.metric("API_URL", API_URL or "(non impostata)")
+        st.metric("DATA_DIR", str(DATA_DIR))
+    with colB:
+        try:
+            if API_URL:
+                h = requests.get(f"{API_URL}/health", timeout=10).json()
+                st.success(f"API ok • data_dir: {h.get('data_dir')}")
+            else:
+                st.warning("API_URL non impostata")
+        except Exception as e:
+            st.error(f"API non raggiungibile: {e}")
+    with colC:
+        st.write("Azioni rapide")
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("Apri Eventi"):
+                _switch_to("frontend/gui/pages/01_Eventi.py")
+            if st.button("Apri Pronostici"):
+                _switch_to("frontend/gui/pages/02_Pronostici.py")
+            if st.button("Apri Crea Bolletta"):
+                _switch_to("frontend/gui/pages/03_Crea_Bolletta.py")
+        with c2:
+            if st.button("Apri Telegram"):
+                _switch_to("frontend/gui/pages/04_Telegram_Channel.py")
+            if st.button("Apri Classifica Tipster"):
+                _switch_to("frontend/gui/pages/05_Classifica_Tipster.py")
+            if st.button("Apri Settings"):
+                _switch_to("frontend/gui/pages/99_Settings.py")
+
+    st.markdown("---")
+    st.subheader("Checklist dati")
+    st.markdown("- Fixtures reali (FDO): data/fixtures.json")
+    st.markdown("- Risultati storici (FDO): data/history/results.jsonl")
+    st.markdown("- Predizioni: data/latest_predictions.json")
+    st.markdown("- Quote (The Odds API): data/odds_latest.json")
+    st.markdown("- Value picks: data/value_picks.json")
+
+# ---------------------------
+# SEZIONI LEGACY (restano disponibili qui)
+# ---------------------------
+elif page == "Alerts":
     st.title("Value Alerts")
     data = fetch("/alerts", fallback_file="value_alerts.json")
     df = to_dataframe(data)
@@ -219,3 +298,24 @@ elif page == "ROI":
                 st.altair_chart(chart, use_container_width=True)
     st.dataframe(df_hist, use_container_width=True)
     download_button(df_hist, "roi_history.csv", label="Download history CSV")
+
+# ---------------------------
+# Scorciatoie alle pagine multipage
+# ---------------------------
+elif page == "➡️ Eventi (pagina)":
+    _switch_to("frontend/gui/pages/01_Eventi.py")
+
+elif page == "➡️ Pronostici (pagina)":
+    _switch_to("frontend/gui/pages/02_Pronostici.py")
+
+elif page == "➡️ Crea Bolletta (pagina)":
+    _switch_to("frontend/gui/pages/03_Crea_Bolletta.py")
+
+elif page == "➡️ Telegram channel (pagina)":
+    _switch_to("frontend/gui/pages/04_Telegram_Channel.py")
+
+elif page == "➡️ Classifica Tipster (pagina)":
+    _switch_to("frontend/gui/pages/05_Classifica_Tipster.py")
+
+elif page == "➡️ Settings (pagina)":
+    _switch_to("frontend/gui/pages/99_Settings.py")
