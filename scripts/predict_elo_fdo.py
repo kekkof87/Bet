@@ -11,18 +11,20 @@ def load_json(path: Path):
         return json.load(f)
 
 def load_jsonl(path: Path):
-    out = []
+    out: List[dict] = []
     with path.open("r", encoding="utf-8") as f:
         for line in f:
-            line=line.strip()
-            if not line: continue
+            line = line.strip()
+            if not line:
+                continue
             out.append(json.loads(line))
     return out
 
 def k_factor(goals_home: int, goals_away: int) -> float:
     margin = abs(goals_home - goals_away)
     base = 20.0
-    if margin >= 2: base += 5.0
+    if margin >= 2:
+        base += 5.0
     return base
 
 def expected_score(diff: float) -> float:
@@ -71,8 +73,10 @@ def main():
         R[normalize_name(team)] = val
 
     for m in history:
-        home = m.get("home"); away = m.get("away")
-        if not home or not away: continue
+        home = m.get("home")
+        away = m.get("away")
+        if not home or not away:
+            continue
         ft = m.get("fullTime") or {}
         gh = int(ft.get("home", 0) or 0)
         ga = int(ft.get("away", 0) or 0)
@@ -93,7 +97,7 @@ def main():
         set_R(home, Rh_new)
         set_R(away, Ra_new)
 
-    items = []
+    items: List[Dict[str, object]] = []
     for fx in fixtures:
         fid = fx.get("fixture_id")
         home = fx.get("home")
