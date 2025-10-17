@@ -3,8 +3,8 @@ import os
 import sys
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime, timezone, timedelta
+from typing import Any, Dict, List, Tuple
+from datetime import datetime, timezone
 
 try:
     from dotenv import load_dotenv, find_dotenv
@@ -40,12 +40,6 @@ def load_fixtures(data_dir: Path) -> List[Dict[str, Any]]:
         return []
     obj = json.loads(fx_path.read_text(encoding="utf-8"))
     return obj.get("items", obj) if isinstance(obj, dict) else obj
-
-def load_results_index(data_dir: Path) -> Dict[str, str]:
-    # opzionale per derive competition mapping; non sempre disponibile
-    idx: Dict[str, str] = {}
-    # Non usiamo ora: possiamo sfruttare la league textual nelle fixtures
-    return idx
 
 def fetch_sport_odds(session: requests.Session, api_key: str, sport_key: str) -> List[Dict[str, Any]]:
     url = f"{API_BASE}/sports/{sport_key}/odds"
