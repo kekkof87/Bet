@@ -1,10 +1,11 @@
 import os
 import asyncio
 import time
+import json
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Tuple
-from datetime import datetime, timedelta, timezone
 
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, HTTPException, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
@@ -17,45 +18,46 @@ except Exception:
 
 from prometheus_client import Gauge
 
-# Utils locali
+# Utils locali (fallback con firme identiche per mypy)
 try:
     from .utils.file_io import load_json, load_jsonl, filter_by_status, filter_predictions  # type: ignore
 except Exception:
-    # Fallback minimo se i utils non fossero disponibili
-    import json
-
-    def load_json(p: Path):
-        with p.open("r", encoding="utf-8") as f:
+    def load_json(path: Path) -> Any:
+        with path.open("r", encoding="utf-8") as f:
             return json.load(f)
 
-    def load_jsonl(p: Path):
-        out = []
-        with p.open("r", encoding="utf-8") as f:
+    def load_jsonl(path: Path) -> List[Any]:
+        out: List[Any] = []
+        with path.open("r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line:
                     out.append(json.loads(line))
         return out
 
-    def filter_by_status(items: List[Dict[str, Any]], statuses: List[str]):
+    def filter_by_status(items: List[Dict[Any, Any]], statuses: List[str]) -> List[Dict[Any, Any]]:
         sset = {s.upper() for s in statuses}
-        out = []
+        out: List[Dict[Any, Any]] = []
         for it in items:
             st = str(it.get("status", "")).upper()
             if st in sset:
                 out.append(it)
         return out
 
-    def filter_predictions(items: List[Dict[str, Any]], min_edge: Optional[float], active_only: bool, status: Optional[List[str]]):
-        # Pass-through minimale: filtra solo per edge e status
+    def filter_predictions(
+        items: List[Dict[Any, Any]],
+        min_edge: Optional[float],
+        active_only: bool,
+        status: Optional[List[str]],
+    ) -> List[Dict[Any, Any]]:
         out = items[:]
         if status:
-            out = [it for it in out if str(it.get("status", "")).upper() in {s.upper() for s in status}]
+            su = {s.upper() for s in status}
+            out = [it for it in out if str(it.get("status", "")).upper() in su]
         if min_edge is not None:
-            def get_edge(x):
-                e = x.get("edge")
+            def get_edge(x: Dict[Any, Any]) -> float:
                 try:
-                    return float(e)
+                    return float(x.get("edge", 0.0))
                 except Exception:
                     return -1.0
             out = [it for it in out if get_edge(it) >= float(min_edge)]
@@ -343,11 +345,12 @@ def _compute_value_picks(edge_min: float = 0.03) -> Dict[str, Any]:
                     "model": pred.get("model", "model"),
                 })
 
-    out = {"generated_at": datetime.now(timezone.utc).isoformat(), "items": out_items}
+    out: Dict[str, Any] = {"generated_at": datetime.now(timezone.utc).isoformat(), "items": out_items}
     # scrive cache server-side
     try:
         (DATA_DIR / "value_picks.json").write_text(
-            ORJSONResponse.render(out).decode("utf-8"), encoding="utf-8"
+            json.dumps(out, ensure_ascii=False, indent=2),
+            encoding="utf-8"
         )
     except Exception:
         pass
@@ -359,7 +362,7 @@ def _suggest_betslip(target_odds: float, min_picks: int = 2, max_picks: int = 8,
     vp_sorted = sorted(vp, key=lambda x: float(x.get("prob") or 0.0), reverse=True)
 
     def combine_until_target(items: List[Dict[str, Any]]) -> Dict[str, Any]:
-        acc = []
+        acc: List[Dict[str, Any]] = []
         prod = 1.0
         for it in items:
             o = float(it.get("best_odds") or 1.0)
@@ -377,7 +380,7 @@ def _suggest_betslip(target_odds: float, min_picks: int = 2, max_picks: int = 8,
     alt1 = combine_until_target(sorted(vp, key=lambda x: float(x.get("edge") or 0.0), reverse=True))
     # Alternative 2: mix leghe diverse (greedy semplice)
     seen_leagues = set()
-    mixed = []
+    mixed: List[Dict[str, Any]] = []
     prod2 = 1.0
     for it in vp_sorted:
         lg = it.get("league")
@@ -408,7 +411,7 @@ def events(range_days: int = Query(default=7, ge=1, le=14), league: Optional[str
     # filtra per range
     now = datetime.now(timezone.utc)
     hi = now + timedelta(days=range_days)
-    out = []
+    out: List[Dict[str, Any]] = []
     for fx in fixtures:
         ko = fx.get("kickoff")
         try:
@@ -477,14 +480,14 @@ def set_settings(updates: Dict[str, str] = Body(...)):
     if not env_path:
         # crea un nuovo .env nella root progetto (due livelli sopra this file)
         env_path = str((Path(__file__).resolve().parents[2] / ".env"))
-    changed = {}
+    changed: Dict[str, str] = {}
     for k, v in updates.items():
         if not isinstance(v, str):
             continue
         try:
-            set_key(env_path, k, v, quote_mode="never")
+            set_key(env_path, k, v, quote_mode="never")  # type: ignore[arg-type]
             os.environ[k] = v
-            changed[k] = True
+            changed[k] = "ok"
         except Exception as e:
             changed[k] = f"error: {e}"
     return {"env": env_path, "changed": changed}
@@ -536,7 +539,7 @@ def tipsters_leaderboard(range_days: int = Query(default=90, ge=1, le=365)):
         else:
             kpi[ch]["pending"] += 1
 
-    out = []
+    out: List[Dict[str, Any]] = []
     for ch, d in kpi.items():
         picks = max(1, d["picks"])
         hit_rate = d["win"] / picks
