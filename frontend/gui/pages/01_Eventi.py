@@ -1,7 +1,5 @@
 import os
 from pathlib import Path
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Any
 
 import streamlit as st
 import pandas as pd
@@ -46,12 +44,6 @@ if lg_selected:
     df = df[df["league"].isin(lg_selected)]
 
 # Miglior quota (se presente in best_odds)
-def best_col(b: Optional[Dict[str, Any]], k: str) -> float:
-    try:
-        return float((b or {}).get(k) or 0.0)
-    except Exception:
-        return 0.0
-
 if "best_odds.home" in df.columns or "best_odds" in df.columns:
     # normalizza colonna best
     if "best_odds.home" not in df.columns and "best_odds" in df.columns:
