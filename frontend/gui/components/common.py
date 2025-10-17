@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 import pandas as pd
 
 def add_status_badge(df: pd.DataFrame, col: str = "status") -> pd.DataFrame:
@@ -20,7 +20,7 @@ def add_status_badge(df: pd.DataFrame, col: str = "status") -> pd.DataFrame:
     return out
 
 def edge_color(edge: float) -> str:
-    if edge >= 0.1:  # >= 10%
+    if edge >= 0.1:
         return "🟢"
     if edge >= 0.05:
         return "🟡"
