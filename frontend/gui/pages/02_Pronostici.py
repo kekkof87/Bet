@@ -14,16 +14,27 @@ st.title("Pronostici")
 
 edge_min = st.slider("Soglia edge minimo", 0.0, 0.2, 0.03, 0.005)
 
+data = None
 if API_URL:
-    r = requests.get(f"{API_URL}/value-picks", params={"edge_min": edge_min}, timeout=25)
-    r.raise_for_status()
-    data = r.json()
-else:
+    try:
+        r = requests.get(f"{API_URL}/value-picks", params={"edge_min": edge_min}, timeout=25)
+        r.raise_for_status()
+        data = r.json()
+    except Exception as e:
+        st.warning(f"Chiamata API /value-picks fallita ({e}). Uso fallback file se presente.")
+
+if data is None:
     p = DATA_DIR / "value_picks.json"
     if not p.exists():
-        st.error("value_picks.json non trovato. Esegui la pipeline o abilita API.")
+        st.error("value_picks.json non trovato. Esegui i task: 'Fetch fixtures', 'Fetch results', 'Predictions: Elo (FDO)', 'Fetch odds (The Odds API)' e poi 'Generate value picks (offline)'. Oppure avvia la API e ricarica.")
         st.stop()
-    data = pd.read_json(p).to_dict()
+    try:
+        data = pd.read_json(p)
+        if isinstance(data, pd.DataFrame):
+            data = data.to_dict()
+    except Exception as e:
+        st.error(f"Errore lettura value_picks.json: {e}")
+        st.stop()
 
 items = data.get("items", [])
 df = pd.json_normalize(items)
