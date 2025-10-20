@@ -4,6 +4,8 @@ httpx>=0.27.0
 fastapi>=0.110.0
 uvicorn>=0.23.0
 prometheus-client>=0.20.0
+pydantic
+rapidfuzz>=3.9.6
 
 # Tooling / Quality / Dev
 pytest>=8.3.0
@@ -14,5 +16,3 @@ mypy>=1.10.0
 # Type stubs
 types-requests>=2.32.0.20240907
 types-urllib3>=1.26.25.14
-
-pydantic
