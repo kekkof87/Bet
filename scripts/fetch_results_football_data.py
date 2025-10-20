@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone, date
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import urllib.parse
+import time
 
 try:
     from dotenv import load_dotenv, find_dotenv
@@ -49,6 +50,14 @@ def fetch_finished(session: requests.Session, date_from: date, date_to: date, co
     payload = r.json()
     return payload.get("matches", [])
 
+def chunked_date_ranges(date_from: date, date_to: date, chunk_days: int = 10):
+    cur = date_from
+    while cur <= date_to:
+        end = min(date_to, cur + timedelta(days=chunk_days))
+        yield cur, end
+        # FDO richiede periodo NON superiore a 10 giorni, quindi facciamo avanzare di chunk_days
+        cur = end + timedelta(days=1)
+
 def main():
     token = clean(os.environ.get("FOOTBALL_DATA_API_KEY",""))
     if not token:
@@ -57,6 +66,7 @@ def main():
 
     back_days = int(os.environ.get("FETCH_BACK_DAYS","180"))
     competitions = os.environ.get("LEAGUE_CODES","").strip()  # es "PL,SA,PD"
+    chunk_days = int(os.environ.get("FDO_CHUNK_DAYS", "10"))  # massimo 10
     data_dir = Path(os.environ.get("DATA_DIR","data"))
     out_file = data_dir / "history" / "results.jsonl"
     out_file.parent.mkdir(parents=True, exist_ok=True)
@@ -66,13 +76,30 @@ def main():
     date_to = today
 
     s = new_session(token)
-    print(f"[fdo-res] dateFrom={date_from} dateTo={date_to} comps={competitions or 'ALL'}")
+    print(f"[fdo-res] dateFrom={date_from} dateTo={date_to} comps={competitions or 'ALL'} chunk={chunk_days}d")
 
-    matches = fetch_finished(s, date_from, date_to, competitions or None)
+    all_matches: List[Dict[str, Any]] = []
+    seen_ids = set()
+
+    for df, dt in chunked_date_ranges(date_from, date_to, chunk_days=chunk_days):
+        try:
+            matches = fetch_finished(s, df, dt, competitions or None)
+        except Exception as e:
+            sys.stderr.write(f"[fdo-res] errore fetch chunk {df}..{dt}: {e}\n")
+            continue
+        # dedup per id
+        for m in matches:
+            mid = m.get("id")
+            if mid in seen_ids:
+                continue
+            seen_ids.add(mid)
+            all_matches.append(m)
+        # rispetto rate-limit free
+        time.sleep(0.4)
 
     cnt = 0
     with out_file.open("w", encoding="utf-8") as f:
-        for m in matches:
+        for m in all_matches:
             rec = {
                 "id": m.get("id"),
                 "utcDate": m.get("utcDate"),
