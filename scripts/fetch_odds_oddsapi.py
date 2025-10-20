@@ -3,7 +3,7 @@ import os
 import sys
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Optional
 from datetime import datetime, timezone
 
 try:
@@ -16,23 +16,51 @@ except Exception:
 
 import requests
 
+# Fuzzy optional
+try:
+    from rapidfuzz import fuzz
+    HAS_FUZZ = True
+except Exception:
+    HAS_FUZZ = False
+
 API_BASE = "https://api.the-odds-api.com/v4"
-REGION = os.environ.get("ODDS_REGION", "eu")  # eu/uk/us/au
+REGIONS = os.environ.get("ODDS_REGIONS", "eu,uk")  # uno o più, separati da virgola
 MARKETS = "h2h"  # esiti 1X2
 ODDS_FORMAT = "decimal"
+MATCH_WINDOW_SECONDS = int(os.environ.get("ODDS_MATCH_WINDOW_SECONDS", str(3 * 3600)))  # ±3 ore
 
-# Mapping indicativo Competition Code (FDO) -> The Odds API sport keys
+# Mapping Competition Code (FDO) -> The Odds API sport keys
 FDO_TO_ODDSAPI = {
     "PL": "soccer_epl",
     "PD": "soccer_spain_la_liga",
     "SA": "soccer_italy_serie_a",
     "BL1": "soccer_germany_bundesliga",
     "FL1": "soccer_france_ligue_one",
-    # estendibile
+    "CL": "soccer_uefa_champs_league",
+    "EL": "soccer_uefa_europa_league"
 }
 
 def normalize_name(s: str) -> str:
-    return "".join(ch for ch in (s or "").lower() if ch.isalnum() or ch.isspace()).strip()
+    base = "".join(ch for ch in (s or "").lower() if ch.isalnum() or ch.isspace()).strip()
+    return " ".join(base.split())
+
+def load_aliases(path: Path) -> Dict[str, List[str]]:
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+def alias_name(s: str, aliases: Dict[str, List[str]]) -> List[str]:
+    # Restituisce lista di possibili varianti per matching
+    norm = normalize_name(s)
+    out = [norm]
+    for k, vals in aliases.items():
+        key = normalize_name(k)
+        if norm == key:
+            out.extend([normalize_name(v) for v in vals])
+    return list(dict.fromkeys(out))
 
 def load_fixtures(data_dir: Path) -> List[Dict[str, Any]]:
     fx_path = data_dir / "fixtures.json"
@@ -41,9 +69,9 @@ def load_fixtures(data_dir: Path) -> List[Dict[str, Any]]:
     obj = json.loads(fx_path.read_text(encoding="utf-8"))
     return obj.get("items", obj) if isinstance(obj, dict) else obj
 
-def fetch_sport_odds(session: requests.Session, api_key: str, sport_key: str) -> List[Dict[str, Any]]:
+def fetch_sport_odds(session: requests.Session, api_key: str, sport_key: str, regions: str) -> List[Dict[str, Any]]:
     url = f"{API_BASE}/sports/{sport_key}/odds"
-    params = {"apiKey": api_key, "regions": REGION, "markets": MARKETS, "oddsFormat": ODDS_FORMAT}
+    params = {"apiKey": api_key, "regions": regions, "markets": MARKETS, "oddsFormat": ODDS_FORMAT}
     r = session.get(url, params=params, timeout=30)
     if not r.ok:
         sys.stderr.write(f"[odds] HTTP {r.status_code} {r.url} {r.text[:300]}\n")
@@ -91,59 +119,89 @@ def main():
         sys.stderr.write("[odds] Nessun fixtures.json; esegui prima fetch fixtures FDO.\n")
         sys.exit(2)
 
-    # Pre-indicizzazione fixtures per matching per (home, away, kickoff)
-    fx_index: List[Tuple[str, str, datetime, Dict[str, Any]]] = []
+    aliases = load_aliases(data_dir / "aliases" / "teams.json")
+
+    # Pre-indicizzazione fixtures per matching per (home/away alias, kickoff)
+    fx_index: List[Tuple[List[str], List[str], datetime, Dict[str, Any]]] = []
     for fx in fixtures:
         try:
             ko = datetime.fromisoformat(str(fx.get("kickoff")).replace("Z", "+00:00"))
         except Exception:
             continue
-        fx_index.append((normalize_name(fx.get("home")), normalize_name(fx.get("away")), ko, fx))
+        homes = alias_name(fx.get("home", ""), aliases)
+        aways = alias_name(fx.get("away", ""), aliases)
+        fx_index.append((homes, aways, ko, fx))
 
     session = requests.Session()
     session.trust_env = False
     out_items: List[Dict[str, Any]] = []
 
-    # Determina sport_keys da interrogare: per MVP usiamo lista fissa top5
     sport_keys = list(set(FDO_TO_ODDSAPI.values()))
+    found_count = 0
 
     for sport in sport_keys:
         try:
-            events = fetch_sport_odds(session, api_key, sport)
+            events = fetch_sport_odds(session, api_key, sport, REGIONS)
         except Exception as e:
             sys.stderr.write(f"[odds] errore fetch sport {sport}: {e}\n")
             continue
 
         for ev in events:
-            # Struttura tipica: {id, sport_key, commence_time, home_team, away_team, bookmakers:[{key, markets:[{key:'h2h', outcomes:[{name, price}]}]}]}
-            home = normalize_name(ev.get("home_team"))
-            away = normalize_name(ev.get("away_team"))
+            # Struttura tipica: {id, sport_key, commence_time, home_team, away_team, bookmakers:[...]}
+            home_ev = normalize_name(ev.get("home_team"))
+            away_ev = normalize_name(ev.get("away_team"))
             try:
                 ct = datetime.fromisoformat(str(ev.get("commence_time")).replace("Z", "+00:00"))
             except Exception:
                 ct = None
-            if not home or not away or not ct:
+            if not home_ev or not away_ev or not ct:
                 continue
-            # Matching: stesso home/away normalizzato e kickoff entro ±3 ore
-            for H, A, KO, FX in fx_index:
-                if H == home and A == away and abs((KO - ct).total_seconds()) <= 3 * 3600:
-                    best = choose_best_h2h(ev.get("bookmakers", []))
-                    out_items.append({
-                        "fixture_id": FX.get("fixture_id"),
-                        "home": FX.get("home"),
-                        "away": FX.get("away"),
-                        "league": FX.get("league"),
-                        "kickoff": FX.get("kickoff"),
-                        "market": "1X2",
-                        "best": best,
-                        "raw_event_id": ev.get("id"),
-                        "sport_key": sport,
-                    })
+
+            matched_fx: Optional[Dict[str, Any]] = None
+
+            for homes, aways, KO, FX in fx_index:
+                time_ok = abs((KO - ct).total_seconds()) <= MATCH_WINDOW_SECONDS
+                if not time_ok:
+                    continue
+
+                # Match diretto sugli alias generati
+                if home_ev in homes and away_ev in aways:
+                    matched_fx = FX
                     break
+
+                # Fuzzy fallback (solo se libreria disponibile)
+                if HAS_FUZZ:
+                    # score su tutte le varianti alias
+                    best_h = max((fuzz.ratio(home_ev, h) for h in homes), default=0)
+                    best_a = max((fuzz.ratio(away_ev, a) for a in aways), default=0)
+                    if best_h >= 92 and best_a >= 92:
+                        matched_fx = FX
+                        break
+
+            if not matched_fx:
+                continue
+
+            best = choose_best_h2h(ev.get("bookmakers", []))
+            if best["home"] <= 1.0 and best["draw"] <= 1.0 and best["away"] <= 1.0:
+                continue
+
+            out_items.append({
+                "fixture_id": matched_fx.get("fixture_id"),
+                "home": matched_fx.get("home"),
+                "away": matched_fx.get("away"),
+                "league": matched_fx.get("league"),
+                "kickoff": matched_fx.get("kickoff"),
+                "market": "1X2",
+                "best": best,
+                "raw_event_id": ev.get("id"),
+                "sport_key": sport,
+                "regions": REGIONS
+            })
+            found_count += 1
 
     out = {"generated_at": datetime.now(timezone.utc).isoformat(), "items": out_items}
     (data_dir / "odds_latest.json").write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"[odds] Scritti {len(out_items)} eventi con best odds in data/odds_latest.json")
+    print(f"[odds] Scritti {found_count} eventi con best odds in data/odds_latest.json (regions={REGIONS}, fuzzy={'on' if HAS_FUZZ else 'off'})")
 
 if __name__ == "__main__":
     main()
